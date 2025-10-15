@@ -39,7 +39,7 @@ pub fn replace_kernel_table(new: PageTable) -> Option<PageTable> {
 }
 
 pub fn new_table() -> Result<PageTable, PagingError> {
-    let mut g = ALLOCATOR.inner.lock();
+    let mut g = ALLOCATOR.lock_heap32();
     let mut access = HeapGuard(g);
     let raw = platform::mmu::new_table(&mut access)?;
     Ok(unsafe { PageTable::raw_to_own(raw) })
@@ -78,7 +78,7 @@ impl PageTable {
     }
 
     pub fn map(&mut self, config: &MapConfig) -> Result<(), PagingError> {
-        let mut g = ALLOCATOR.inner.lock();
+        let mut g = ALLOCATOR.lock_heap32();
         let mut access = HeapGuard(g);
         platform::mmu::table_map(self.raw, &mut access, config)
     }
@@ -86,7 +86,7 @@ impl PageTable {
 
 impl Drop for PageTable {
     fn drop(&mut self) {
-        let mut g = ALLOCATOR.inner.lock();
+        let mut g = ALLOCATOR.lock_heap32();
         let mut access = HeapGuard(g);
         platform::mmu::release_table(self.raw, &mut access);
     }

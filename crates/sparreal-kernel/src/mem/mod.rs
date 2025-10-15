@@ -37,52 +37,131 @@ pub use addr::*;
 #[cfg(target_os = "none")]
 #[global_allocator]
 static ALLOCATOR: KAllocator = KAllocator {
-    inner: Mutex::new(Heap::empty()),
+    heap32: Mutex::new(Heap::empty()),
+    heap64: Mutex::new(Heap::empty()),
 };
 
 static mut TMP_PAGE_ALLOC_ADDR: usize = 0;
 
 pub struct KAllocator {
-    pub(crate) inner: Mutex<Heap<32>>,
+    heap32: Mutex<Heap<32>>,
+    heap64: Mutex<Heap<64>>,
 }
 
 impl KAllocator {
     pub fn reset(&self, memory: &mut [u8]) {
-        let mut g = self.inner.lock();
+        let range = memory.as_mut_ptr_range();
+        let start = range.start as usize;
+        let end = range.end as usize;
+        let len = memory.len();
 
-        let mut h = Heap::empty();
+        {
+            let mut heap32 = self.heap32.lock();
+            *heap32 = Heap::empty();
+        }
+        {
+            let mut heap64 = self.heap64.lock();
+            *heap64 = Heap::empty();
+        }
 
-        unsafe { h.init(memory.as_mut_ptr() as usize, memory.len()) };
-
-        *g = h;
+        if Self::range_within_u32(start, end) {
+            let mut heap32 = self.heap32.lock();
+            unsafe { heap32.init(start, len) };
+        } else {
+            let mut heap64 = self.heap64.lock();
+            unsafe { heap64.init(start, len) };
+        }
     }
 
     pub fn add_to_heap(&self, memory: &mut [u8]) {
-        let mut g = self.inner.lock();
         let range = memory.as_mut_ptr_range();
+        let start = range.start as usize;
+        let end = range.end as usize;
 
-        unsafe { g.add_to_heap(range.start as usize, range.end as usize) };
+        if Self::range_within_u32(start, end) {
+            let mut heap32 = self.heap32.lock();
+            unsafe { heap32.add_to_heap(start, end) };
+        } else {
+            let mut heap64 = self.heap64.lock();
+            unsafe { heap64.add_to_heap(start, end) };
+        }
+    }
+
+    pub(crate) fn lock_heap32(&self) -> spin::MutexGuard<'_, Heap<32>> {
+        self.heap32.lock()
+    }
+
+    pub(crate) fn lock_heap64(&self) -> spin::MutexGuard<'_, Heap<64>> {
+        self.heap64.lock()
+    }
+
+    pub(crate) unsafe fn alloc_with_mask(
+        &self,
+        layout: core::alloc::Layout,
+        dma_mask: u64,
+    ) -> *mut u8 {
+        let guard = NoIrqGuard::new();
+        let result = if dma_mask <= u32::MAX as u64 {
+            Self::try_alloc(&self.heap32, layout)
+        } else {
+            Self::try_alloc(&self.heap64, layout).or_else(|| Self::try_alloc(&self.heap32, layout))
+        };
+        drop(guard);
+
+        result.map_or(null_mut(), |ptr| ptr.as_ptr())
+    }
+
+    #[inline]
+    fn try_alloc<const BITS: usize>(
+        heap: &Mutex<Heap<BITS>>,
+        layout: core::alloc::Layout,
+    ) -> Option<NonNull<u8>> {
+        let mut guard = heap.lock();
+        guard.alloc(layout).ok()
+    }
+
+    #[inline]
+    fn range_within_u32(start: usize, end: usize) -> bool {
+        if start >= end {
+            return false;
+        }
+
+        let last = end - 1;
+
+        let ps = PhysAddr::from(VirtAddr::from(start));
+        let pe = PhysAddr::from(VirtAddr::from(last));
+
+        let limit = PhysAddr::from(u32::MAX as usize);
+        ps <= limit && pe <= limit
+    }
+
+    #[inline]
+    fn ptr_in_32bit(ptr: *mut u8) -> bool {
+        let phys = PhysAddr::from(VirtAddr::from(ptr as usize));
+        phys <= PhysAddr::from(u32::MAX as usize)
     }
 }
 
 unsafe impl GlobalAlloc for KAllocator {
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-        let g = NoIrqGuard::new();
-        if let Ok(p) = self.inner.lock().alloc(layout) {
-            drop(g);
-            p.as_ptr()
-        } else {
-            drop(g);
-            null_mut()
-        }
+        let guard = NoIrqGuard::new();
+        let result =
+            Self::try_alloc(&self.heap64, layout).or_else(|| Self::try_alloc(&self.heap32, layout));
+        drop(guard);
+
+        result.map_or(null_mut(), |ptr| ptr.as_ptr())
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
-        let g = NoIrqGuard::new();
-        self.inner
-            .lock()
-            .dealloc(unsafe { NonNull::new_unchecked(ptr) }, layout);
-        drop(g);
+        let guard = NoIrqGuard::new();
+        let nn = unsafe { NonNull::new_unchecked(ptr) };
+
+        if Self::ptr_in_32bit(ptr) {
+            self.heap32.lock().dealloc(nn, layout);
+        } else {
+            self.heap64.lock().dealloc(nn, layout);
+        }
+        drop(guard);
     }
 }
 

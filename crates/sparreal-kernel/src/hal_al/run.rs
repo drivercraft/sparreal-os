@@ -28,7 +28,7 @@ pub fn run(plat: PlatformInfoKind) {
     unsafe { globals::setup_percpu() };
 
     print_start_msg();
-    
+
     driver::init();
     debug!("Driver initialized");
     task::init();

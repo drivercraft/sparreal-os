@@ -186,7 +186,7 @@ fn new_boot_table() -> Result<PageTableRef, &'static str> {
 }
 
 fn new_table() -> Result<PageTableRef, &'static str> {
-    let mut g = ALLOCATOR.inner.lock();
+    let mut g = ALLOCATOR.lock_heap32();
     let mut access = HeapGuard(g);
     new_table_with_access(&mut access)
 }

@@ -16,6 +16,31 @@ impl Osal for DMAImpl {
     }
 
     fn unmap(&self, _addr: NonNull<u8>, _size: usize) {}
+
+    unsafe fn alloc(&self, dma_mask: u64, layout: core::alloc::Layout) -> *mut u8 {
+        #[cfg(target_os = "none")]
+        {
+            unsafe { super::ALLOCATOR.alloc_with_mask(layout, dma_mask) }
+        }
+
+        #[cfg(not(target_os = "none"))]
+        {
+            let _ = dma_mask;
+            unsafe { alloc::alloc::alloc(layout) }
+        }
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
+        #[cfg(target_os = "none")]
+        {
+            unsafe { core::alloc::GlobalAlloc::dealloc(&super::ALLOCATOR, ptr, layout) };
+        }
+
+        #[cfg(not(target_os = "none"))]
+        {
+            unsafe { alloc::alloc::dealloc(ptr, layout) }
+        }
+    }
 }
 
 pub fn init() {
