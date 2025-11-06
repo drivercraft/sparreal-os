@@ -77,6 +77,11 @@ where
                 new_pte.set_is_huge(true);
                 *pte_ref = new_pte;
 
+                // 如果需要刷新TLB，立即执行
+                if config.flush {
+                    T::flush(Some(vaddr));
+                }
+
                 vaddr += level_size;
                 paddr += level_size;
                 continue;
@@ -96,6 +101,11 @@ where
                 new_pte.set_valid(true);
                 new_pte.set_is_huge(false);
                 *pte_ref = new_pte;
+
+                // 如果需要刷新TLB，立即执行
+                if config.flush {
+                    T::flush(Some(vaddr));
+                }
 
                 vaddr += T::PAGE_SIZE;
                 paddr += T::PAGE_SIZE;
