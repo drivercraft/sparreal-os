@@ -1,7 +1,7 @@
 use crate::{
-    map::{MapConfig, MapRecursiveConfig, Frame},
-    walk::{WalkConfig, PageTableWalker},
     FramAllocator, PagingError, PagingResult, TableGeneric, VirtAddr,
+    map::{Frame, MapConfig, MapRecursiveConfig},
+    walk::{PageTableWalker, WalkConfig},
 };
 
 /// 页表结构
@@ -66,7 +66,7 @@ impl<T: TableGeneric, A: FramAllocator> PageTable<T, A> {
     pub fn walk_valid(&self) -> PageTableWalker<T, A> {
         let config = WalkConfig {
             start_vaddr: VirtAddr::new(0),
-            end_vaddr: VirtAddr::new(core::usize::MAX),
+            end_vaddr: VirtAddr::new(usize::MAX),
             visit_invalid: false,
         };
         self.walk(config)
