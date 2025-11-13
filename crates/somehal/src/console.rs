@@ -3,7 +3,7 @@ use core::{cell::UnsafeCell, ptr::NonNull};
 use some_serial::*;
 
 use crate::cmdline::EarlyconConfig;
-use crate::mem::phys_to_virt;
+use crate::mem::_fixmap_io;
 
 pub(crate) static mut DEBUG_BASE: usize = 0;
 
@@ -178,7 +178,7 @@ fn set_pl011(config: &EarlyconConfig) -> Result<(), &'static str> {
         .base_addr
         .ok_or("No base address specified for pl011 earlycon")?;
     let base_addr =
-        NonNull::new(phys_to_virt(base_addr)).ok_or("Invalid base address for pl011 earlycon")?;
+        NonNull::new(_fixmap_io(base_addr)).ok_or("Invalid base address for pl011 earlycon")?;
 
     let mut serial = pl011::Pl011::new(base_addr, 0);
     let tx = serial.take_tx().ok_or("no tx")?;
@@ -195,7 +195,7 @@ fn set_16550_mmio(config: &EarlyconConfig) -> Result<(), &'static str> {
         .base_addr
         .ok_or("No base address specified for ns16550 earlycon")?;
     let base_addr =
-        NonNull::new(phys_to_virt(base_addr)).ok_or("Invalid base address for ns16550 earlycon")?;
+        NonNull::new(_fixmap_io(base_addr)).ok_or("Invalid base address for ns16550 earlycon")?;
     let width = match config.io_type {
         "mmio" => 1,
         "mmio16" => 2,

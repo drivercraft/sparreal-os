@@ -30,4 +30,28 @@ impl ArchTrait for Arch {
         let end = ext_sym_addr!(__kernel_code_end);
         unsafe { core::slice::from_raw_parts(start as *const u8, end - start) }
     }
+
+    fn _pa(vaddr: *const u8) -> usize {
+        vaddr as usize - crate::consts::KERNEL_LINER_OFFSET
+    }
+
+    fn _va(paddr: usize) -> *mut u8 {
+        (paddr + crate::consts::KERNEL_LINER_OFFSET) as *mut u8
+    }
+
+    fn ioremap(paddr: usize, size: usize) -> *mut u8 {
+        if crate::mem::is_mmu_enabled() {
+            todo!()
+        } else {
+            paddr as *mut u8
+        }
+    }
+
+    fn _fixmap_io(paddr: usize) -> *mut u8 {
+        if crate::mem::is_mmu_enabled() {
+            Self::_va(paddr)
+        } else {
+            paddr as *mut u8
+        }
+    }
 }

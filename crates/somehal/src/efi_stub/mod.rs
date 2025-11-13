@@ -55,6 +55,7 @@ pub unsafe extern "C" fn efi_pe_entry(
                 && desc.page_count as usize >= 2 * MB / page_size()
             {
                 println!("{desc:#x?}");
+                let desc: crate::mem::region::MemoryDescriptor = desc.into();
                 mem::add_memory_descriptor(desc.into());
             }
         }
@@ -135,11 +136,43 @@ fn find_acpi_rsdp() {
     })
 }
 
-impl From<&MemoryDescriptor> for crate::mem::MemoryDescriptor {
+impl From<&MemoryDescriptor> for crate::mem::region::MemoryDescriptor {
     fn from(value: &MemoryDescriptor) -> Self {
-        crate::mem::MemoryDescriptor {
+        let name = match value.ty {
+            MemoryType::CONVENTIONAL => "Conventional Memory",
+            MemoryType::LOADER_CODE => "Loader Code",
+            MemoryType::LOADER_DATA => "Loader Data",
+            MemoryType::BOOT_SERVICES_CODE => "Boot Services Code",
+            MemoryType::BOOT_SERVICES_DATA => "Boot Services Data",
+            MemoryType::RUNTIME_SERVICES_CODE => "Runtime Services Code",
+            MemoryType::RUNTIME_SERVICES_DATA => "Runtime Services Data",
+            MemoryType::MMIO => "MMIO",
+            MemoryType::MMIO_PORT_SPACE => "MMIO Port Space",
+            MemoryType::PAL_CODE => "PAL Code",
+            _ => "Reserved",
+        };
+
+        crate::mem::region::MemoryDescriptor {
+            name,
             physical_start: value.phys_start as usize,
             size_in_bytes: (value.page_count as usize) * 0x1000,
+            memory_type: match value.ty {
+                MemoryType::CONVENTIONAL => crate::mem::region::MemoryType::Usable,
+                _ => crate::mem::region::MemoryType::Reserved,
+            },
+        }
+    }
+}
+
+impl From<crate::mem::region::MemoryDescriptor> for kernutil::memory::MemoryDescriptor {
+    fn from(value: crate::mem::region::MemoryDescriptor) -> Self {
+        kernutil::memory::MemoryDescriptor {
+            physical_start: value.physical_start,
+            size_in_bytes: value.size_in_bytes,
+            memory_type: match value.memory_type {
+                crate::mem::region::MemoryType::Usable => kernutil::memory::MemoryType::Usable,
+                crate::mem::region::MemoryType::Reserved => kernutil::memory::MemoryType::Reserved,
+            },
         }
     }
 }

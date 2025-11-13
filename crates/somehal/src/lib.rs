@@ -33,13 +33,10 @@ trait ArchTrait {
     fn kernel_code() -> &'static [u8];
     fn post_allocator();
 
-    fn virt_to_phys(vaddr: usize) -> usize {
-        vaddr
-    }
-
-    fn phys_to_virt(paddr: usize) -> usize {
-        paddr
-    }
+    fn _pa(vaddr: *const u8) -> usize;
+    fn _va(paddr: usize) -> *mut u8;
+    fn _fixmap_io(paddr: usize) -> *mut u8;
+    fn ioremap(paddr: usize, size: usize) -> *mut u8;
 }
 
 pub fn post_allocator() {

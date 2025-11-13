@@ -1,31 +1,55 @@
 use core::{cell::UnsafeCell, ops::Deref};
 
 pub use kernutil::memory::{MemoryDescriptor, MemoryType};
+use num_align::NumAlign;
 
 use crate::ArchTrait;
 
 pub(crate) mod address;
 pub(crate) mod ram;
+pub(crate) mod region;
 
+static mut MMU_ENABLED: bool = false;
 static MEMORY_MAP: StaticCell<heapless::Vec<MemoryDescriptor, 64>> =
     StaticCell::new(Some(heapless::Vec::new()));
-
-static mut KERNEL_LINER_OFFSET_CURRENT: usize = 0;
 
 pub const MB: usize = 1024 * 1024;
 
 pub(crate) fn set_mmu_enabled() {
     unsafe {
-        KERNEL_LINER_OFFSET_CURRENT = crate::consts::KERNEL_LINER_OFFSET;
+        MMU_ENABLED = true;
+    }
+}
+
+pub(crate) fn is_mmu_enabled() -> bool {
+    unsafe { MMU_ENABLED }
+}
+
+pub fn phys_to_virt(paddr: usize) -> *mut u8 {
+    if is_mmu_enabled() {
+        crate::arch::Arch::_va(paddr)
+    } else {
+        paddr as *mut u8
     }
 }
 
 pub fn virt_to_phys(vaddr: *const u8) -> usize {
-    vaddr as usize - unsafe { KERNEL_LINER_OFFSET_CURRENT }
+    if is_mmu_enabled() {
+        crate::arch::Arch::_pa(vaddr)
+    } else {
+        vaddr as usize
+    }
 }
 
-pub fn phys_to_virt(paddr: usize) -> *mut u8 {
-    (paddr + unsafe { KERNEL_LINER_OFFSET_CURRENT }) as *mut u8
+pub fn ioremap(paddr: usize, size: usize) -> *mut u8 {
+    let end = paddr + size;
+    let paddr = paddr.align_down(page_size());
+    let size = end.align_up(page_size()) - paddr;
+    crate::arch::Arch::ioremap(paddr, size)
+}
+
+pub(crate) fn _fixmap_io(paddr: usize) -> *mut u8 {
+    crate::arch::Arch::_fixmap_io(paddr)
 }
 
 pub(crate) fn early_init() {

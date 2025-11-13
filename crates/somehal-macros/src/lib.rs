@@ -1,6 +1,4 @@
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{Ident, ItemFn, parse::Parse, parse_macro_input};
 
 mod entry;
 
@@ -60,4 +58,3 @@ pub fn entry(args: TokenStream, input: TokenStream) -> TokenStream {
 pub fn secondary_entry(args: TokenStream, input: TokenStream) -> TokenStream {
     entry::entry(args, input, "__somehal_secondary")
 }
-
