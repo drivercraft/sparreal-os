@@ -1,23 +1,17 @@
 use core::{ffi::c_void, fmt::Write, ptr::null, sync::atomic::AtomicBool};
 
 use uefi::{
-    Result,
-    boot::{MemoryDescriptor, MemoryType},
-    mem::memory_map::MemoryMap,
-    prelude::*,
-    proto::loaded_image::LoadedImage,
-    system::with_config_table,
-    table::cfg::ConfigTableEntry,
+    Result, mem::memory_map::MemoryMap, prelude::*, proto::loaded_image::LoadedImage,
+    system::with_config_table, table::cfg::ConfigTableEntry,
 };
 use uefi_raw::table::system::SystemTable;
 
-use crate::{
-    acpi::set_rsdp,
-    arch::relocate,
-    mem::{self, MB, page_size},
-};
+use crate::{acpi::set_rsdp, arch::relocate};
+
+pub use uefi_raw::table::boot::{MemoryDescriptor, MemoryType};
 
 mod acpi_handle;
+pub(crate) mod memmap;
 pub mod pe;
 mod system;
 mod table;
@@ -45,20 +39,13 @@ pub unsafe extern "C" fn efi_pe_entry(
             return e.status();
         }
 
+        let _ = crate::acpi::earlycon::acpi_setup_earlycon();
+
         UEFI_SERVICE_OK.store(false, core::sync::atomic::Ordering::Relaxed);
         let mem_map = boot::exit_boot_services(None);
 
         println!("Exited boot services, owned memory map obtained.");
-
-        for desc in mem_map.entries() {
-            if matches!(desc.ty, MemoryType::CONVENTIONAL)
-                && desc.page_count as usize >= 2 * MB / page_size()
-            {
-                println!("{desc:#x?}");
-                let desc: crate::mem::region::MemoryDescriptor = desc.into();
-                mem::add_memory_descriptor(desc.into());
-            }
-        }
+        memmap::setup_memory_map(mem_map.entries());
 
         crate::arch::entry::kernel_entry(1, null(), system_table as *const c_void);
     }

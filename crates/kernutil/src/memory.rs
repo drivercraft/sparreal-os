@@ -2,6 +2,7 @@ use heapless::Vec;
 
 #[derive(Debug, Clone, Copy)]
 pub struct MemoryDescriptor {
+    // pub name: &'static str,
     pub physical_start: usize,
     pub size_in_bytes: usize,
     pub memory_type: MemoryType,

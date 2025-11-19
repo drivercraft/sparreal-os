@@ -29,13 +29,6 @@ pub fn setup_memory_map() -> Option<()> {
     }
 
     let mut rsv = Vec::<MemoryDescriptor, 32>::new();
-    let _ = rsv.push(MemoryDescriptor {
-        physical_start: virt_to_phys(kernel_code().as_ptr()),
-        size_in_bytes: kernel_code().len(),
-        memory_type: MemoryType::Reserved,
-    });
-
-    let _ = rsv.push(crate::mem::ram::to_rsvd_memory_descriptor());
 
     for reserved in fdt.memory_reservation_blocks() {
         if rsv
@@ -71,16 +64,6 @@ pub fn setup_memory_map() -> Option<()> {
 
     for desc in merged {
         crate::mem::add_memory_descriptor(desc);
-    }
-
-    for desc in crate::mem::get_memory_map() {
-        pr_range!(
-            "Memory Region",
-            desc.physical_start,
-            desc.size_in_bytes,
-            " Type: {:?}",
-            desc.memory_type
-        );
     }
 
     Some(())
