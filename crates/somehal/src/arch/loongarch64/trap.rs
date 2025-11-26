@@ -1,6 +1,15 @@
+use core::{arch::naked_asm, mem::offset_of, ops::Deref};
+
 use loongArch64::register::{ecfg, eentry, estat, tlbrentry};
 
-use crate::{arch::cache::local_flush_icache_range, mem::StaticCell};
+use crate::{
+    arch::{
+        cache::local_flush_icache_range,
+        context::TrapFrame,
+        register::{csr, irq::TI},
+    },
+    mem::StaticCell,
+};
 
 const VECSIZE: usize = 0x200;
 
@@ -39,7 +48,7 @@ pub fn per_cpu_trap_init(is_primary: bool) {
             set_handler(i, handle_reserved);
         }
         for i in 64..=64 + 14 {
-            set_handler(i, handle_int);
+            set_handler(i, handle_vint);
         }
 
         local_flush_icache_range(eentry_addr(), eentry_addr() + 0x400);
@@ -47,7 +56,7 @@ pub fn per_cpu_trap_init(is_primary: bool) {
 }
 
 fn setup_vint_size() {
-    let n = 64 - (VECSIZE / 4).leading_zeros() - 1;
+    let n = (VECSIZE / 4).ilog2();
     ecfg::set_vs(n as _);
 }
 
@@ -58,7 +67,7 @@ fn configure_exception_vector() {
     tlbrentry::set_tlbrentry(tlbrentry_addr());
 }
 
-fn set_handler(idx: usize, handler: fn()) {
+fn set_handler(idx: usize, handler: unsafe extern "C" fn()) {
     unsafe {
         let src = core::slice::from_raw_parts(handler as *const u8, VECSIZE);
         EXCEPTION_HANDLERS.update(|vec| {
@@ -73,13 +82,47 @@ fn set_handler(idx: usize, handler: fn()) {
     }
 }
 
-fn handle_reserved() {}
+unsafe extern "C" fn handle_reserved() {}
 
-fn handle_int() {}
+#[unsafe(naked)]
+unsafe extern "C" fn handle_vint() {
+    naked_asm!(
+        backup_t0t1!(),
+        "move    $t0,  $sp",
+        "addi.d  $sp,  $sp, -{frame_size}",
+        push_general_regs!(),
+        "st.d    $t0, $sp, {tf_sp}",
+        restore_t0t1!(),
+        "st.d    $t0, $sp, {tf_t0}",
+        "st.d    $t1, $sp, {tf_t1}",
+        "csrrd   $t0, {prmd}",
+        "st.d    $t0, $sp, {tf_prmd}",
+        "csrrd   $t0, {era}",
+        "st.d    $t0, $sp, {tf_era}",
+        "move    $t0,  $sp",
+        "bl {do_vint}",
+        "ld.d    $t0,  $sp, {tf_era}",
+        "csrwr    $t0, {era}",
+        "ld.d    $t0,  $sp, {tf_prmd}",
+        "csrwr    $t0, {prmd}",
+        pop_general_regs!(),
+        "ld.d    $sp,  $sp, {tf_sp}",
+        "ertn",
+        do_vint = sym do_vint,
+        frame_size = const size_of::<TrapFrame>(),
+        tf_sp = const offset_of!(TrapFrame, regs.sp),
+        tf_t0 = const offset_of!(TrapFrame, regs.t0),
+        tf_t1 = const offset_of!(TrapFrame, regs.t1),
+        tf_prmd = const offset_of!(TrapFrame, prmd),
+        prmd = const csr::PRMD,
+        tf_era = const offset_of!(TrapFrame, era),
+        era = const csr::ERA,
+    )
+}
 
 /// 处理向量中断
 /// 等效于 C 的 do_vint()
-fn do_vint() {
+fn do_vint(_tf: &mut TrapFrame) {
     // unsigned int estat = read_csr_estat() & CSR_ESTAT_IS;
     let mut estat = estat::read().is();
 
@@ -99,4 +142,24 @@ fn do_vint() {
 
 fn handle_irq(hwirq: u32) {
     // 处理中断的具体实现
+
+    match hwirq {
+        TI => {
+            handle_timer_interrupt();
+        }
+        _ => {
+            // 处理其他中断
+        }
+    }
+}
+
+static TI_HANDLER: StaticCell<fn()> = StaticCell::new(None);
+pub fn register_timer_handler(handler: fn()) {
+    TI_HANDLER.set(handler);
+}
+fn handle_timer_interrupt() {
+    let h = TI_HANDLER
+        .try_deref()
+        .expect("Timer handler not registered");
+    (h)();
 }

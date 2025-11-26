@@ -30,6 +30,8 @@ mod efi_stub;
 mod elf;
 pub(crate) mod fdt;
 pub mod mem;
+pub mod irq;
+pub mod power;
 
 pub use somehal_macros::{entry, secondary_entry};
 
@@ -43,10 +45,14 @@ trait ArchTrait {
     fn _va(paddr: usize) -> *mut u8;
     fn _io(paddr: usize) -> *mut u8;
     fn ioremap(paddr: usize, size: usize) -> *mut u8;
+
+    fn register_timer_handler(handler: fn());
+    fn shutdown() -> !;
+        
 }
 
 pub fn post_allocator() {
-    debug!("alloc ok");
+    debug!("Setup after allocator");
     arch::Arch::post_allocator();
 }
 

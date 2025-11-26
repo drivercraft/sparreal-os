@@ -2,12 +2,13 @@
 mod _macros;
 
 mod addrspace;
+mod cache;
+mod context;
 pub(crate) mod entry;
 mod head;
 mod register;
 mod relocate;
 mod trap;
-mod cache;
 
 pub use relocate::relocate;
 
@@ -42,5 +43,15 @@ impl ArchTrait for Arch {
 
     fn per_cpu_trap_init(is_primary: bool) {
         trap::per_cpu_trap_init(is_primary);
+    }
+
+    fn register_timer_handler(handler: fn()) {
+        trap::register_timer_handler(handler);
+    }
+
+    fn shutdown() -> ! {
+        loop {
+            unsafe { loongArch64::asm::idle() };
+        }
     }
 }

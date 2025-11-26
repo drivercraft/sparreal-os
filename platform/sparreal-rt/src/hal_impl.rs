@@ -1,5 +1,18 @@
 use sparreal_kernel::{hal::al::*, impl_trait};
 
+struct InitImpl;
+
+impl_trait! {
+impl Platform for InitImpl {
+    fn post_allocator() {
+        somehal::post_allocator();
+    }
+    fn shutdown() -> ! {
+        somehal::power::shutdown()
+    }
+}
+}
+
 struct MemoryImpl;
 
 impl_trait! {
@@ -14,6 +27,10 @@ impl Memory for MemoryImpl {
 
     fn page_size() -> usize {
         somehal::mem::page_size()
+    }
+
+    fn memory_map() -> StackVec<MemoryDescriptor, 64> {
+        somehal::mem::memory_map()
     }
 }
 }
@@ -32,6 +49,10 @@ impl Cpu for CpuImpl {
 
     fn irq_set_enabled(enabled:bool) {
 
+    }
+
+    fn register_timer_handler(handler: fn()) {
+        somehal::irq::register_timer_handler(handler);
     }
 }
 }

@@ -199,6 +199,10 @@ impl<T> StaticCell<T> {
             f(val.as_mut().unwrap())
         }
     }
+
+    pub fn try_deref(&self) -> Option<&T> {
+        unsafe { (*self.value.get()).as_ref() }
+    }
 }
 
 impl<T> Deref for StaticCell<T> {

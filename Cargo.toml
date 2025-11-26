@@ -18,6 +18,7 @@ fdt-parser = "0.5"
 log = "0.4"
 anyhow = {version = "1.0", default-features = false}
 byte-unit = {version = "5", default-features = false, features = ["byte"]}
+heapless = {version = "0.9"}
 
 somehal = {path = "crates/somehal", version = "0.5"}
 somehal-macros = {path = "crates/somehal-macros", version = "0.1"}

@@ -980,6 +980,7 @@ dependencies = [
  "ansi_rgb",
  "buddy_system_allocator",
  "byte-unit",
+ "heapless 0.9.1",
  "kernutil",
  "log",
  "rgb",
