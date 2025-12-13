@@ -1,18 +1,27 @@
-use core::{cell::UnsafeCell, ops::Deref};
-
 use byte_unit::{Byte, UnitType};
+use kernutil::StaticCell;
 pub use kernutil::memory::{MemoryDescriptor, MemoryType};
 use num_align::NumAlign;
-
-use crate::ArchTrait;
+use ranges_ext::RangeError;
 
 pub(crate) mod address;
 pub(crate) mod ram;
 pub(crate) mod region;
 
+use crate::ArchTrait;
+
 pub use crate::arch::Pte;
 pub use page_table_generic::*;
+
+pub const KB: usize = 1024;
+pub const MB: usize = 1024 * KB;
+pub const GB: usize = 1024 * MB;
+
+static mut MMU_ENABLED: bool = false;
+static MEMORY_MAP: StaticCell<MemoryMap> = StaticCell::new(MemoryMap::new());
+
 pub type PageTable<A> = crate::arch::PT<A>;
+pub type MemoryMap = ranges_ext::RangeSet<MemoryDescriptor>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PageTableInfo {
@@ -20,13 +29,9 @@ pub struct PageTableInfo {
     pub addr: usize,
 }
 
-static mut MMU_ENABLED: bool = false;
-static MEMORY_RAM: StaticCell<heapless::Vec<MemoryDescriptor, 32>> =
-    StaticCell::new(Some(heapless::Vec::new()));
-static MEMORY_RSV: StaticCell<heapless::Vec<MemoryDescriptor, 32>> =
-    StaticCell::new(Some(heapless::Vec::new()));
-
-pub const MB: usize = 1024 * 1024;
+pub fn memory_map() -> &'static [MemoryDescriptor] {
+    MEMORY_MAP.as_slice()
+}
 
 pub(crate) fn set_mmu_enabled() {
     unsafe {
@@ -96,68 +101,14 @@ pub fn new_page_table<A: FrameAllocator>(allocator: A) -> PageTable<A> {
     crate::arch::Arch::create_page_table(allocator)
 }
 
-fn rsv_memories() -> heapless::Vec<MemoryDescriptor, 32> {
-    let mut rsv = MEMORY_RSV.clone();
+pub(crate) fn memory_map_setup() {
     let kernel_range = kernel_range();
+    let desc = MemoryDescriptor::new_with_range("Kernel", kernel_range, MemoryType::Reserved);
 
-    let _ = rsv.push(MemoryDescriptor {
-        name: "Kernel",
-        physical_start: kernel_range.start,
-        size_in_bytes: kernel_range.end - kernel_range.start,
-        memory_type: MemoryType::Reserved,
-    });
-    let _ = rsv.push(ram::to_rsvd_memory_descriptor());
+    add_memory_descriptor(desc).unwrap();
 
-    merge_contiguous_with_same_name(rsv)
-}
-
-fn merge_contiguous_with_same_name(
-    mut list: heapless::Vec<MemoryDescriptor, 32>,
-) -> heapless::Vec<MemoryDescriptor, 32> {
-    if list.is_empty() {
-        return list;
-    }
-
-    list.sort_by(|a, b| a.physical_start.cmp(&b.physical_start));
-
-    let mut merged: heapless::Vec<MemoryDescriptor, 32> = heapless::Vec::new();
-    for desc in list.into_iter() {
-        if let Some(last) = merged.last_mut() {
-            let last_end = last.physical_start + last.size_in_bytes;
-            if last.name == desc.name && last_end == desc.physical_start {
-                last.size_in_bytes += desc.size_in_bytes;
-                continue;
-            }
-        }
-
-        if merged.push(desc).is_err() {
-            println!("Warning: reserved regions exceed the max supported count");
-            break;
-        }
-    }
-
-    merged
-}
-
-pub fn memory_map() -> heapless::Vec<MemoryDescriptor, 64> {
-    let mut result = kernutil::memory::cal_free_memories(&MEMORY_RAM, &rsv_memories(), page_size());
-
-    result.sort_by(|a, b| a.physical_start.cmp(&b.physical_start));
-
-    let start = result.first().map_or(0, |m| m.physical_start);
-    let end = result
-        .last()
-        .map_or(0, |m| m.physical_start + m.size_in_bytes);
-
-    for rsv in rsv_memories().iter() {
-        if (start..end).contains(&(rsv.physical_start)) {
-            let _ = result.push(*rsv);
-        }
-    }
-
-    result.sort_by(|a, b| a.physical_start.cmp(&b.physical_start));
-
-    result
+    let desc = ram::to_rsvd_memory_descriptor();
+    add_memory_descriptor(desc).unwrap();
 }
 
 pub fn print_memory_map() {
@@ -174,62 +125,17 @@ pub fn print_memory_map() {
     }
 }
 
-pub(crate) fn add_memory_descriptor(desc: MemoryDescriptor) {
-    if matches!(desc.memory_type, MemoryType::Usable) {
-        MEMORY_RAM.update(|map| {
-            if map.push(desc).is_err() {
-                println!("Warning: memory usable regions exceed the max supported count");
-            }
-        });
-    } else {
-        MEMORY_RSV.update(|map| {
-            if map.push(desc).is_err() {
-                println!("Warning: memory reserved regions exceed the max supported count");
-            }
-        });
-    }
+pub(crate) fn add_memory_descriptor(
+    desc: MemoryDescriptor,
+) -> Result<(), RangeError<MemoryDescriptor>> {
+    unsafe { MEMORY_MAP.update(|mem| mem.add(desc)) }
 }
 
-pub(crate) struct StaticCell<T> {
-    value: UnsafeCell<Option<T>>,
+pub(crate) fn add_memory_descriptors(
+    descs: impl Iterator<Item = MemoryDescriptor>,
+) -> Result<(), RangeError<MemoryDescriptor>> {
+    for desc in descs {
+        add_memory_descriptor(desc)?;
+    }
+    Ok(())
 }
-
-impl<T> StaticCell<T> {
-    pub const fn new(v: Option<T>) -> Self {
-        StaticCell {
-            value: UnsafeCell::new(v),
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn set(&self, v: T) {
-        unsafe {
-            *self.value.get() = Some(v);
-        }
-    }
-
-    pub fn update<F, R>(&self, f: F) -> R
-    where
-        F: FnOnce(&mut T) -> R,
-    {
-        unsafe {
-            let val = &mut *self.value.get();
-            f(val.as_mut().unwrap())
-        }
-    }
-
-    pub fn try_deref(&self) -> Option<&T> {
-        unsafe { (*self.value.get()).as_ref() }
-    }
-}
-
-impl<T> Deref for StaticCell<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        unsafe { (*self.value.get()).as_ref().unwrap() }
-    }
-}
-
-unsafe impl<T> Sync for StaticCell<T> {}
-unsafe impl<T> Send for StaticCell<T> {}

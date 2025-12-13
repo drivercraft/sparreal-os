@@ -26,27 +26,27 @@ macro_rules! println {
     ($($arg:tt)*) => ($crate::console::_print(core::format_args!("{}{}", core::format_args!($($arg)*), "\r\n")));
 }
 
-macro_rules! pr_range {
-    ($name:expr, $b:expr, $s:expr) => {
-        $crate::println!(
-            "{:<20}: [0x{:0>16x}, 0x{:0>16x}) ({:>5} Mb)",
-            $name,
-            $b,
-            $b + $s,
-            ($s) / 1024 / 1024
-        );
-    };
-    ($name:expr, $b:expr, $s:expr, $($arg:tt)*) => {
-        $crate::println!(
-            "{:<20}: [0x{:0>16x}, 0x{:0>16x}) ({:>5} Mb) {}",
-            $name,
-            $b,
-            $b + $s,
-            ($s) / 1024 / 1024,
-            core::format_args!($($arg)*)
-        );
-    };
-}
+// macro_rules! pr_range {
+//     ($name:expr, $b:expr, $s:expr) => {
+//         $crate::println!(
+//             "{:<20}: [0x{:0>16x}, 0x{:0>16x}) ({:>5} Mb)",
+//             $name,
+//             $b,
+//             $b + $s,
+//             ($s) / 1024 / 1024
+//         );
+//     };
+//     ($name:expr, $b:expr, $s:expr, $($arg:tt)*) => {
+//         $crate::println!(
+//             "{:<20}: [0x{:0>16x}, 0x{:0>16x}) ({:>5} Mb) {}",
+//             $name,
+//             $b,
+//             $b + $s,
+//             ($s) / 1024 / 1024,
+//             core::format_args!($($arg)*)
+//         );
+//     };
+// }
 
 #[allow(dead_code)]
 struct ConFmt {}

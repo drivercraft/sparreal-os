@@ -11,7 +11,6 @@ use uefi::{
 
 use crate::{acpi::set_rsdp, arch::relocate};
 
-mod acpi_handle;
 pub(crate) mod memmap;
 pub mod pe;
 

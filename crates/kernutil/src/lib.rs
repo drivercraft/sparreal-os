@@ -2,7 +2,7 @@
 
 pub mod address;
 pub mod id;
-mod lazystatic;
+mod staticcell;
 pub mod memory;
 
-pub use lazystatic::LazyStatic;
+pub use staticcell::StaticCell;

@@ -4,7 +4,7 @@ pub fn start_kernel() -> ! {
     crate::os::logger::init();
     info!("Setting up allocator...");
 
-    crate::os::mem::init_heap(&al::memory::memory_map());
+    crate::os::mem::init_heap(al::memory::memory_map());
     al::platform::post_allocator();
     crate::os::mem::paging::init();
     timer::init();

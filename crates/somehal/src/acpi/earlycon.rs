@@ -37,7 +37,7 @@ fn deal_with_spsr(spsr: &PhysicalMapping<impl Handler, Spcr>) -> Option<()> {
     if let Some(freq) = spsr.uart_clock_frequency() {
         clock = freq.into();
     }
-    let mut vaddr = core::ptr::null_mut();
+    let vaddr;
 
     match spsr.interface_type() {
         acpi::sdt::spcr::SpcrInterfaceType::Full16550

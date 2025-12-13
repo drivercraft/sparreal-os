@@ -12,7 +12,7 @@ pub trait Memory {
     fn virt_to_phys(virt: VirtAddr) -> PhysAddr;
     fn phys_to_virt(phys: PhysAddr) -> VirtAddr;
     fn page_size() -> usize;
-    fn memory_map() -> StackVec<MemoryDescriptor, 64>;
+    fn memory_map() -> &'static [MemoryDescriptor];
 
     fn page_table_new() -> Box<dyn PageTable>;
 

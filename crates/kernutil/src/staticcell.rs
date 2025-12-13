@@ -5,19 +5,26 @@ use core::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-pub struct LazyStatic<T> {
+pub struct StaticCell<T> {
     init: AtomicBool,
     value: UnsafeCell<MaybeUninit<T>>,
 }
 
-unsafe impl<T: Send> Sync for LazyStatic<T> {}
-unsafe impl<T: Send> Send for LazyStatic<T> {}
+unsafe impl<T: Send> Sync for StaticCell<T> {}
+unsafe impl<T: Send> Send for StaticCell<T> {}
 
-impl<T> LazyStatic<T> {
+impl<T> StaticCell<T> {
     pub const fn uninit() -> Self {
-        LazyStatic {
+        StaticCell {
             init: AtomicBool::new(false),
             value: UnsafeCell::new(MaybeUninit::uninit()),
+        }
+    }
+
+    pub const fn new(val: T) -> Self {
+        StaticCell {
+            init: AtomicBool::new(true),
+            value: UnsafeCell::new(MaybeUninit::new(val)),
         }
     }
 
@@ -45,7 +52,7 @@ impl<T> LazyStatic<T> {
     }
 }
 
-impl<T> Deref for LazyStatic<T> {
+impl<T> Deref for StaticCell<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {

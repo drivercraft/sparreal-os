@@ -39,7 +39,7 @@ impl Memory for MemoryImpl {
         somehal::mem::page_size()
     }
 
-    fn memory_map() -> StackVec<MemoryDescriptor, 64> {
+    fn memory_map() -> &'static[ MemoryDescriptor] {
         somehal::mem::memory_map()
     }
 

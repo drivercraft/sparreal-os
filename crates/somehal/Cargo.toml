@@ -36,6 +36,7 @@ some-serial = "0.3"
 somehal-macros = {workspace = true}
 spin = "0.10"
 uguid = "2.2.1"
+ranges-ext = {workspace = true}
 
 [target.'cfg(target_arch = "loongarch64")'.dependencies]
 loongArch64 = "0.2"

@@ -15,7 +15,7 @@ pub fn page_size() -> usize {
 
 pub(crate) fn init_heap(regions: &[MemoryDescriptor]) {
     for region in regions {
-        if region.memory_type == kernutil::memory::MemoryType::Usable {
+        if region.memory_type == kernutil::memory::MemoryType::Free {
             let start = PhysAddr::new(region.physical_start).align_up(page_size());
             let end =
                 PhysAddr::new(region.physical_start + region.size_in_bytes).align_down(page_size());

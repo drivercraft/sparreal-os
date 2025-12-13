@@ -166,7 +166,7 @@ impl<T> IrqSpinlock<T> {
     /// 2. 不要在持有锁期间执行可能长时间阻塞的操作
     /// 3. 避免嵌套获取同一个锁
     #[inline]
-    pub fn lock(&self) -> IrqMutexGuard<T> {
+    pub fn lock(&self) -> IrqMutexGuard<'_, T> {
         // 禁用中断（这会在整个守卫生命周期内保持）
         let irq_guard = NoIrqGuard::new();
 
@@ -189,7 +189,7 @@ impl<T> IrqSpinlock<T> {
     /// * `Some(guard)` - 成功获取锁时的守卫，中断已禁用
     /// * `None` - 锁已被占用时，中断状态不变
     #[inline]
-    pub fn try_lock(&self) -> Option<IrqMutexGuard<T>> {
+    pub fn try_lock(&self) -> Option<IrqMutexGuard<'_, T>> {
         let irq_guard = NoIrqGuard::new();
         if self.raw.try_lock() {
             Some(IrqMutexGuard {

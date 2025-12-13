@@ -563,6 +563,8 @@ name = "kernutil"
 version = "0.1.0"
 dependencies = [
  "heapless 0.9.2",
+ "num-align",
+ "ranges-ext",
 ]
 
 [[package]]
@@ -775,6 +777,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 
 [[package]]
+name = "ranges-ext"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d630852de8c4bf47fa11258238fd8f618f55437a0026249bedfdb0ea4b824520"
+dependencies = [
+ "heapless 0.9.2",
+ "thiserror",
+]
+
+[[package]]
 name = "raw-cpuid"
 version = "10.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -954,6 +966,7 @@ dependencies = [
  "page-table-generic",
  "prettyplease",
  "quote",
+ "ranges-ext",
  "rgb",
  "some-serial",
  "somehal-macros",

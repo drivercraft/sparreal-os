@@ -111,6 +111,7 @@ fn prime_entry() -> ! {
     fdt::setup_memory_map();
     let _ = acpi::earlycon::acpi_setup_earlycon();
 
+    mem::memory_map_setup();
     mem::print_memory_map();
 
     unsafe extern "C" {
