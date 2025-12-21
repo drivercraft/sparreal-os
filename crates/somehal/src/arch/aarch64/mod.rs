@@ -19,11 +19,10 @@ pub mod relocate;
 mod trap;
 
 use aarch64_cpu::registers::*;
-pub use elx::Pte;
-pub use elx::Pte as Entry; // 导出统一的 Entry 类型
 use elx::*;
 use num_align::NumAlign;
 use page_table_generic::{AccessFlags, MemAttributes, MemConfig, PageTableEntry, PagingError};
+pub use paging::Entry;
 
 use crate::{
     ArchTrait,
@@ -39,6 +38,12 @@ pub struct PT<A: page_table_generic::FrameAllocator> {
 }
 
 impl<A: page_table_generic::FrameAllocator> crate::PageTableOp<A> for PT<A> {
+    type Entry = paging::Entry;
+
+    fn new_valid_pte(&self) -> Self::Entry {
+        paging::Entry::new_valid()
+    }
+
     fn map(
         &mut self,
         config: &page_table_generic::MapConfig<paging::Entry>,

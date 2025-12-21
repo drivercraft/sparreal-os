@@ -9,7 +9,6 @@ pub(crate) mod region;
 
 use crate::ArchTrait;
 
-pub use crate::arch::Pte;
 pub use page_table_generic::*;
 
 pub const KB: usize = 1024;

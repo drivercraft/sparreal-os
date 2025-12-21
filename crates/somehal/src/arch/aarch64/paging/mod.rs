@@ -7,13 +7,15 @@ use page_table_generic::{
 
 use crate::{
     ArchTrait,
-    arch::elx::{Pte, flush_tlb, set_kernal_table, set_user_table, setup_sctlr, setup_table_regs},
+    arch::elx::{flush_tlb, set_kernal_table, set_user_table, setup_sctlr, setup_table_regs},
     console::print_mapping,
     mem::{MB, PageTableInfo, page_size, ram::Ram, vm_load_offset},
 };
 
-pub use super::elx::Generic;
-pub use super::elx::Pte as Entry; // 导出统一的 Entry 类型
+mod pte;
+
+pub use pte::Entry;
+pub use pte::Generic;
 
 static BOOT_TABLE: spin::Once<PageTable<Generic, Ram>> = spin::Once::new();
 
@@ -28,7 +30,7 @@ pub fn enable_mmu() -> ! {
 
     let mut table = PageTable::<Generic, _>::new(Ram).unwrap();
 
-    let mut pte = Pte::new_valid();
+    let mut pte = Entry::new_valid();
     pte.set_mem_config(MemConfig {
         access: AccessFlags::READ | AccessFlags::WRITE | AccessFlags::EXECUTE,
         attrs: MemAttributes::Normal,
@@ -71,7 +73,7 @@ pub fn enable_mmu() -> ! {
     if debug_base != 0 {
         let start = debug_base.align_down(page_size());
         let size = page_size();
-        let mut pte = Pte::new_valid();
+        let mut pte = Entry::new_valid();
         pte.set_mem_config(MemConfig {
             access: AccessFlags::READ | AccessFlags::WRITE,
             attrs: MemAttributes::Device,

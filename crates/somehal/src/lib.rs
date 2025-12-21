@@ -135,6 +135,10 @@ fn prime_entry() -> ! {
 }
 
 pub trait PageTableOp<A: FrameAllocator> {
+    type Entry: PageTableEntry;
+
+    fn new_valid_pte(&self) -> Self::Entry;
+
     fn map(&mut self, config: &MapConfig<arch::paging::Entry>) -> Result<(), PagingError>;
 
     fn unmap(&mut self, virt_start: VirtAddr, size: usize) -> Result<(), PagingError>;
