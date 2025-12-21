@@ -1,11 +1,11 @@
-use core::{hint::spin_loop, panic::PanicInfo};
+use core::panic::PanicInfo;
+
+use crate::hal::al::platform::shutdown;
 
 #[allow(dead_code)]
 #[cfg_attr(not(any(windows, unix)), panic_handler)]
 fn panic(info: &PanicInfo) -> ! {
     error!("Panicked: {info}");
-    loop {
-        // Infinite loop to halt the system
-        spin_loop();
-    }
+
+    shutdown()
 }
