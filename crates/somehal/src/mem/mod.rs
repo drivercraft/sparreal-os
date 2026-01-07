@@ -2,12 +2,12 @@ use byte_unit::{Byte, UnitType};
 use kernutil::StaticCell;
 pub use kernutil::memory::{MemoryDescriptor, MemoryType, PageTableInfo};
 use num_align::NumAlign;
-use ranges_ext::RangeError;
+use ranges_ext::{RangeError, RangeExtBaseOps, RangeVecOps};
 
 pub(crate) mod ram;
 pub(crate) mod region;
 
-use crate::ArchTrait;
+use crate::{ArchTrait, mem::ram::Ram};
 
 pub use page_table_generic::*;
 
@@ -17,10 +17,10 @@ pub const GB: usize = 1024 * MB;
 
 static mut VM_LOAD_OFFSET: isize = 0;
 
-static MEMORY_MAP: StaticCell<MemoryMap> = StaticCell::new(MemoryMap::new(heapless::Vec::new()));
+static MEMORY_MAP: StaticCell<MemoryMap> = StaticCell::new(MemoryMap::new());
 
 pub type PageTable<A> = crate::arch::PT<A>;
-pub type MemoryMap = ranges_ext::RangeSetHeapless<MemoryDescriptor>;
+pub type MemoryMap = heapless::Vec<MemoryDescriptor, 128>;
 
 pub(crate) fn set_vm_load_offset(offset: isize) {
     unsafe {
@@ -150,14 +150,10 @@ pub fn print_memory_map() {
 pub(crate) fn add_memory_descriptor(
     desc: MemoryDescriptor,
 ) -> Result<(), RangeError<MemoryDescriptor>> {
-    unsafe { MEMORY_MAP.update(|mem| mem.add(desc)) }
-}
+    let temp = unsafe {
+        let start = phys_to_virt(Ram {}.current().align_up(page_size()) as usize);
+        core::slice::from_raw_parts_mut(start, size_of::<MemoryMap>())
+    };
 
-// pub(crate) fn add_memory_descriptors(
-//     descs: impl Iterator<Item = MemoryDescriptor>,
-// ) -> Result<(), RangeError<MemoryDescriptor>> {
-//     for desc in descs {
-//         add_memory_descriptor(desc)?;
-//     }
-//     Ok(())
-// }
+    unsafe { MEMORY_MAP.update(|mem| mem.merge_add(desc, temp)) }
+}

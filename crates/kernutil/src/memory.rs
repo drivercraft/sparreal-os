@@ -1,6 +1,6 @@
 use num_align::NumAlign;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MemoryDescriptor {
     pub name: &'static str,
     pub physical_start: usize,
@@ -56,8 +56,9 @@ impl MemoryDescriptor {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MemoryType {
+    #[default]
     Free,
     Reserved,
     Mmio,

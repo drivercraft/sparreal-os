@@ -19,7 +19,7 @@ fdt-parser = "0.5"
 heapless = {version = "0.9"}
 log = "0.4"
 thiserror = {version = "2", default-features = false}
-ranges-ext = "0.4"
+ranges-ext = "0.5"
 uefi = "0.36"
 
 dma-api = {version = "0.6", path = "crates/dma-api"}
