@@ -13,6 +13,11 @@ pub fn page_size() -> usize {
     crate::hal::al::memory::page_size()
 }
 
+pub(crate) fn __va(addr: PhysAddr) -> VirtAddr {
+    let offset = crate::hal::al::memory::page_offset();
+    VirtAddr::new(addr.raw() + offset)
+}
+
 pub(crate) fn init_heap(regions: &[MemoryDescriptor]) {
     for region in regions {
         if region.memory_type == kernutil::memory::MemoryType::Free {

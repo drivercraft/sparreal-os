@@ -8,7 +8,6 @@ use crate::mem::phys_to_virt;
 pub(crate) use handle::AcpiHandle;
 
 /// RSDP存储
-#[unsafe(link_section = ".data")]
 static mut RSDP: usize = 0;
 
 /// 设置RSDP地址

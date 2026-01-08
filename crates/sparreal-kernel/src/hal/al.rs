@@ -6,8 +6,15 @@ use kernutil::define_type;
 pub use kernutil::memory::{MemoryDescriptor, PageTableInfo};
 pub use page_table_generic::{AccessFlags, MemAttributes, MemConfig, PagingError};
 
+use crate::os::mem::{__va, page_size};
+
 #[trait_ffi::def_extern_trait(mod_path = "hal::al")]
 pub trait Memory {
+    /// RAM 与内核虚拟地址空间的偏移
+    fn page_offset() -> usize;
+    /// 内核镜像在虚拟地址空间中的偏移
+    fn kimage_offset() -> isize;
+
     /// Convert virtual address to physical address
     fn virt_to_phys(virt: VirtAddr) -> PhysAddr;
     fn phys_to_virt(phys: PhysAddr) -> VirtAddr;
@@ -73,9 +80,50 @@ pub trait PageTable: Send + 'static {
         phys_start: PhysAddr,
         size: usize,
         flush: bool,
-    ) -> Result<IoMemAddr, PagingError>;
+    ) -> Result<IoMemAddr, PagingError> {
+        let virt = __va(phys_start);
+        let end = virt + size;
+        let vaddr = virt.align_down(page_size());
+        let paddr = phys_start.align_down(page_size());
+        let end = end.align_up(page_size());
+        let size = end - vaddr;
+        debug!("ioremap: phys={}, virt={}, size=0x{:x}", paddr, vaddr, size);
+        let settings = MemConfig {
+            access: AccessFlags::READ | AccessFlags::WRITE,
+            attrs: MemAttributes::Device,
+        };
 
-    fn iounmap(&mut self, io_addr: IoMemAddr, size: usize) -> Result<(), PagingError>;
+        self.map(
+            vaddr.raw().into(),
+            paddr.raw().into(),
+            size,
+            settings,
+            flush,
+        )?;
+
+        // let config = page_table_generic::MapConfig {
+        //     vaddr: vaddr.raw().into(),
+        //     paddr: paddr.raw().into(),
+        //     size,
+        //     pte: {
+        //         let mut pte = paging::Entry::new_valid();
+        //         pte.set_writable(true);
+        //         pte.set_executable(false);
+        //         pte.set_mem_attr(MemAttributes::Device);
+        //         pte
+        //     },
+        //     allow_huge: true,
+        //     flush: true,
+        // };
+
+        // match self.inner.map(&config) {
+        //     Ok(()) | Err(PagingError::MappingConflict { .. }) => {}
+        //     Err(e) => return Err(e),
+        // }
+        Ok(virt.raw().into())
+    }
+
+    // fn iounmap(&mut self, io_addr: IoMemAddr, size: usize) -> Result<(), PagingError>;
 }
 
 define_type! {

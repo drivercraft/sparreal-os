@@ -27,6 +27,14 @@ struct MemoryImpl;
 
 impl_trait! {
 impl Memory for MemoryImpl {
+    fn page_offset() -> usize {
+        somehal::mem::page_offset()
+    }
+
+    fn kimage_offset() -> isize {
+        somehal::mem::vm_load_offset()
+    }
+
     fn virt_to_phys(virt: VirtAddr) -> PhysAddr {
         somehal::mem::virt_to_phys(virt.raw() as _).into()
     }
@@ -107,21 +115,6 @@ impl PageTable for PageTableImpl {
 
     fn unmap(&mut self, virt_start: VirtAddr, size: usize) -> Result<(), PagingError> {
         self.0.unmap(virt_start.raw().into(), size)
-    }
-
-    fn ioremap(
-        &mut self,
-        phys_start: PhysAddr,
-        size: usize,
-        flush: bool,
-    ) -> Result<IoMemAddr, PagingError> {
-        self.0
-            .ioremap(phys_start.raw().into(), size, flush)
-            .map(|vaddr| IoMemAddr::new(vaddr.raw()))
-    }
-
-    fn iounmap(&mut self, io_addr: IoMemAddr, size: usize) -> Result<(), PagingError> {
-        self.0.iounmap(io_addr.raw().into(), size)
     }
 }
 

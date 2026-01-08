@@ -4,9 +4,9 @@ pub use kernutil::memory::{MemoryDescriptor, MemoryType, PageTableInfo};
 use num_align::NumAlign;
 use ranges_ext::{RangeError, RangeVecOps};
 
+pub mod mmu;
 pub(crate) mod ram;
 pub(crate) mod region;
-pub mod mmu;
 
 use crate::{ArchTrait, mem::ram::Ram};
 
@@ -31,8 +31,12 @@ pub(crate) fn set_vm_load_offset(offset: isize) {
 }
 
 /// Get the offset between virtual address and physical address of the loaded kernel image
-pub(crate) fn vm_load_offset() -> isize {
+pub fn vm_load_offset() -> isize {
     unsafe { VM_LOAD_OFFSET }
+}
+
+pub fn page_offset() -> usize {
+    crate::arch::Arch::PAGE_OFFSET
 }
 
 /// RAM 物理地址转换为内核虚拟地址
