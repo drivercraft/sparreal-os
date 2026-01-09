@@ -16,7 +16,8 @@ uspace = ["somehal/uspace"]
 [dependencies]
 
 somehal = { workspace = true }
+somehal-macros = { workspace = true }
 sparreal-kernel = { workspace = true }
- 
+
 log = {workspace = true}
  

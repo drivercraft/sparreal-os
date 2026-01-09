@@ -2,6 +2,7 @@ use alloc::boxed::Box;
 use core::time::Duration;
 
 use somehal::{MemConfig, mem::PageTableEntry};
+use somehal_macros::irq_handler;
 use sparreal_kernel::{hal::al::*, impl_trait, os::mem::KernelAllocator};
 
 struct InitImpl;
@@ -180,7 +181,7 @@ impl Console for ConsoleImpl {
 }
 }
 
-#[unsafe(no_mangle)]
-pub extern "Rust" fn _somehal_handle_irq(hwirq: IrqId) {
+#[irq_handler]
+fn _somehal_handle_irq(hwirq: IrqId) {
     handle_irq(hwirq);
 }

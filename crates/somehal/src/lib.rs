@@ -41,7 +41,7 @@ pub mod power;
 pub mod timer;
 
 pub use page_table_generic::*;
-pub use somehal_macros::{entry, secondary_entry};
+pub use somehal_macros::{entry, irq_handler, secondary_entry};
 
 use crate::{irq::IrqId, mem::PageTableInfo};
 
