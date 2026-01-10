@@ -43,8 +43,6 @@ impl ArchTrait for Arch {
         power::init();
     }
 
-
-
     fn per_cpu_trap_init(_is_primary: bool) {
         trap::setup();
         println!("Disable user page table");

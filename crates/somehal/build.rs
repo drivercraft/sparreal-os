@@ -89,6 +89,7 @@ impl Build {
         }
         if self.uspace {
             self.kernel_vaddr = 0xFFFF_9000_0020_0000;
+            // self.kernel_vaddr = 0xffff_ffff_8000_0000;
         }
 
         let kernel_vaddr = self.kernel_vaddr as usize;
