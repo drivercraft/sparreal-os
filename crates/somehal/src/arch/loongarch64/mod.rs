@@ -14,7 +14,7 @@ mod relocate;
 mod trap;
 
 use loongArch64::{
-    register::{crmd, tcfg, ticlr},
+    register::{crmd, pgdh, tcfg, ticlr},
     time::{Time, get_timer_freq},
 };
 pub use paging::Entry as Pte;
@@ -159,7 +159,7 @@ impl ArchTrait for Arch {
 
     fn set_kernel_page_table(val: crate::mem::PageTableInfo) {
         // 设置内核页表基地址到 PGDH (高地址空间)
-        paging::write_csr_pgdh(val.addr as u64);
+        pgdh::set_base(val.addr);
         // 设置 ASID
         paging::write_csr_asid(val.asid as u64);
         // 刷新 TLB

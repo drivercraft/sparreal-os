@@ -8,9 +8,10 @@
 use core::arch::naked_asm;
 
 use kernutil::StaticCell;
-use loongArch64::register::crmd;
+use loongArch64::register::{crmd, stlbps, tlbidx, tlbrehi};
 use num_align::NumAlign;
 use page_table_generic::{MapConfig, MemAttributes, PageTableEntry, TableGeneric, VirtAddr};
+use uefi::table::cfg;
 
 // 导入 tock-registers 风格的页表项
 pub use super::pte::Entry;
@@ -21,6 +22,7 @@ use crate::{
     console::print_mapping,
     consts::PAGE_SIZE,
     mem::{__kimage_va, __va, MB, PageTableInfo, ram::Ram},
+    set_user_page_table,
 };
 
 static BOOT_TABLE: StaticCell<page_table_generic::PageTable<Generic, Ram>> = StaticCell::uninit();
@@ -184,7 +186,7 @@ pub const CACHE_WUC: u64 = 2 << _CACHE_SHIFT;
 // ============================================================================
 
 /// 4KB 页大小的 PS 值
-pub const PS_4K: u64 = 0x0c;
+pub const PS_4K: usize = 0x0c;
 /// 16KB 页大小的 PS 值
 pub const PS_16K: u64 = 0x0e;
 /// 64KB 页大小的 PS 值
@@ -195,7 +197,7 @@ pub const PS_2M: u64 = 0x15;
 pub const PS_1G: u64 = 0x1e;
 
 /// 默认页大小 (4KB = 0x0c)
-pub const PS_DEFAULT_SIZE: u64 = PS_4K;
+pub const PS_DEFAULT_SIZE: usize = PS_4K;
 
 /// 页内偏移位数
 pub const PAGE_SHIFT: usize = PAGE_SIZE.trailing_zeros() as usize;
@@ -432,7 +434,7 @@ pub fn tlb_write_random() {
 pub fn local_flush_tlb_all() {
     unsafe {
         // invtlb op=0x0 (无效化所有 TLB)
-        core::arch::asm!("invtlb 0, $zero, $zero", options(nomem, nostack));
+        core::arch::asm!("dbar 0; invtlb 0x00, $r0, $r0", options(nomem, nostack));
     }
 }
 
@@ -588,38 +590,84 @@ pub fn setup_ptwalker() {
     write_csr_pwctl1(pwctl1.encode());
 }
 
-/// 初始化页表相关寄存器
-/// 参考: Linux arch/loongarch/mm/tlb.c - tlb_init()
-pub fn setup_with_pg_dir(swapper_pg_dir: usize, invalid_pg_dir: usize) {
-    // 设置页大小
-    write_csr_pagesize(PS_DEFAULT_SIZE);
-    write_csr_stlbpgsize(PS_DEFAULT_SIZE);
-    write_csr_tlbrefill_pagesize(PS_DEFAULT_SIZE);
+// /// 初始化页表相关寄存器
+// /// 参考: Linux arch/loongarch/mm/tlb.c - tlb_init()
+// pub fn setup_with_pg_dir(swapper_pg_dir: usize, invalid_pg_dir: usize) {
+//     // 设置页大小
+//     write_csr_pagesize(PS_DEFAULT_SIZE);
+//     write_csr_stlbpgsize(PS_DEFAULT_SIZE);
+//     write_csr_tlbrefill_pagesize(PS_DEFAULT_SIZE);
 
-    // 设置页表遍历器
-    setup_ptwalker();
+//     // 设置页表遍历器
+//     setup_ptwalker();
 
-    // 设置页表基地址
-    // PGDH: 高地址空间 (内核空间)
-    write_csr_pgdh(swapper_pg_dir as u64);
-    // PGDL: 低地址空间 (用户空间，初始化为无效页表)
-    write_csr_pgdl(invalid_pg_dir as u64);
+//     // 设置页表基地址
+//     // PGDH: 高地址空间 (内核空间)
+//     write_csr_pgdh(swapper_pg_dir as u64);
+//     // PGDL: 低地址空间 (用户空间，初始化为无效页表)
+//     write_csr_pgdl(invalid_pg_dir as u64);
 
-    // 刷新 TLB
-    local_flush_tlb_all();
-}
+//     // 刷新 TLB
+//     local_flush_tlb_all();
+// }
 
 /// 简化的页表初始化 (仅设置页大小和遍历器)
 pub fn setup() {
+    #[cfg(page_size_4k)]
+    const PS: usize = PS_4K;
+    #[cfg(page_size_16k)]
+    const PS: usize = PS_16K as usize;
+
+    tlbidx::set_ps(PS);
+    stlbps::set_ps(PS);
+    tlbrehi::set_ps(PS);
+    /// PWCL(Page Walk Controller for Lower Half Address Space) CSR flags
+    ///
+    /// <https://loongson.github.io/LoongArch-Documentation/LoongArch-Vol1-EN.html#page-walk-controller-for-lower-half-address-space>
+    ///
+    /// | BitRange | Name      | Value |
+    /// | ----     | ----      | ----  |
+    /// | 4:0      | PTBase    |    12 |
+    /// | 9:5      | PTWidth   |     9 |
+    /// | 14:10    | Dir1Base  |    21 |
+    /// | 19:15    | Dir1Width |     9 |
+    /// | 24:20    | Dir2Base  |    30 |
+    /// | 29:25    | Dir2Width |     9 |
+    /// | 31:30    | PTEWidth  |     0 |
+    const PWCL_VALUE: u32 = 12 | (9 << 5) | (21 << 10) | (9 << 15) | (30 << 20) | (9 << 25);
+
+    /// PWCH(Page Walk Controller for Higher Half Address Space) CSR flags
+    ///
+    /// <https://loongson.github.io/LoongArch-Documentation/LoongArch-Vol1-EN.html#page-walk-controller-for-higher-half-address-space>
+    ///
+    /// | BitRange | Name                            | Value |
+    /// | ----     | ----                            | ----  |
+    /// | 5:0      | Dir3Base                        |    39 |
+    /// | 11:6     | Dir3Width                       |     9 |
+    /// | 17:12    | Dir4Base                        |     0 |
+    /// | 23:18    | Dir4Width                       |     0 |
+    /// | 24       | 0                               |     0 |
+    /// | 24       | HPTW_En(CPUCFG.2.HPTW(bit24)=1) |     0 |
+    /// | 31:25    | 0                               |     0 |
+    const PWCH_VALUE: u32 = 39 | (9 << 6);
+    // Configure page table walking
+
+    write_csr_pwctl0(PWCL_VALUE as u64);
+    write_csr_pwctl1(PWCH_VALUE as u64);
+
+    // Enable mapped address translation mode
     crmd::set_pg(true);
     crmd::set_da(false);
-    // 设置页大小
-    write_csr_pagesize(PS_DEFAULT_SIZE);
-    write_csr_stlbpgsize(PS_DEFAULT_SIZE);
-    write_csr_tlbrefill_pagesize(PS_DEFAULT_SIZE);
 
-    // 设置页表遍历器
-    setup_ptwalker();
+    // crmd::set_pg(true);
+    // crmd::set_da(false);
+    // // 设置页大小
+    // write_csr_pagesize(PS_DEFAULT_SIZE);
+    // write_csr_stlbpgsize(PS_DEFAULT_SIZE);
+    // write_csr_tlbrefill_pagesize(PS_DEFAULT_SIZE);
+
+    // // 设置页表遍历器
+    // setup_ptwalker();
 }
 
 // ============================================================================
