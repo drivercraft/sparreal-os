@@ -10,7 +10,7 @@ use tock_registers::registers::*;
 
 // LoongArch64 页表项寄存器位域定义
 register_bitfields![u64,
-    /// LoongArch64 页表项 (Page Table Entry)
+    /// LoongArch64 单页页表项 (Page Table Entry)
     ///
     /// 布局参考 LoongArch64 参考手册 5.4.2 节
     PTE [
@@ -35,8 +35,8 @@ register_bitfields![u64,
             WUC = 0b10   // 弱序非缓存 (Weakly-ordered UnCached)
         ],
 
-        /// G - 全局位 (bit 6)
-        GLOBAL OFFSET(6) NUMBITS(1) [],
+        /// 目录项大页表项标志位 H，为 1 表示此时的目录项实际上存放了一个大页的页表项信息；
+        GH OFFSET(6) NUMBITS(1) [],
 
         /// P - 存在位 (bit 7)
         PRESENT OFFSET(7) NUMBITS(1) [],
@@ -127,15 +127,12 @@ impl PageTableEntry for Entry {
     }
 
     fn is_huge(&self) -> bool {
-        self.as_typed().is_set(PTE::HGLOBAL)
+        self.as_typed().is_set(PTE::GH)
     }
 
     fn set_is_huge(&mut self, b: bool) {
-        self.as_typed_mut().modify(if b {
-            PTE::HGLOBAL::SET
-        } else {
-            PTE::HGLOBAL::CLEAR
-        });
+        self.as_typed_mut()
+            .modify(if b { PTE::GH::SET } else { PTE::GH::CLEAR });
     }
 
     fn is_writable(&self) -> bool {
@@ -175,15 +172,12 @@ impl PageTableEntry for Entry {
     }
 
     fn is_global(&self) -> bool {
-        self.as_typed().is_set(PTE::GLOBAL)
+        self.as_typed().is_set(PTE::GH)
     }
 
     fn set_global(&mut self, b: bool) {
-        self.as_typed_mut().modify(if b {
-            PTE::GLOBAL::SET
-        } else {
-            PTE::GLOBAL::CLEAR
-        });
+        self.as_typed_mut()
+            .modify(if b { PTE::GH::SET } else { PTE::GH::CLEAR });
     }
 
     fn is_accessed(&self) -> bool {
