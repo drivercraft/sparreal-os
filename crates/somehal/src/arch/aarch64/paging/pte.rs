@@ -1,4 +1,4 @@
-use page_table_generic::{MemAttributes, PageTableEntry, TableGeneric};
+use page_table_generic::{MemAttributes, PageTableEntry, TableMeta};
 
 use tock_registers::{interfaces::*, register_bitfields, registers::ReadWrite};
 
@@ -190,7 +190,7 @@ impl core::fmt::Debug for Entry {
 #[derive(Clone, Copy)]
 pub struct Generic;
 
-impl TableGeneric for Generic {
+impl TableMeta for Generic {
     type P = Entry;
 
     const PAGE_SIZE: usize = 0x1000;
