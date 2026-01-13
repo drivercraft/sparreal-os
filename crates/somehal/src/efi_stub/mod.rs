@@ -1,15 +1,23 @@
 use core::{fmt::Write, ptr::null, sync::atomic::AtomicBool};
 
 use uefi::{
-    Result, boot,
+    Result,
+    boot::{self, MemoryDescriptor, MemoryType},
     mem::memory_map::MemoryMap,
     prelude::*,
     proto::loaded_image::LoadedImage,
+    runtime::set_virtual_address_map,
     system::with_config_table,
     table::{self, cfg::ConfigTableEntry},
 };
 
-use crate::{acpi::set_rsdp, arch::relocate};
+pub use uefi::{Status, runtime::ResetType};
+
+use crate::{
+    acpi::set_rsdp,
+    arch::relocate,
+    mem::{__io, __va},
+};
 
 pub(crate) fn setup_service(system_table: *const ::core::ffi::c_void) {
     unsafe { table::set_system_table(system_table.cast()) };
@@ -43,6 +51,32 @@ pub(crate) fn exit_boot_services() {
     UEFI_SERVICE_EXIT.store(true, core::sync::atomic::Ordering::Relaxed);
     let mem_map = unsafe { boot::exit_boot_services(None) };
     println!("Exited boot services, owned memory map obtained.");
+
+    let mut new_map: heapless::Vec<MemoryDescriptor, 32> = heapless::Vec::new();
+
+    for entry in mem_map.entries() {
+        match entry.ty {
+            MemoryType::RUNTIME_SERVICES_CODE | MemoryType::RUNTIME_SERVICES_DATA => {
+                let mut en = *entry;
+                en.virt_start = __va(entry.phys_start as _) as usize as _;
+                new_map.push(en).unwrap();
+            }
+            MemoryType::MMIO => {
+                let mut en = *entry;
+                en.virt_start = __io(entry.phys_start as _) as usize as _;
+                new_map.push(en).unwrap();
+            }
+            _ => {}
+        }
+    }
+
+    unsafe {
+        if let Some(st) = uefi::table::system_table_raw() {
+            set_virtual_address_map(&mut new_map, __va(st.as_ptr() as _) as _)
+                .expect("Failed to set virtual address map");
+        }
+    }
+
     memmap::setup_memory_map(mem_map.entries()).unwrap();
 }
 
@@ -117,4 +151,13 @@ fn find_acpi_rsdp() {
             println!("No ACPI RSDP found in UEFI config tables.");
         }
     })
+}
+
+pub fn is_uefi_available() -> bool {
+    uefi::table::system_table_raw().is_some()
+}
+
+pub fn reset(reset_type: ResetType, status: Status, data: Option<&[u8]>) -> ! {
+    info!("Resetting system via UEFI...");
+    uefi::runtime::reset(reset_type, status, data)
 }

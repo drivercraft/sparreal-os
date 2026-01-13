@@ -34,6 +34,7 @@ impl core::fmt::Display for ShutdownError {
 /// 3. 获取 PM1 控制寄存器地址
 /// 4. 提取 S5 睡眠类型值
 /// 5. 写入 PM1 控制寄存器触发关机
+#[allow(dead_code)]
 pub fn shutdown() -> ! {
     info!("Attempting ACPI shutdown...");
 

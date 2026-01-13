@@ -43,7 +43,3 @@ pub fn tables() -> Result<AcpiTables<AcpiHandle>, acpi::AcpiError> {
         ::acpi::AcpiTables::from_rsdp(h, rsdp)
     }
 }
-
-pub fn shutdown() -> ! {
-    power::shutdown()
-}

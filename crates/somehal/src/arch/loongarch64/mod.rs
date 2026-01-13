@@ -12,6 +12,8 @@ mod register;
 mod relocate;
 mod trap;
 
+use core::hint::spin_loop;
+
 use loongArch64::{
     register::{asid, crmd, pgdh, pgdl, tcfg, ticlr},
     time::{Time, get_timer_freq},
@@ -19,7 +21,7 @@ use loongArch64::{
 pub use paging::Entry as Pte;
 pub use relocate::relocate;
 
-use crate::{ArchTrait, arch::register::irq::TI, irq::IrqId, mem::PageTableInfo};
+use crate::{ArchTrait, arch::register::irq::TI, efi_stub, irq::IrqId, mem::PageTableInfo};
 
 const MIN_TICKS: usize = 4;
 
@@ -91,7 +93,17 @@ impl ArchTrait for Arch {
     }
 
     fn shutdown() -> ! {
-        crate::acpi::shutdown()
+        if efi_stub::is_uefi_available() {
+            efi_stub::reset(
+                efi_stub::ResetType::SHUTDOWN,
+                efi_stub::Status::SUCCESS,
+                None,
+            );
+        }
+
+        loop {
+            spin_loop();
+        }
     }
 
     fn irq_all_is_enabled() -> bool {
