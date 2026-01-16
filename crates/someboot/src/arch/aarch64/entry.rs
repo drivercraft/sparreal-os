@@ -3,7 +3,7 @@ use core::arch::naked_asm;
 use aarch64_cpu::registers::{CurrentEL, Readable};
 use kernutil::memory::PageTableInfo;
 
-use crate::{ArchTrait, arch::elx, consts::VM_LOAD_ADDRESS, fdt, mem::set_vm_load_offset};
+use crate::{arch::elx, consts::VM_LOAD_ADDRESS, fdt, mem::set_vm_load_offset};
 
 use super::switch_to_elx;
 
