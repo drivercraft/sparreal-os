@@ -4,8 +4,10 @@ use aarch64_cpu::asm::barrier::{self, dsb, isb};
 use num_align::NumAlign;
 use page_table_generic::{MapConfig, MemAttributes, PteConfig};
 
+#[cfg(not(feature = "hv"))]
+use crate::arch::elx::set_user_table;
 use crate::{
-    arch::elx::{flush_tlb, set_kernal_table, set_user_table, setup_sctlr, setup_table_regs},
+    arch::elx::{flush_tlb, set_kernal_table, setup_sctlr, setup_table_regs},
     console::print_mapping,
     mem::{__kimage_va, __va, MB, PageTableInfo, page_size},
 };
@@ -105,6 +107,7 @@ pub fn enable_mmu() -> ! {
         addr: tb_addr.into(),
     };
     set_kernal_table(tb);
+    #[cfg(not(feature = "hv"))]
     set_user_table(tb);
     flush_tlb(None);
 

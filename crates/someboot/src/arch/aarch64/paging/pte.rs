@@ -141,7 +141,7 @@ impl PageTableEntry for Entry {
         #[cfg(feature = "hv")]
         {
             lower = pte.is_set(PTE::AP_EL0);
-            excutable = !pte.is_set(PTE::PXN);
+            executable = !pte.is_set(PTE::PXN);
         }
 
         page_table_generic::PteConfig {

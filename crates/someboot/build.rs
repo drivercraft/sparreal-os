@@ -86,6 +86,7 @@ impl Build {
 
         if self.hv {
             self.uspace = false;
+            self.kernel_vaddr = 0xffff_8000_0000;
         }
         if self.uspace {
             // self.kernel_vaddr = 0xFFFF_9000_0020_0000;

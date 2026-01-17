@@ -49,6 +49,7 @@ impl ArchTrait for Arch {
     fn per_cpu_trap_init(_is_primary: bool) {
         trap::setup();
         println!("Disable user page table");
+        #[cfg(not(feature = "hv"))]
         elx::set_user_table(PageTableInfo { asid: 0, addr: 0 });
         elx::flush_tlb(None);
     }
@@ -117,10 +118,12 @@ impl ArchTrait for Arch {
         elx::flush_tlb(None);
     }
 
+    #[cfg(not(feature = "hv"))]
     fn user_page_table() -> PageTableInfo {
         elx::get_user_table()
     }
 
+    #[cfg(not(feature = "hv"))]
     fn set_user_page_table(val: PageTableInfo) {
         elx::set_user_table(val);
         elx::flush_tlb(None);

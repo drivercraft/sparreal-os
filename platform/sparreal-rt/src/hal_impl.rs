@@ -76,11 +76,19 @@ impl Memory for MemoryImpl {
     }
 
     fn user_page_table() -> PageTableInfo {
-        somehal::user_page_table()
+        #[cfg(not(feature = "hv"))]
+        {
+            somehal::user_page_table()
+        }
+        #[cfg(feature = "hv")]
+        {
+            PageTableInfo { asid: 0, addr: 0 }
+        }
     }
 
-    fn set_user_page_table(pt: PageTableInfo) {
-        somehal::set_user_page_table(pt);
+    fn set_user_page_table(_pt: PageTableInfo) {
+        #[cfg(not(feature = "hv"))]
+        somehal::set_user_page_table(_pt);
     }
 }
 }

@@ -63,7 +63,9 @@ pub trait ArchTrait {
 
     fn kernel_page_table() -> PageTableInfo;
     fn set_kernel_page_table(val: PageTableInfo);
+    #[cfg(not(feature = "hv"))]
     fn user_page_table() -> PageTableInfo;
+    #[cfg(not(feature = "hv"))]
     fn set_user_page_table(val: PageTableInfo);
 
     fn systimer_irq() -> IrqId;
@@ -108,10 +110,12 @@ pub fn set_kernel_page_table_paddr(paddr: usize) {
     });
 }
 
+#[cfg(not(feature = "hv"))]
 pub fn user_page_table() -> PageTableInfo {
     arch::Arch::user_page_table()
 }
 
+#[cfg(not(feature = "hv"))]
 pub fn set_user_page_table(pt: PageTableInfo) {
     arch::Arch::set_user_page_table(pt);
 }

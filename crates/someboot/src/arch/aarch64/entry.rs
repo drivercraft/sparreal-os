@@ -60,6 +60,7 @@ pub fn el_entry() -> ! {
 
 pub(crate) fn mmu_entry() -> ! {
     println!("Disable user page table");
+    #[cfg(not(feature = "hv"))]
     elx::set_user_table(PageTableInfo { asid: 0, addr: 0 });
     elx::flush_tlb(None);
     super::trap::setup();

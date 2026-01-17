@@ -1,6 +1,8 @@
 {
     "rust-analyzer.check.allTargets": false,
     "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.cargo.features": ["hv"],
+
     "lldb.displayFormat": "auto",
     "lldb.dereferencePointers": true,
     "lldb.consoleMode": "commands",

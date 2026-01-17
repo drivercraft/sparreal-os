@@ -21,7 +21,6 @@ pub fn irq_set_enable(irq: rdrive::IrqId, enable: bool) {
     let raw = irq.into();
     v2::irq_set_enable(raw, enable);
     v3::irq_set_enable(raw, enable);
-
 }
 
 #[unsafe(no_mangle)]
