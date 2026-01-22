@@ -1,8 +1,6 @@
 use core::ops::Index;
 
-use alloc::sync::Arc;
-
-use crate::{DeviceDmaOps, Direction, DmaError, common::DCommon};
+use crate::{DeviceDma, Direction, DmaError, common::DCommon};
 
 pub struct DArray<T> {
     data: DCommon<T>,
@@ -12,7 +10,7 @@ unsafe impl<T> Send for DArray<T> where T: Send {}
 
 impl<T> DArray<T> {
     pub(crate) fn new_zero(
-        os: &Arc<dyn DeviceDmaOps>,
+        os: &DeviceDma,
         size: usize,
         align: usize,
         direction: Direction,

@@ -1,8 +1,6 @@
 use core::ptr::NonNull;
 
-use alloc::sync::Arc;
-
-use crate::{DeviceDmaOps, Direction, DmaError, MapHandle};
+use crate::{DeviceDma, Direction, DmaError, MapHandle};
 
 pub struct DSliceSingle<'a, T> {
     c: DSliceSingleCommon<'a, T>,
@@ -10,7 +8,7 @@ pub struct DSliceSingle<'a, T> {
 
 impl<'a, T> DSliceSingle<'a, T> {
     pub(crate) fn new(
-        dev: &Arc<dyn DeviceDmaOps>,
+        dev: &DeviceDma,
         data: &'a [T],
         direction: Direction,
     ) -> Result<Self, DmaError> {
@@ -74,7 +72,7 @@ pub struct DSliceSingleMut<'a, T> {
 
 impl<'a, T> DSliceSingleMut<'a, T> {
     pub(crate) fn new(
-        dev: &Arc<dyn DeviceDmaOps>,
+        dev: &DeviceDma,
         data: &'a mut [T],
         direction: Direction,
     ) -> Result<Self, DmaError> {
@@ -129,7 +127,7 @@ impl<'a, T> DSliceSingleMut<'a, T> {
 struct DSliceSingleCommon<'a, T> {
     handle: MapHandle,
     direction: Direction,
-    dev: Arc<dyn DeviceDmaOps>,
+    dev: DeviceDma,
     _phantom: core::marker::PhantomData<&'a T>,
 }
 
@@ -144,14 +142,10 @@ impl<'a, T> Drop for DSliceSingleCommon<'a, T> {
 }
 
 impl<'a, T> DSliceSingleCommon<'a, T> {
-    fn new(
-        dev: &Arc<dyn DeviceDmaOps>,
-        s: &'a [T],
-        direction: Direction,
-    ) -> Result<Self, DmaError> {
+    fn new(dev: &DeviceDma, s: &'a [T], direction: Direction) -> Result<Self, DmaError> {
         let size = size_of_val(s);
         let addr = NonNull::new(s.as_ptr() as usize as *mut u8).unwrap();
-        let handle = unsafe { dev.map_single(addr, size, direction) }?;
+        let handle = unsafe { dev._map_single(addr, size, direction) }?;
         if dev.dma_mask() < handle.dma_addr + size as u64 {
             unsafe {
                 dev.unmap_single(handle);

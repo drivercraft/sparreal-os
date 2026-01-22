@@ -1,12 +1,10 @@
 use core::{alloc::Layout, ptr::NonNull};
 
-use alloc::sync::Arc;
-
-use crate::{DeviceDmaOps, Direction, DmaError, DmaHandle};
+use crate::{DeviceDma, Direction, DmaError, DmaHandle};
 
 pub struct DCommon<T> {
     pub handle: DmaHandle,
-    pub osal: Arc<dyn DeviceDmaOps>,
+    pub osal: DeviceDma,
     pub direction: Direction,
     _phantom: core::marker::PhantomData<T>,
 }
@@ -15,7 +13,7 @@ unsafe impl<T: Send> Send for DCommon<T> {}
 
 impl<T> DCommon<T> {
     pub fn new(
-        os: &Arc<dyn DeviceDmaOps>,
+        os: &DeviceDma,
         size: usize,
         align: usize,
         direction: Direction,
