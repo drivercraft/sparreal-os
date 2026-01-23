@@ -224,6 +224,15 @@ fn add_all_ram() {
         let end = VirtAddr::from(region.range.end.raw() + LINER_OFFSET);
         let len = end - start;
 
+        if len < 2 * 1024 * 1024 {
+            println!(
+                "skip small ram region [{:#x}, {:#x})",
+                start.raw(),
+                end.raw()
+            );
+            continue;
+        }
+
         println!("Heap add memory [{}, {})", start, end);
         #[cfg(target_os = "none")]
         ALLOCATOR.add_to_heap(unsafe { &mut *slice_from_raw_parts_mut(start.into(), len) });
