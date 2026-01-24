@@ -1,4 +1,4 @@
-use core::cmp::PartialOrd;
+use core::{alloc::Layout, cmp::PartialOrd, ops::Deref, ptr::NonNull};
 use derive_more::{
     Add, AddAssign, Debug, Display, Div, From, Into, Mul, MulAssign, Sub, SubAssign,
 };
@@ -86,4 +86,111 @@ pub enum DmaError {
     NullPointer,
     #[error("Zero-sized buffer cannot be used for DMA")]
     ZeroSizedBuffer,
+}
+
+/// Handle for DMA memory allocation.
+///
+/// Manages DMA memory buffers that may require special alignment or DMA address mask
+/// constraints. When the original virtual address doesn't meet alignment or mask
+/// requirements, an additional aligned buffer is allocated and stored in `alloc_virt`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct DmaHandle {
+    /// Original virtual address provided by the user
+    pub(crate) cpu_addr: NonNull<u8>,
+    /// DMA address visible to devices
+    pub(crate) dma_addr: DmaAddr,
+    /// Memory layout specification (size and alignment)
+    pub(crate) layout: Layout,
+    // /// Additional allocated virtual address if the original doesn't satisfy
+    // /// alignment or DMA mask requirements when mapping for DMA.
+    // pub(crate) map_alloc_virt: Option<NonNull<u8>>,
+}
+
+impl DmaHandle {
+    /// 为 `alloc_coherent` 操作创建 `DmaHandle`。
+    ///
+    /// 此构造函数专门用于 DMA 一致性内存分配场景，其中：
+    /// - 内存是专门为 DMA 分配的（零初始化）
+    /// - CPU 和设备看到同一个虚拟地址
+    /// - 不需要额外的对齐缓冲区
+    ///
+    /// # 特性保证
+    ///
+    /// - 内存已被零初始化
+    ///
+    /// # Safety
+    ///
+    /// 调用者必须确保：
+    /// - `origin_virt` 指向有效内存，生命周期与 handle 相同
+    /// - `dma_addr` 是与 `origin_virt` 对应的设备可访问地址
+    /// - `layout` 正确描述内存的大小和对齐
+    /// - 内存必须保持有效直到被正确释放
+    pub unsafe fn new(cpu_addr: NonNull<u8>, dma_addr: DmaAddr, layout: Layout) -> Self {
+        Self {
+            cpu_addr,
+            dma_addr,
+            layout,
+        }
+    }
+
+    /// Returns the size of the DMA buffer in bytes.
+    pub fn size(&self) -> usize {
+        self.layout.size()
+    }
+
+    /// Returns the alignment requirement of the DMA buffer in bytes.
+    pub fn align(&self) -> usize {
+        self.layout.align()
+    }
+
+    /// Returns the virtual address to access data.
+    pub fn as_ptr(&self) -> NonNull<u8> {
+        self.cpu_addr
+    }
+
+    /// Returns the DMA address visible to devices.
+    pub fn dma_addr(&self) -> DmaAddr {
+        self.dma_addr
+    }
+
+    /// Returns the memory layout used for this DMA allocation.
+    pub fn layout(&self) -> Layout {
+        self.layout
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct DmaMapHandle {
+    pub(crate) handle: DmaHandle,
+    pub(crate) map_alloc_virt: Option<NonNull<u8>>,
+}
+
+impl Deref for DmaMapHandle {
+    type Target = DmaHandle;
+    fn deref(&self) -> &Self::Target {
+        &self.handle
+    }
+}
+
+impl DmaMapHandle {
+    pub unsafe fn new(
+        cpu_addr: NonNull<u8>,
+        dma_addr: DmaAddr,
+        layout: Layout,
+        alloc_virt: Option<NonNull<u8>>,
+    ) -> Self {
+        let handle = DmaHandle {
+            cpu_addr,
+            dma_addr,
+            layout,
+        };
+        Self {
+            handle,
+            map_alloc_virt: alloc_virt,
+        }
+    }
+
+    pub fn alloc_virt(&self) -> Option<NonNull<u8>> {
+        self.map_alloc_virt
+    }
 }

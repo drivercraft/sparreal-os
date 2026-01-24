@@ -2,7 +2,7 @@ use core::{num::NonZeroUsize, ptr::NonNull};
 
 use mbarrier::mb;
 
-use crate::{DmaDirection, DmaError, DmaHandle};
+use crate::{DmaDirection, DmaError, DmaHandle, DmaMapHandle};
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "aarch64")] {
@@ -28,13 +28,13 @@ pub trait DmaOp: Sync + Send + 'static {
         size: NonZeroUsize,
         align: usize,
         direction: DmaDirection,
-    ) -> Result<DmaHandle, DmaError>;
+    ) -> Result<DmaMapHandle, DmaError>;
 
     /// 解除 DMA 映射
     ///
     /// # Safety
     /// 必须与 map_single 配对使用
-    unsafe fn unmap_single(&self, handle: DmaHandle);
+    unsafe fn unmap_single(&self, handle: DmaMapHandle);
 
     /// 写回缓存到内存 (clean)
     fn flush(&self, addr: NonNull<u8>, size: usize) {
@@ -72,7 +72,7 @@ pub trait DmaOp: Sync + Send + 'static {
 
     fn prepare_read(
         &self,
-        handle: &DmaHandle,
+        handle: &DmaMapHandle,
         offset: usize,
         size: usize,
         direction: DmaDirection,
@@ -81,19 +81,17 @@ pub trait DmaOp: Sync + Send + 'static {
             direction,
             DmaDirection::FromDevice | DmaDirection::Bidirectional
         ) {
-            let ptr = unsafe { handle.dma_virt().add(offset) };
+            let ptr = unsafe { handle.cpu_addr.add(offset) };
 
             self.invalidate(ptr, size);
 
-            if let Some(virt) = handle.alloc_virt
-                && virt != handle.origin_virt
+            if let Some(virt) = handle.map_alloc_virt
+                && virt != handle.cpu_addr
             {
                 unsafe {
                     let src = core::slice::from_raw_parts(ptr.as_ptr(), size);
-                    let dst = core::slice::from_raw_parts_mut(
-                        handle.origin_virt.as_ptr().add(offset),
-                        size,
-                    );
+                    let dst =
+                        core::slice::from_raw_parts_mut(handle.cpu_addr.as_ptr().add(offset), size);
 
                     dst.copy_from_slice(src);
                 }
@@ -103,7 +101,7 @@ pub trait DmaOp: Sync + Send + 'static {
 
     fn confirm_write(
         &self,
-        handle: &DmaHandle,
+        handle: &DmaMapHandle,
         offset: usize,
         size: usize,
         direction: DmaDirection,
@@ -112,14 +110,14 @@ pub trait DmaOp: Sync + Send + 'static {
             direction,
             DmaDirection::ToDevice | DmaDirection::Bidirectional
         ) {
-            let ptr = unsafe { handle.dma_virt().add(offset) };
+            let ptr = unsafe { handle.cpu_addr.add(offset) };
 
-            if let Some(virt) = handle.alloc_virt
-                && virt != handle.origin_virt
+            if let Some(virt) = handle.map_alloc_virt
+                && virt != handle.cpu_addr
             {
                 unsafe {
                     core::ptr::copy_nonoverlapping(
-                        handle.origin_virt.as_ptr().add(offset),
+                        handle.cpu_addr.as_ptr().add(offset),
                         ptr.as_ptr(),
                         size,
                     );

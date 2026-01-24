@@ -206,13 +206,7 @@ impl DmaOp for TrackingDmaOp {
         if ptr.is_null() {
             return None;
         }
-        Some(unsafe {
-            DmaHandle::new_for_alloc_coherent(
-                NonNull::new(ptr).unwrap(),
-                (ptr as u64).into(),
-                layout,
-            )
-        })
+        Some(unsafe { DmaHandle::new(NonNull::new(ptr).unwrap(), (ptr as u64).into(), layout) })
     }
 
     unsafe fn dealloc_coherent(&self, handle: DmaHandle) {

@@ -45,15 +45,15 @@ impl<T> DBox<T> {
     pub fn read(&self) -> T {
         unsafe {
             self.data.prepare_read(0, core::mem::size_of::<T>());
-            let ptr = self.data.dma_ptr(0).cast::<T>();
-            ptr.read_volatile()
+            let ptr = self.data.handle.cpu_addr.cast::<T>();
+            ptr.read()
         }
     }
 
     pub fn write(&mut self, value: T) {
         unsafe {
-            let ptr = self.data.dma_ptr(0).cast::<T>();
-            ptr.write_volatile(value);
+            let ptr = self.data.handle.cpu_addr.cast::<T>();
+            ptr.write(value);
             self.data.confirm_write(0, core::mem::size_of::<T>());
         }
     }

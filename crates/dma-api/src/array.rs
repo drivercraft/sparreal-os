@@ -59,7 +59,7 @@ impl<T> DArray<T> {
         unsafe {
             let offset = index * core::mem::size_of::<T>();
             self.data.prepare_read(offset, size_of::<T>());
-            Some(self.data.dma_ptr(offset).cast::<T>().read_volatile())
+            Some(self.data.handle.cpu_addr.cast().add(index).read())
         }
     }
 
@@ -73,8 +73,8 @@ impl<T> DArray<T> {
 
         unsafe {
             let offset = index * size_of::<T>();
-            let ptr = self.data.dma_ptr(offset).cast::<T>();
-            ptr.write_volatile(value);
+            let ptr = self.data.handle.cpu_addr.cast::<T>().add(index);
+            ptr.write(value);
             self.data.confirm_write(offset, size_of::<T>());
         }
     }
@@ -94,7 +94,7 @@ impl<T> DArray<T> {
             self.len()
         );
         unsafe {
-            let dst_ptr = self.data.handle.dma_virt().as_ptr() as *mut T;
+            let dst_ptr = self.data.handle.cpu_addr.as_ptr() as *mut T;
             core::ptr::copy_nonoverlapping(src.as_ptr(), dst_ptr, src.len());
         }
         self.data.confirm_write_all();
@@ -104,7 +104,7 @@ impl<T> DArray<T> {
     ///
     /// slice will not auto do cache sync operations.
     pub unsafe fn as_mut_slice(&mut self) -> &mut [T] {
-        let ptr = self.data.handle.dma_virt();
+        let ptr = self.data.handle.cpu_addr;
         unsafe {
             core::slice::from_raw_parts_mut(
                 ptr.as_ptr() as *mut T,
