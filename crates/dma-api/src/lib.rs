@@ -397,8 +397,9 @@ impl DeviceDma {
     pub fn map_single<T>(
         &self,
         buff: &[T],
+        align: usize,
         direction: DmaDirection,
     ) -> Result<common::SingleMap, DmaError> {
-        common::SingleMap::new_from_slice(self, buff, direction)
+        common::SingleMap::new_from_slice(self, buff, align, direction)
     }
 }

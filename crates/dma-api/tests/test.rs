@@ -98,7 +98,7 @@ fn mask_check_rejects_overflow_map() {
 
     let mut buf = [0u8; 0x1000];
 
-    let err = dev.map_single(&buf, DmaDirection::FromDevice);
+    let err = dev.map_single(&buf, 64, DmaDirection::FromDevice);
 
     assert!(matches!(err, Err(DmaError::DmaMaskNotMatch { .. })));
 }

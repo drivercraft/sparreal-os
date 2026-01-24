@@ -95,12 +95,12 @@ impl SingleMap {
     pub(crate) fn new_from_slice<T>(
         os: &DeviceDma,
         buff: &[T],
+        align: usize,
         direction: DmaDirection,
     ) -> Result<Self, DmaError> {
         let addr = NonNull::new(buff.as_ptr() as *mut u8).ok_or(DmaError::NullPointer)?;
         let size =
             NonZeroUsize::new(core::mem::size_of_val(buff)).ok_or(DmaError::ZeroSizedBuffer)?;
-        let align = core::mem::align_of::<T>();
 
         Self::new(os, addr, size, align, direction)
     }

@@ -148,7 +148,7 @@ let device = DeviceDma::new(0xFFFFFFFF, &DMA_IMPL);
 let mut buffer = [0u8; 4096];
 
 // 映射缓冲区用于 DMA
-let mapping = device.map_single(&buffer, Direction::ToDevice)
+let mapping = device.map_single(&buffer, 64, Direction::ToDevice)
     .expect("Mapping failed");
 
 // 使用前需要手动同步缓存
@@ -189,7 +189,7 @@ API 遵循 Linux DMA 缓存一致性语义，由 `DmaOp` trait 的 `prepare_read
 **重要**：`SingleMap` **不会**在 Drop 时自动同步缓存，用户必须显式调用缓存同步方法：
 
 ```rust,ignore
-let mapping = device.map_single(&buffer, Direction::ToDevice)?;
+let mapping = device.map_single(&buffer, 64, Direction::ToDevice)?;
 
 // 写入前准备
 mapping.confirm_write_all();  // 将 CPU 数据刷到内存
