@@ -67,15 +67,15 @@ impl Drop for DCommon {
     }
 }
 
-pub struct SingleMapping {
+pub struct SingleMap {
     pub handle: DmaHandle,
     osal: DeviceDma,
     pub direction: DmaDirection,
 }
 
-unsafe impl Send for SingleMapping {}
+unsafe impl Send for SingleMap {}
 
-impl SingleMapping {
+impl SingleMap {
     pub(crate) fn new(
         os: &DeviceDma,
         addr: NonNull<u8>,
@@ -84,23 +84,6 @@ impl SingleMapping {
         direction: DmaDirection,
     ) -> Result<Self, DmaError> {
         let handle = unsafe { os._map_single(addr, size, align, direction)? };
-        let dma_mask = os.dma_mask();
-
-        let in_mask = handle
-            .dma_addr
-            .checked_add(size.get() as u64 - 1)
-            .map(|end| end <= dma_mask)
-            .unwrap_or(false);
-
-        if !in_mask {
-            unsafe {
-                os.unmap_single(handle);
-            }
-            return Err(DmaError::DmaMaskNotMatch {
-                addr: handle.dma_addr,
-                mask: dma_mask,
-            });
-        }
 
         Ok(Self {
             handle,
@@ -133,10 +116,8 @@ impl SingleMapping {
     }
 }
 
-impl Drop for SingleMapping {
+impl Drop for SingleMap {
     fn drop(&mut self) {
-        self.confirm_write_all();
-        self.prepare_read_all();
         unsafe {
             self.osal.unmap_single(self.handle);
         }

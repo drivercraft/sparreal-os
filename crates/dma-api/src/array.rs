@@ -1,4 +1,4 @@
-use core::{alloc::Layout, ops::Index, ptr::NonNull};
+use core::{alloc::Layout, ptr::NonNull};
 
 use crate::{DeviceDma, DmaDirection, DmaError, common::DCommon};
 
@@ -130,27 +130,5 @@ impl<'a, T> Iterator for DArrayIter<'a, T> {
         let value = self.array.read(self.index);
         self.index += 1;
         value
-    }
-}
-
-/// 注意：Index 实现返回引用，调用时会自动执行缓存同步。
-/// 但由于返回的是引用，在持有引用期间如果设备继续写入数据，
-/// 可能导致数据不一致。对于 `FromDevice` 方向，建议使用 `read()` 方法。
-impl<T: Copy> Index<usize> for DArray<T> {
-    type Output = T;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        assert!(
-            index < self.len(),
-            "index out of range, index: {},len: {}",
-            index,
-            self.len()
-        );
-        unsafe {
-            let offset = index * core::mem::size_of::<T>();
-            let ptr = self.data.dma_ptr(offset).cast::<T>();
-            self.data.prepare_read(offset, size_of::<T>());
-            &*ptr
-        }
     }
 }

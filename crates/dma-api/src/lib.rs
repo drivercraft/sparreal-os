@@ -13,7 +13,7 @@ mod dbox;
 mod def;
 
 pub use array::*;
-pub use common::SingleMapping;
+pub use common::SingleMap;
 pub use dbox::*;
 pub use def::*;
 pub use osal::DmaOp;
@@ -293,7 +293,15 @@ impl DeviceDma {
 
     unsafe fn alloc_coherent(&self, layout: core::alloc::Layout) -> Result<DmaHandle, DmaError> {
         let res = unsafe { self.os.alloc_coherent(self.mask, layout) }.ok_or(DmaError::NoMemory)?;
-        self.check_handle(&res)?;
+        match self.check_handle(&res) {
+            Ok(()) => (),
+            Err(e) => {
+                unsafe {
+                    self.dealloc_coherent(res);
+                }
+                return Err(e);
+            }
+        }
         Ok(res)
     }
 
@@ -319,6 +327,14 @@ impl DeviceDma {
             });
         }
 
+        let is_aligned = handle.dma_addr.as_u64().is_multiple_of(self.dma_mask());
+        if !is_aligned {
+            return Err(DmaError::AlignMismatch {
+                address: handle.dma_addr,
+                required: handle.align(),
+            });
+        }
+
         Ok(())
     }
 
@@ -330,7 +346,15 @@ impl DeviceDma {
         direction: DmaDirection,
     ) -> Result<DmaHandle, DmaError> {
         let res = unsafe { self.os.map_single(self.mask, addr, size, align, direction) }?;
-        self.check_handle(&res)?;
+        match self.check_handle(&res) {
+            Ok(()) => (),
+            Err(e) => {
+                unsafe {
+                    self.unmap_single(res);
+                }
+                return Err(e);
+            }
+        }
         Ok(res)
     }
 
@@ -373,7 +397,7 @@ impl DeviceDma {
         size: NonZeroUsize,
         align: usize,
         direction: DmaDirection,
-    ) -> Result<common::SingleMapping, DmaError> {
-        common::SingleMapping::new(self, addr, size, align, direction)
+    ) -> Result<common::SingleMap, DmaError> {
+        common::SingleMap::new(self, addr, size, align, direction)
     }
 }

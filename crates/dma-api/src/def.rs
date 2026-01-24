@@ -80,6 +80,6 @@ pub enum DmaError {
     LayoutError(#[from] core::alloc::LayoutError),
     #[error("DMA address {addr} does not match device mask {mask:#X}")]
     DmaMaskNotMatch { addr: DmaAddr, mask: u64 },
-    #[error("DMA align mismatch: required={required:#X}, but address={address:#X}")]
-    AlignMismatch { required: usize, address: usize },
+    #[error("DMA align mismatch: required={required:#X}, but address={address}")]
+    AlignMismatch { required: usize, address: DmaAddr },
 }
