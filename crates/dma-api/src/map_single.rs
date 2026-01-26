@@ -212,6 +212,16 @@ impl<T> SArrayPtr<T> {
         }
         vec
     }
+
+    pub fn prepare_read_all(&self) {
+        self.osal
+            .prepare_read(&self.handle, 0, self.handle.size(), self.direction);
+    }
+
+    pub fn confirm_write_all(&self) {
+        self.osal
+            .confirm_write(&self.handle, 0, self.handle.size(), self.direction);
+    }
 }
 
 impl<T> Drop for SArrayPtr<T> {

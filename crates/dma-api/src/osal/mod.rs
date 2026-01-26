@@ -81,20 +81,18 @@ pub trait DmaOp: Sync + Send + 'static {
             direction,
             DmaDirection::FromDevice | DmaDirection::Bidirectional
         ) {
-            let ptr = unsafe { handle.cpu_addr.add(offset) };
-
-            self.invalidate(ptr, size);
+            let origin_ptr = unsafe { handle.cpu_addr.add(offset) };
 
             if let Some(virt) = handle.map_alloc_virt
                 && virt != handle.cpu_addr
             {
+                let map_ptr = unsafe { virt.add(offset) };
+                self.invalidate(map_ptr, size);
                 unsafe {
-                    let src = core::slice::from_raw_parts(ptr.as_ptr(), size);
-                    let dst =
-                        core::slice::from_raw_parts_mut(handle.cpu_addr.as_ptr().add(offset), size);
-
-                    dst.copy_from_slice(src);
+                    origin_ptr.copy_from_nonoverlapping(map_ptr, size);
                 }
+            } else {
+                self.invalidate(origin_ptr, size);
             }
         }
     }
@@ -116,11 +114,10 @@ pub trait DmaOp: Sync + Send + 'static {
                 && virt != handle.cpu_addr
             {
                 unsafe {
-                    core::ptr::copy_nonoverlapping(
-                        handle.cpu_addr.as_ptr().add(offset),
-                        ptr.as_ptr(),
-                        size,
-                    );
+                    let src = core::slice::from_raw_parts(ptr.as_ptr(), size);
+                    let dst = core::slice::from_raw_parts_mut(virt.as_ptr().add(offset), size);
+
+                    dst.copy_from_slice(src);
                 }
             }
 

@@ -200,8 +200,9 @@ impl<T> DArray<T> {
             self.len()
         );
         unsafe {
-            let dst_ptr = self.data.handle.cpu_addr.as_ptr() as *mut T;
-            core::ptr::copy_nonoverlapping(src.as_ptr(), dst_ptr, src.len());
+            let dst_ptr = self.data.handle.cpu_addr.as_ptr();
+            let len = core::mem::size_of_val(src);
+            dst_ptr.copy_from_nonoverlapping(src.as_ptr() as *const u8, len);
         }
         self.data.confirm_write_all();
     }
