@@ -128,10 +128,7 @@ impl TimerManager {
         let mut expired = Vec::new();
 
         // Collect all expired timers
-        loop {
-            let Some(key) = self.timers.keys().next().cloned() else {
-                break;
-            };
+        while let Some(key) = self.timers.keys().next().cloned() {
             if key.deadline > now {
                 break;
             }

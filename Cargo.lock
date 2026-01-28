@@ -1181,6 +1181,7 @@ name = "sparreal-kernel"
 version = "0.13.0"
 dependencies = [
  "ansi_rgb",
+ "anstyle",
  "bitflags 2.10.0",
  "buddy_system_allocator",
  "byte-unit",
