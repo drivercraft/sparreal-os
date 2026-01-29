@@ -12,14 +12,15 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  ci:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [loongarch64, aarch64]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
-    # ZR233/ostool requires
-    - name: Install qemu-system
-      run: sudo apt update && sudo apt install qemu-system -y 
     - name: Install libudev-dev
       run: sudo apt update && sudo apt install libudev-dev -y
     - name: Install toolchain
@@ -27,9 +28,16 @@ jobs:
     - name: Check rust version
       run: rustc --version --verbose
 
+    - name: Setup QEMU
+      uses: arceos-org/setup-qemu@v1
+      with:
+        version: 10.1.0
+        arch_list: ${{ matrix.arch }}
+
     - uses: Swatinem/rust-cache@v2
       with:
-          workspaces: "."
+        shared-key: test
+        cache-targets: false
 
     - name: Install cargo-binutils
       run: cargo install cargo-binutils
@@ -43,7 +51,7 @@ jobs:
     - uses: taiki-e/install-action@cargo-hack
 
     - name: Clippy for workspace
-      run: cargo clippy --target loongarch64-unknown-none-softfloat -- -D warnings
+      run: cargo clippy --target ${{ matrix.arch }}-unknown-none-softfloat -- -D warnings
 
     - name: Build test
       run: chmod +x ./test_all.sh && ./test_all.sh
