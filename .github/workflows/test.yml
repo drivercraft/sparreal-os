@@ -44,11 +44,11 @@ jobs:
 
     - name: Install cargo-binutils
       run: cargo install cargo-binutils
-    - name: Install ostool
-      run: cargo install ostool
+    # - name: Install ostool
+    #   run: cargo install ostool
 
     - uses: cargo-bins/cargo-binstall@main
-    
+
     - name: Install ostool
       run: cargo binstall ostool
 
