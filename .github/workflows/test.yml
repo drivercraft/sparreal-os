@@ -21,8 +21,11 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - name: Install libudev-dev
-      run: sudo apt update && sudo apt install libudev-dev -y
+    - &setup-libudenv
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: libudev-dev
+        version: 1.0
     - name: Install toolchain
       run: rustup show
     - name: Check rust version
@@ -43,6 +46,12 @@ jobs:
       run: cargo install cargo-binutils
     - name: Install ostool
       run: cargo install ostool
+
+    - uses: cargo-bins/cargo-binstall@main
+    
+    - name: Install ostool
+      run: cargo binstall ostool
+
     - name: Add Target
       run: rustc --version
     - name: Check code format
