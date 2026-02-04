@@ -1,7 +1,7 @@
 use rdrive::{IrqId, probe::OnProbeError};
 use someboot::PagingError;
 
-use crate::setup::kernel;
+use crate::setup::Mmio;
 
 pub trait PlatOp {
     fn irq_set_enable(irq: IrqId, enable: bool);
@@ -10,9 +10,8 @@ pub trait PlatOp {
 }
 
 #[allow(dead_code)]
-pub fn ioremap(paddr: usize, size: usize) -> Result<*mut u8, IoremapError> {
-    let ptr = kernel().ioremap(paddr, size)?;
-    Ok(ptr)
+pub fn ioremap(paddr: u64, size: usize) -> anyhow::Result<Mmio> {
+    unsafe { mmio_api::ioremap(paddr.into(), size) }
 }
 
 #[derive(thiserror::Error, Debug)]

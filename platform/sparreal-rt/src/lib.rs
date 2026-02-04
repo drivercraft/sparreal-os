@@ -5,7 +5,9 @@
 extern crate alloc;
 extern crate somehal;
 
-use somehal::KernelOp;
+use core::ptr::NonNull;
+
+use somehal::setup::{Error, KernelOp, Mmio, MmioOp, PhysAddr};
 pub use sparreal_kernel::entry;
 pub use sparreal_kernel::*;
 
@@ -18,8 +20,16 @@ fn main() -> ! {
 
 pub struct Kernel;
 
-impl KernelOp for Kernel {
-    fn ioremap(&self, paddr: usize, size: usize) -> somehal::PagingResult<*mut u8> {
-        sparreal_kernel::os::mem::ioremap(paddr.into(), size).map(|addr| addr.raw() as *mut u8)
+impl KernelOp for Kernel {}
+
+impl MmioOp for Kernel {
+    fn ioremap(&self, addr: PhysAddr, size: usize) -> Result<Mmio, Error> {
+        let res = sparreal_kernel::os::mem::ioremap(addr.as_usize().into(), size)?;
+        let ptr = res.raw() as *mut u8;
+        Ok(unsafe { Mmio::new(addr, NonNull::new_unchecked(ptr), size) })
+    }
+
+    fn iounmap(&self, _mmio: &Mmio) {
+        // sparreal_kernel::os::mem::iounmap(mmio)
     }
 }

@@ -36,21 +36,24 @@ fn probe_gic(info: FdtInfo<'_>, dev: PlatformDevice) -> Result<(), OnProbeError>
     let gicd_reg = reg.next().unwrap();
     let gicr_reg = reg.next().unwrap();
 
-    let gicd = ioremap(gicd_reg.address as _, gicd_reg.size.unwrap_or(0x1000))?;
-    let gicr = ioremap(gicr_reg.address as _, gicr_reg.size.unwrap_or(0x1000))?;
+    let gicd = ioremap(gicd_reg.address, gicd_reg.size.unwrap_or(0x1000)).unwrap();
+    let gicr = ioremap(gicr_reg.address, gicr_reg.size.unwrap_or(0x1000)).unwrap();
 
     let mut hyper = None;
 
     if let Some(gich_reg) = reg.next()
         && let Some(gicv_reg) = reg.next()
     {
-        let gich = ioremap(gich_reg.address as _, gich_reg.size.unwrap_or(0x1000))?;
-        let gicv = ioremap(gicv_reg.address as _, gicv_reg.size.unwrap_or(0x1000))?;
+        let gich = ioremap(gich_reg.address, gich_reg.size.unwrap_or(0x1000)).unwrap();
+        let gicv = ioremap(gicv_reg.address, gicv_reg.size.unwrap_or(0x1000)).unwrap();
 
-        hyper = Some(HyperAddress::new(gich.into(), gicv.into()))
+        hyper = Some(HyperAddress::new(
+            gich.as_ptr().into(),
+            gicv.as_ptr().into(),
+        ))
     }
 
-    let mut gic = unsafe { Gic::new(gicd.into(), gicr.into(), hyper) };
+    let mut gic = unsafe { Gic::new(gicd.as_ptr().into(), gicr.as_ptr().into(), hyper) };
     gic.init();
     let cpu = gic.cpu_interface();
     let trap = cpu.trap_operations();

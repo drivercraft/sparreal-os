@@ -11,10 +11,10 @@ extern crate log;
 pub(crate) mod common;
 mod driver;
 pub mod irq;
-mod setup;
+pub mod setup;
 
 pub use page_table_generic::{PagingError, PagingResult};
-pub use setup::*;
+pub use setup::KernelOp;
 pub use someboot::*;
 
 #[cfg(target_arch = "loongarch64")]
