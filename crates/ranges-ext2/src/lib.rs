@@ -100,7 +100,62 @@ pub trait VecOp<T: RangeOp>: Send + 'static {
     }
 
     fn merge_add(&mut self, item: T) -> Result<(), RangeError<T>> {
+        let new_range = item.range();
+        let mut i = 0;
+
+        // 遍历现有ranges，处理重叠情况
+        while i < self.len() {
+            let existing = &self.as_slice()[i];
+            let existing_range = existing.range();
+
+            // 检查是否有重叠: new.start < existing.end && new.end > existing.start
+            if new_range.start < existing_range.end && new_range.end > existing_range.start {
+                // 有重叠，检查是否可覆盖
+                if !existing.overwritable(&item) {
+                    // 不可覆盖，返回冲突错误
+                    return Err(RangeError::Conflict {
+                        new: item,
+                        existing: existing.clone(),
+                    });
+                }
+
+                // 可覆盖，根据重叠情况处理
+                if new_range.start <= existing_range.start && new_range.end >= existing_range.end {
+                    // 情况1: 新range完全覆盖旧range，删除旧的
+                    self.remove(i);
+                    // 不增加i，因为删除后当前位置是下一个元素
+                } else if new_range.start > existing_range.start
+                    && new_range.end < existing_range.end
+                {
+                    // 情况2: 新range在旧range中间，分割成两块
+                    let left = existing.clone_with_range(existing_range.start..new_range.start);
+                    let right = existing.clone_with_range(new_range.end..existing_range.end);
+
+                    self.remove(i);
+                    self.insert(i, left)?;
+                    self.insert(i + 1, right)?;
+                    i += 2; // 跳过刚插入的两个
+                } else if new_range.start <= existing_range.start {
+                    // 情况3: 新range覆盖旧range的左侧部分，保留右侧
+                    let adjusted = existing.clone_with_range(new_range.end..existing_range.end);
+                    self.remove(i);
+                    self.insert(i, adjusted)?;
+                    i += 1;
+                } else {
+                    // 情况4: 新range覆盖旧range的右侧部分，保留左侧
+                    let adjusted = existing.clone_with_range(existing_range.start..new_range.start);
+                    self.remove(i);
+                    self.insert(i, adjusted)?;
+                    i += 1;
+                }
+            } else {
+                i += 1;
+            }
+        }
+
+        // 添加新的item
         self.push(item)?;
+        // 合并相同类型的相邻range
         self.merge_same_kind();
         Ok(())
     }

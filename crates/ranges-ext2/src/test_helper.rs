@@ -2,11 +2,23 @@ use crate::RangeOp;
 use core::ops::Range;
 
 /// 测试用的 Range 类型
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TestRange {
     pub start: u64,
     pub end: u64,
     pub kind: RangeKind,
+    pub overwritable: bool,
+}
+
+impl Default for TestRange {
+    fn default() -> Self {
+        Self {
+            start: 0,
+            end: 0,
+            kind: RangeKind::default(),
+            overwritable: true,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -24,7 +36,26 @@ impl Default for RangeKind {
 
 impl TestRange {
     pub fn new(start: u64, end: u64, kind: RangeKind) -> Self {
-        Self { start, end, kind }
+        Self {
+            start,
+            end,
+            kind,
+            overwritable: true,
+        }
+    }
+
+    pub fn new_with_overwritable(
+        start: u64,
+        end: u64,
+        kind: RangeKind,
+        overwritable: bool,
+    ) -> Self {
+        Self {
+            start,
+            end,
+            kind,
+            overwritable,
+        }
     }
 }
 
@@ -41,7 +72,7 @@ impl RangeOp for TestRange {
     }
 
     fn overwritable(&self, _other: &Self) -> bool {
-        true
+        self.overwritable
     }
 
     fn clone_with_range(&self, range: Range<Self::Type>) -> Self {
@@ -49,6 +80,7 @@ impl RangeOp for TestRange {
             start: range.start,
             end: range.end,
             kind: self.kind.clone(),
+            overwritable: self.overwritable,
         }
     }
 }

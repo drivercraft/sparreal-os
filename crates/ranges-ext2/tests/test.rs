@@ -256,3 +256,142 @@ fn test_heapless_vec_capacity_error() {
 
     println!("✓ heapless::Vec capacity error test passed");
 }
+
+#[test]
+fn test_merge_add() {
+    use ranges_ext2::VecOp;
+    use ranges_ext2::test_helper::RangeKind;
+
+    // 测试用例集合
+    let test_cases: &[(&str, Vec<TestRange>, TestRange, Result<Vec<TestRange>, ()>)] = &[
+        // 1. 完全覆盖：新range完全覆盖旧range（可覆盖）
+        (
+            "complete overlap - overwritable",
+            vec![TestRange::new(10, 20, RangeKind::TypeA)],
+            TestRange::new(5, 25, RangeKind::TypeB),
+            Ok(vec![TestRange::new(5, 25, RangeKind::TypeB)]),
+        ),
+        // 2. 中间分割：新range在旧range中间（可覆盖）
+        (
+            "middle split - overwritable",
+            vec![TestRange::new(0, 30, RangeKind::TypeA)],
+            TestRange::new(10, 20, RangeKind::TypeB),
+            Ok(vec![
+                TestRange::new(0, 10, RangeKind::TypeA),
+                TestRange::new(20, 30, RangeKind::TypeA),
+                TestRange::new(10, 20, RangeKind::TypeB),
+            ]),
+        ),
+        // 3. 左侧覆盖：新range覆盖旧range左侧（可覆盖）
+        (
+            "left overlap - overwritable",
+            vec![TestRange::new(10, 30, RangeKind::TypeA)],
+            TestRange::new(5, 20, RangeKind::TypeB),
+            Ok(vec![
+                TestRange::new(20, 30, RangeKind::TypeA),
+                TestRange::new(5, 20, RangeKind::TypeB),
+            ]),
+        ),
+        // 4. 右侧覆盖：新range覆盖旧range右侧（可覆盖）
+        (
+            "right overlap - overwritable",
+            vec![TestRange::new(10, 30, RangeKind::TypeA)],
+            TestRange::new(20, 40, RangeKind::TypeB),
+            Ok(vec![
+                TestRange::new(10, 20, RangeKind::TypeA),
+                TestRange::new(20, 40, RangeKind::TypeB),
+            ]),
+        ),
+        // 5. 无重叠：直接添加并可能合并
+        (
+            "no overlap",
+            vec![TestRange::new(0, 10, RangeKind::TypeA)],
+            TestRange::new(10, 20, RangeKind::TypeA),
+            Ok(vec![TestRange::new(0, 20, RangeKind::TypeA)]),
+        ),
+        // 6. 多个重叠：处理多个可覆盖的range
+        (
+            "multiple overlaps - overwritable",
+            vec![
+                TestRange::new(0, 15, RangeKind::TypeA),
+                TestRange::new(20, 35, RangeKind::TypeA),
+            ],
+            TestRange::new(10, 30, RangeKind::TypeB),
+            Ok(vec![
+                TestRange::new(0, 10, RangeKind::TypeA),
+                TestRange::new(30, 35, RangeKind::TypeA),
+                TestRange::new(10, 30, RangeKind::TypeB),
+            ]),
+        ),
+    ];
+
+    for (description, initial, new_item, expected) in test_cases {
+        let mut vec: Vec<TestRange> = initial.clone();
+        let result = vec.merge_add(new_item.clone());
+
+        match expected {
+            Ok(expected_vec) => {
+                assert!(
+                    result.is_ok(),
+                    "Test case '{}' failed: expected Ok, got {:?}",
+                    description,
+                    result
+                );
+
+                assert_eq!(
+                    vec.len(),
+                    expected_vec.len(),
+                    "Test case '{}' failed: length mismatch. Got {} ranges, expected {}",
+                    description,
+                    vec.len(),
+                    expected_vec.len()
+                );
+
+                for exp in expected_vec {
+                    assert!(
+                        vec.contains(exp),
+                        "Test case '{}' failed: expected range {:?} not found in result {:?}",
+                        description,
+                        exp,
+                        vec
+                    );
+                }
+
+                println!("✓ Test case '{}' passed", description);
+            }
+            Err(_) => {
+                assert!(
+                    result.is_err(),
+                    "Test case '{}' failed: expected Err, got Ok",
+                    description
+                );
+                println!("✓ Test case '{}' passed (error expected)", description);
+            }
+        }
+    }
+}
+
+#[test]
+fn test_merge_add_conflict() {
+    use ranges_ext2::test_helper::{RangeKind, TestRange};
+    use ranges_ext2::{RangeError, VecOp};
+
+    // 测试不可覆盖的冲突
+    let mut vec: Vec<TestRange> = vec![TestRange::new_with_overwritable(
+        10,
+        20,
+        RangeKind::TypeA,
+        false, // 不可覆盖
+    )];
+
+    let new_item = TestRange::new(15, 25, RangeKind::TypeB);
+    let result = vec.merge_add(new_item.clone());
+
+    assert!(
+        matches!(result, Err(RangeError::Conflict { .. })),
+        "Expected Conflict error, got {:?}",
+        result
+    );
+
+    println!("✓ merge_add conflict test passed");
+}
