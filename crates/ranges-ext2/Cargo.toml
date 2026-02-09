@@ -16,4 +16,3 @@ default = ["alloc"]
 [dependencies]
 heapless = "0.9"
 thiserror = {version = "2.0", default-features = false}
-tinyvec = {version = "1.8", default-features = false, features = ["alloc"]}
