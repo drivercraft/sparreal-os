@@ -40,7 +40,7 @@ impl RangeOp for TestRange {
         self.kind.clone()
     }
 
-    fn overwritable(&self, _other: Self::Type) -> bool {
+    fn overwritable(&self, _other: &Self) -> bool {
         true
     }
 

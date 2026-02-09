@@ -18,7 +18,10 @@ pub trait RangeOp: Debug + Clone + Sized + Default {
     type Type: Ord + Copy;
     fn range(&self) -> Range<Self::Type>;
     fn kind(&self) -> Self::Kind;
-    fn overwritable(&self, other: Self::Type) -> bool;
+    fn overwritable(&self, other: &Self) -> bool;
+    fn mergeable(&self, other: &Self) -> bool {
+        self.kind() == other.kind()
+    }
     fn clone_with_range(&self, range: Range<Self::Type>) -> Self;
 }
 
@@ -52,7 +55,7 @@ pub trait VecOp<T: RangeOp>: Send + 'static {
                     let next = &slice[j];
 
                     // 检查是否同类型
-                    if current.kind() == next.kind() {
+                    if current.mergeable(next) {
                         let current_range = current.range();
                         let next_range = next.range();
 
@@ -94,6 +97,12 @@ pub trait VecOp<T: RangeOp>: Send + 'static {
                 break;
             }
         }
+    }
+
+    fn merge_add(&mut self, item: T) -> Result<(), RangeError<T>> {
+        self.push(item)?;
+        self.merge_same_kind();
+        Ok(())
     }
 }
 
