@@ -887,6 +887,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ranges-ext2"
+version = "0.1.0"
+dependencies = [
+ "heapless",
+ "thiserror",
+ "tinyvec",
+]
+
+[[package]]
 name = "raw-cpuid"
 version = "10.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -1,0 +1,19 @@
+[package]
+name = "ranges-ext2"
+version = "0.1.0"
+authors.workspace = true
+categories.workspace = true
+description.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+alloc = []
+default = ["alloc"]
+
+[dependencies]
+heapless = "0.9"
+thiserror = {version = "2.0", default-features = false}
+tinyvec = {version = "1.8", default-features = false, features = ["alloc"]}
