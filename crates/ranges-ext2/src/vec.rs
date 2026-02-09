@@ -11,13 +11,6 @@ impl<T: RangeOp + Send + 'static> VecOp<T> for Vec<T> {
         self.as_slice()
     }
 
-    fn drain<R>(&mut self, range: R) -> impl Iterator<Item = T>
-    where
-        R: core::ops::RangeBounds<usize>,
-    {
-        self.drain(range)
-    }
-
     fn len(&self) -> usize {
         self.as_slice().len()
     }
@@ -29,9 +22,5 @@ impl<T: RangeOp + Send + 'static> VecOp<T> for Vec<T> {
     fn insert(&mut self, index: usize, item: T) -> Result<(), RangeError<T>> {
         self.insert(index, item);
         Ok(())
-    }
-
-    fn clear(&mut self) {
-        self.clear();
     }
 }

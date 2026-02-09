@@ -25,19 +25,13 @@ pub trait RangeOp: Debug + Clone + Sized + Default {
     fn clone_with_range(&self, range: Range<Self::Type>) -> Self;
 }
 
+#[allow(clippy::len_without_is_empty)]
 pub trait VecOp<T: RangeOp>: Send + 'static {
     fn push(&mut self, item: T) -> Result<(), RangeError<T>>;
     fn as_slice(&self) -> &[T];
-    fn drain<R>(&mut self, range: R) -> impl Iterator<Item = T>
-    where
-        R: core::ops::RangeBounds<usize>;
     fn len(&self) -> usize;
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
     fn remove(&mut self, index: usize) -> T;
     fn insert(&mut self, index: usize, item: T) -> Result<(), RangeError<T>>;
-    fn clear(&mut self);
 
     /// 合并相同类型且相邻或重叠的range
     ///
