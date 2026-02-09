@@ -188,9 +188,9 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "bare-test"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
- "bare-test-macros 0.3.0",
+ "bare-test-macros 0.3.1",
  "log",
  "sparreal-rt",
 ]
@@ -208,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "bare-test-macros"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -710,7 +710,7 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
 name = "mmio-api"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -1085,7 +1085,7 @@ name = "simple_bare_test"
 version = "0.1.0"
 dependencies = [
  "bare-test",
- "bare-test-macros 0.3.0",
+ "bare-test-macros 0.3.1",
  "dma-api 0.7.0",
  "log",
 ]
@@ -1120,7 +1120,7 @@ dependencies = [
 
 [[package]]
 name = "someboot"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "aarch64-cpu-ext",
@@ -1159,7 +1159,7 @@ dependencies = [
 
 [[package]]
 name = "somehal"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "anyhow",
@@ -1188,7 +1188,7 @@ dependencies = [
 
 [[package]]
 name = "sparreal-kernel"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "ansi_rgb",
  "anstyle",
@@ -1212,7 +1212,7 @@ dependencies = [
 
 [[package]]
 name = "sparreal-macros"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "abi-singleton",
  "darling 0.21.3",
@@ -1224,7 +1224,7 @@ dependencies = [
 
 [[package]]
 name = "sparreal-rt"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "log",
  "somehal",

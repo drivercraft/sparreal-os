@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.1](https://github.com/drivercraft/sparreal-os/compare/sparreal-kernel-v0.13.0...sparreal-kernel-v0.13.1) - 2026-02-09
+
+### Other
+
+- release ([#12](https://github.com/drivercraft/sparreal-os/pull/12))
+
 ## [0.13.0](https://github.com/drivercraft/sparreal-os/compare/sparreal-kernel-v0.12.5...sparreal-kernel-v0.13.0) - 2026-02-09
 
 ### Added

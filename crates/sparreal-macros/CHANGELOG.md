@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1](https://github.com/drivercraft/sparreal-os/compare/sparreal-macros-v0.10.0...sparreal-macros-v0.10.1) - 2026-02-09
+
+### Other
+
+- release ([#12](https://github.com/drivercraft/sparreal-os/pull/12))
+
 ## [0.10.0](https://github.com/drivercraft/sparreal-os/compare/sparreal-macros-v0.9.3...sparreal-macros-v0.10.0) - 2026-02-09
 
 ### Added
