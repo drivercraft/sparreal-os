@@ -45,7 +45,7 @@ jobs:
       - uses: cargo-bins/cargo-binstall@main
 
       - name: Install ostool
-        run: cargo binstall ostool --no-confirm
+        run: cargo binstall ostool --no-confirm  --force
 
       - name: Install cargo-binutils
         run: |
