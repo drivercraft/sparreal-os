@@ -635,7 +635,7 @@ dependencies = [
 
 [[package]]
 name = "kernutil"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "heapless",
  "num-align",
@@ -1117,7 +1117,7 @@ dependencies = [
 
 [[package]]
 name = "someboot"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "aarch64-cpu-ext",

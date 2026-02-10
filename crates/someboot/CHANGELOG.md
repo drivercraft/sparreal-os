@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/drivercraft/sparreal-os/compare/someboot-v0.1.1...someboot-v0.1.2) - 2026-02-10
+
+### Other
+
+- * ✨ feat(ranges-ext): 添加 ranges-ext 包及其相关功能和测试
+
 ## [0.1.1](https://github.com/drivercraft/sparreal-os/compare/someboot-v0.1.0...someboot-v0.1.1) - 2026-02-09
 
 ### Other
