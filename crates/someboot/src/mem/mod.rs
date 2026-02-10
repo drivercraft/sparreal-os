@@ -2,7 +2,7 @@ use byte_unit::{Byte, UnitType};
 use kernutil::StaticCell;
 pub use kernutil::memory::{MemoryDescriptor, MemoryType, PageTableInfo};
 use num_align::NumAlign;
-use ranges_ext::{RangeError, RangeExtBaseOps};
+use ranges_ext::*;
 
 pub mod mmu;
 pub(crate) mod ram;
@@ -174,8 +174,5 @@ pub fn print_memory_map() {
 pub(crate) fn add_memory_descriptor(
     desc: MemoryDescriptor,
 ) -> Result<(), RangeError<MemoryDescriptor>> {
-    unsafe {
-        let mut temp = MemoryMap::new();
-        MEMORY_MAP.update(|mem| mem.merge_add_with_temp(desc, &mut temp))
-    }
+    unsafe { MEMORY_MAP.update(|mem| mem.merge_add(desc)) }
 }

@@ -65,7 +65,7 @@ pub enum MemoryType {
     Mmio,
 }
 
-impl ranges_ext::RangeInfo for MemoryDescriptor {
+impl ranges_ext::RangeOp for MemoryDescriptor {
     type Kind = MemoryType;
 
     type Type = usize;
@@ -78,7 +78,7 @@ impl ranges_ext::RangeInfo for MemoryDescriptor {
         self.memory_type
     }
 
-    fn overwritable(&self) -> bool {
+    fn overwritable(&self, _other: &Self) -> bool {
         matches!(self.memory_type, MemoryType::Free)
     }
 
