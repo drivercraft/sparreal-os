@@ -21,17 +21,12 @@ impl Default for TestRange {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum RangeKind {
+    #[default]
     TypeA,
     TypeB,
     TypeC,
-}
-
-impl Default for RangeKind {
-    fn default() -> Self {
-        RangeKind::TypeA
-    }
 }
 
 impl TestRange {

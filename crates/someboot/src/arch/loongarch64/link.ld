@@ -56,6 +56,11 @@ SECTIONS
         *(.data .data.*)
         *(.init.data)
         *(.sdata .sdata.*)
+
+        . = ALIGN(PAGE_SIZE);
+        __percpu_start = .;
+        *(.percpu_data .percpu_data.*)
+        __percpu_end = .;
     }
     .rela.dyn : ALIGN(8) {
         __rela_dyn_begin = .;

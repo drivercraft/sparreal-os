@@ -38,6 +38,13 @@ pub(crate) fn setup_entry(
     }
 }
 
+pub fn stack_size() -> usize {
+    unsafe extern "C" {
+        fn STACK_SIZE();
+    }
+    STACK_SIZE as *const () as usize
+}
+
 /// Get the offset between virtual address and physical address of the loaded kernel image
 pub fn vm_load_offset() -> isize {
     unsafe { VM_LOAD_OFFSET }
@@ -142,19 +149,22 @@ pub fn page_size() -> usize {
 //     start..end.align_up(page_size())
 // }
 
-pub(crate) fn memory_map_setup() {
+pub(crate) fn memory_map_setup() -> anyhow::Result<()> {
     let kernel_range = kimage_range();
     let desc = MemoryDescriptor::new_with_range("Kernel", kernel_range, MemoryType::KImage);
 
-    add_memory_descriptor(desc).unwrap();
+    add_memory_descriptor(desc)?;
 
     let ram_range = ram::used_range();
+
     let desc = MemoryDescriptor::new_with_range("Some Rsv", ram_range, MemoryType::Reserved);
-    add_memory_descriptor(desc).unwrap();
+    add_memory_descriptor(desc)?;
 
     if let Some(desc) = crate::console::debug_to_memory_desc() {
-        add_memory_descriptor(desc).unwrap();
+        add_memory_descriptor(desc)?;
     }
+
+    Ok(())
 }
 
 pub fn print_memory_map() {

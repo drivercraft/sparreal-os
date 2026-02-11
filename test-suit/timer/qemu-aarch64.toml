@@ -6,6 +6,8 @@ args = [
   "virt,gic-version=3,virtualization=on",
   "-d",
   "int,mmu,guest_errors",
+  "-smp",
+  "4",
   "-D",
   "qemu.log"
 ]

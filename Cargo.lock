@@ -466,7 +466,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b0f564fda6b9389cec0b258a98483b974b6ed37cf4e771222fb49cabe1e260f"
 dependencies = [
  "enum_dispatch",
- "fdt-raw",
+ "fdt-raw 0.1.5",
  "log",
 ]
 
@@ -481,6 +481,15 @@ name = "fdt-raw"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e7b19f67663e8368d5a07165a1c348b5a761afe5d130e982a0ed8859aca37c2"
+dependencies = [
+ "heapless",
+ "log",
+ "thiserror",
+]
+
+[[package]]
+name = "fdt-raw"
+version = "0.2.0"
 dependencies = [
  "heapless",
  "log",
@@ -1131,7 +1140,7 @@ dependencies = [
  "byte-unit",
  "derive_more",
  "fdt-edit",
- "fdt-raw",
+ "fdt-raw 0.2.0",
  "heapless",
  "kasm-aarch64",
  "kernutil",
@@ -1193,7 +1202,7 @@ dependencies = [
  "buddy_system_allocator",
  "byte-unit",
  "dma-api 0.7.0",
- "fdt-raw",
+ "fdt-raw 0.1.5",
  "heapless",
  "kernutil",
  "log",

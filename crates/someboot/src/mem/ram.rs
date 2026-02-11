@@ -1,4 +1,4 @@
-use core::{alloc::Layout, cell::UnsafeCell, ops::Range, ptr::NonNull};
+use core::{alloc::Layout, cell::UnsafeCell, ops::Range};
 
 use num_align::NumAlign;
 use page_table_generic::FrameAllocator;
@@ -26,16 +26,17 @@ impl SimpleAllocator {
         self.current = range.start.max(0x40);
     }
 
-    pub fn alloc(&mut self, layout: Layout) -> *mut u8 {
-        unsafe {
-            let start = self.current.align_up(layout.align()) as *mut u8;
-            let end = start.add(layout.size());
-            if end as usize > self.end {
-                return core::ptr::null_mut();
-            }
-            self.current = end as usize;
-            start
+    pub fn alloc(&mut self, layout: Layout) -> Option<usize> {
+        let start = self.current.align_up(layout.align());
+        let end = start + layout.size();
+
+        if end > self.end {
+            return None;
         }
+
+        self.current = end;
+
+        Some(start)
     }
 }
 
@@ -54,15 +55,15 @@ impl Ram {
         unsafe { (*RAM_ALLOC.0.get()).current as _ }
     }
 
-    pub fn alloc(&self, layout: Layout) -> Option<NonNull<u8>> {
-        unsafe { NonNull::new((*RAM_ALLOC.0.get()).alloc(layout)) }
+    pub fn alloc(&self, layout: Layout) -> Option<usize> {
+        unsafe { (*RAM_ALLOC.0.get()).alloc(layout) }
     }
 }
 
 impl FrameAllocator for Ram {
     fn alloc_frame(&self) -> Option<page_table_generic::PhysAddr> {
         self.alloc(unsafe { Layout::from_size_align_unchecked(page_size(), page_size()) })
-            .map(|ptr| (ptr.as_ptr() as usize).into())
+            .map(|ptr| ptr.into())
     }
 
     fn dealloc_frame(&self, _frame: page_table_generic::PhysAddr) {}

@@ -70,5 +70,6 @@ pub(crate) fn mmu_entry() -> ! {
     elx::flush_tlb(None);
     super::trap::setup();
     crate::mem::reset_memory_map();
+    crate::arch::relocate::reset();
     crate::prime_entry()
 }
