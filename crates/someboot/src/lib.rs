@@ -39,6 +39,7 @@ pub mod mem;
 pub mod power;
 mod smp;
 pub mod timer;
+mod err;
 
 pub use fdt::fdt_addr;
 pub use page_table_generic::*;
@@ -133,15 +134,18 @@ fn prime_entry() -> ! {
     unsafe { __someboot_main() }
 }
 
-fn prime_init() -> anyhow::Result<()> {
+fn prime_init() -> Result<(), &'static str> {
     fdt::setup_earlycon();
     let _ = acpi::earlycon::acpi_setup_earlycon();
 
     println!("Trap vector at {:#x}", arch::Arch::trap_addr());
 
     mem::init_after_mmu();
-    // crate::smp::init_percpu()?;
-    mem::memory_map_setup()?;
+    crate::smp::init_percpu()?;
+    if let Err(e) = mem::memory_map_setup() {
+        println!("Memory map setup failed: {e}");
+        return Err("Memory map setup failed");
+    }
     mem::print_memory_map();
 
     Ok(())
