@@ -26,25 +26,39 @@ pub fn init_percpu() -> Result<(), &'static str> {
 
     let percpu_data = Ram {}
         .alloc(Layout::from_size_align(percpu_all_secondary_size, page_size()).unwrap())
-        .ok_or("Ram no memory")?;
+        .unwrap();
 
     unsafe {
         PERCPU_START = percpu_data;
         PERCPU_END = PERCPU_START + percpu_all_secondary_size;
 
-        core::ptr::write_bytes(percpu_data as *mut u8, 0, percpu_all_secondary_size);
+        core::ptr::write_bytes(__va(percpu_data), 0, percpu_all_secondary_size);
     }
+
+    println!(
+        "Per-CPU data allocated at {:#x} - {:#x}",
+        unsafe { PERCPU_START },
+        unsafe { PERCPU_END }
+    );
 
     for (idx, hard_id) in __cpu_id_list().enumerate() {
         let cpu_percpu_start = percpu_data_range().start + idx * percpu_size;
         println!(
             "Initializing per-CPU RAM for CPU{idx} - hard id {hard_id:#x} @ {cpu_percpu_start:#x}"
         );
-        let start_va = __va(cpu_percpu_start);
         let meta_start = cpu_percpu_start + percpu_link_range().len();
-        let meta = unsafe { &mut *start_va.add(meta_start).cast::<PerCpuMeta>() };
+        let meta_va = __va(meta_start);
+
+        let meta = unsafe { &mut *meta_va.cast::<PerCpuMeta>() };
         meta.cpu_id = hard_id;
         meta.stack_top = meta_start + size_of::<PerCpuMeta>();
+    }
+
+    for meta in cpu_meta_list() {
+        println!(
+            "CPU{} - hard id {:#x} stack top @ {:#x}",
+            meta.cpu_id, meta.cpu_id, meta.stack_top
+        );
     }
 
     Ok(())
@@ -63,7 +77,7 @@ fn percpu_data_size() -> usize {
 }
 
 pub fn cpu_meta_list() -> impl Iterator<Item = PerCpuMeta> {
-    unsafe {}
+    CpuMetaIter { next: 0 }
 }
 
 struct CpuMetaIter {
@@ -79,7 +93,7 @@ impl Iterator for CpuMetaIter {
         if self.next >= percpu_data_range().end {
             return None;
         }
-        let meta = unsafe { &*(self.next as *const PerCpuMeta) };
+        let meta = unsafe { &*(__va(base) as *const PerCpuMeta) };
         self.next += percpu_data_size();
         Some(*meta)
     }
