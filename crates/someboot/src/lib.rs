@@ -33,19 +33,22 @@ pub(crate) mod consts;
 #[cfg(efi)]
 mod efi_stub;
 mod elf;
+mod err;
 pub(crate) mod fdt;
 pub mod irq;
 pub mod mem;
 pub mod power;
 mod smp;
 pub mod timer;
-mod err;
 
 pub use fdt::fdt_addr;
 pub use page_table_generic::*;
 pub use somehal_macros::{entry, irq_handler, secondary_entry};
 
-use crate::{irq::IrqId, mem::PageTableInfo};
+use crate::{
+    irq::IrqId,
+    mem::{__va, PageTableInfo},
+};
 
 #[allow(unused)]
 pub trait ArchTrait {
@@ -55,6 +58,8 @@ pub trait ArchTrait {
     fn _io(paddr: usize) -> *mut u8 {
         Self::_va(paddr)
     }
+
+    fn jump_to(entry: usize, sp: usize) -> !;
 
     fn post_allocator();
 
@@ -131,7 +136,15 @@ fn prime_entry() -> ! {
     unsafe extern "C" {
         fn __someboot_main() -> !;
     }
-    unsafe { __someboot_main() }
+
+    let entry = __someboot_main as *const () as usize;
+    let sp = crate::smp::cpu_meta(0).unwrap().stack_top;
+    let sp = __va(sp);
+    println!(
+        "Jumping to main entry point at {:#x} with SP {:#p}",
+        entry, sp
+    );
+    arch::Arch::jump_to(entry, sp as _)
 }
 
 fn prime_init() -> Result<(), &'static str> {

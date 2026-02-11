@@ -145,4 +145,16 @@ impl ArchTrait for Arch {
     fn trap_addr() -> usize {
         trap_addr()
     }
+
+    fn jump_to(entry: usize, sp: usize) -> ! {
+        unsafe {
+            core::arch::asm!(
+                "mov sp, {sp}",
+                "br {entry}",
+                sp = in(reg) sp,
+                entry = in(reg) entry,
+                options(noreturn)
+            );
+        }
+    }
 }

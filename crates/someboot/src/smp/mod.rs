@@ -11,6 +11,10 @@ fn __cpu_id_list() -> impl Iterator<Item = usize> {
     crate::fdt::cpu_id_list().into_iter().flatten()
 }
 
+/// Per-CPU data layout:
+///
+///
+/// | Linker percpu data | PerCpuMeta | align padding to page size | Stack |
 pub fn init_percpu() -> Result<(), &'static str> {
     println!("Initializing per-CPU data");
     let cpu_num = __cpu_id_list().count();
@@ -51,7 +55,7 @@ pub fn init_percpu() -> Result<(), &'static str> {
 
         let meta = unsafe { &mut *meta_va.cast::<PerCpuMeta>() };
         meta.cpu_id = hard_id;
-        meta.stack_top = meta_start + size_of::<PerCpuMeta>();
+        meta.stack_top = cpu_percpu_start + stack_offset() + stack_size();
     }
 
     for meta in cpu_meta_list() {
@@ -71,13 +75,28 @@ pub struct PerCpuMeta {
     pub cpu_id: usize,
 }
 
+fn stack_offset() -> usize {
+    let link_size = percpu_link_range().len();
+    let meta_size = core::mem::size_of::<PerCpuMeta>();
+    (link_size + meta_size).align_up(page_size())
+}
+
 fn percpu_data_size() -> usize {
-    (core::mem::size_of::<PerCpuMeta>() + stack_size() + percpu_link_range().len())
-        .align_up(page_size())
+    (stack_offset() + stack_size()).align_up(page_size())
 }
 
 pub fn cpu_meta_list() -> impl Iterator<Item = PerCpuMeta> {
     CpuMetaIter { next: 0 }
+}
+
+pub fn cpu_meta(idx: usize) -> Option<PerCpuMeta> {
+    let base = percpu_data_range().start + idx * percpu_data_size();
+    if base >= percpu_data_range().end {
+        return None;
+    }
+
+    let meta_start = base + percpu_link_range().len();
+    Some(unsafe { *(__va(meta_start) as *const PerCpuMeta) })
 }
 
 struct CpuMetaIter {
@@ -88,14 +107,9 @@ impl Iterator for CpuMetaIter {
     type Item = PerCpuMeta;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let base = percpu_data_range().start + self.next * percpu_data_size();
-
-        if self.next >= percpu_data_range().end {
-            return None;
-        }
-        let meta = unsafe { &*(__va(base) as *const PerCpuMeta) };
-        self.next += percpu_data_size();
-        Some(*meta)
+        let meta = cpu_meta(self.next)?;
+        self.next += 1;
+        Some(meta)
     }
 }
 
