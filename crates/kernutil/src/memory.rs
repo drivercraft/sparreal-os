@@ -63,6 +63,7 @@ pub enum MemoryType {
     KImage,
     Reserved,
     Mmio,
+    PerCpuData,
 }
 
 impl ranges_ext::RangeOp for MemoryDescriptor {

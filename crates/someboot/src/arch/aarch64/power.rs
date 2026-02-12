@@ -49,11 +49,18 @@ impl Display for Method {
 
 // Shutdown the system
 pub fn shutdown() -> ! {
-    match *METHOD {
+    if !METHOD.is_init() {
+        loop {
+            wfi();
+        }
+    }
+
+    if let Err(e) = match *METHOD {
         Method::Smc => psci::system_off::<Smc>(),
         Method::Hvc => psci::system_off::<Hvc>(),
+    } {
+        println!("Failed to shutdown: {e}");
     }
-    .unwrap();
     loop {
         wfi();
     }

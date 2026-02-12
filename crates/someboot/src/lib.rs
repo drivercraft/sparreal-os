@@ -129,10 +129,15 @@ pub fn set_user_page_table(pt: PageTableInfo) {
 
 /// Entry point after enabling MMU
 fn prime_entry() -> ! {
-    if let Err(e) = prime_init() {
-        println!("Initialization failed: {e}");
-        arch::Arch::shutdown();
-    }
+    fdt::setup_earlycon();
+    let _ = acpi::earlycon::acpi_setup_earlycon();
+
+    println!("Trap vector at {:#x}", arch::Arch::trap_addr());
+
+    mem::init_after_mmu();
+    crate::smp::init_percpu();
+    mem::memory_map_setup();
+    mem::print_memory_map();
 
     unsafe extern "C" {
         fn __someboot_main() -> !;
@@ -146,21 +151,4 @@ fn prime_entry() -> ! {
         entry, sp
     );
     arch::Arch::jump_to(entry, sp as _)
-}
-
-fn prime_init() -> Result<(), &'static str> {
-    fdt::setup_earlycon();
-    let _ = acpi::earlycon::acpi_setup_earlycon();
-
-    println!("Trap vector at {:#x}", arch::Arch::trap_addr());
-
-    mem::init_after_mmu();
-    crate::smp::init_percpu()?;
-    if let Err(e) = mem::memory_map_setup() {
-        println!("Memory map setup failed: {e}");
-        return Err("Memory map setup failed");
-    }
-    mem::print_memory_map();
-
-    Ok(())
 }

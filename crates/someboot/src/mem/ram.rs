@@ -1,9 +1,10 @@
 use core::{alloc::Layout, ops::Range};
 
+use kernutil::memory::{MemoryDescriptor, MemoryType};
 use num_align::NumAlign;
 use page_table_generic::FrameAllocator;
 
-use crate::mem::page_size;
+use crate::mem::{add_memory_descriptor, page_size};
 
 /// RAM 分配器的起始地址
 static mut RAM_START: usize = 0;
@@ -30,6 +31,37 @@ pub unsafe fn alloc(layout: Layout) -> Option<usize> {
         RAM_CURRENT = end;
     }
     Some(start)
+}
+
+pub unsafe fn alloc_and_flush_to_memory_map(
+    layout: Layout,
+    name: &'static str,
+    kind: MemoryType,
+) -> Option<usize> {
+    unsafe {
+        let addr = alloc(layout)?;
+        flush_to_memory_map(name, kind);
+        Some(addr)
+    }
+}
+
+pub unsafe fn flush_to_memory_map(name: &'static str, kind: MemoryType) {
+    let range = used_range();
+    if range.is_empty() {
+        return;
+    }
+
+    let end = range.end;
+    let desc = MemoryDescriptor::new_with_range(name, range.clone(), kind);
+    add_memory_descriptor(desc).unwrap();
+    println!(
+        "Flushed RAM used range to memory map: {:#x?}, current: {:#x}",
+        range, end
+    );
+    unsafe {
+        RAM_START = end;
+        RAM_CURRENT = end;
+    }
 }
 
 #[allow(dead_code)]

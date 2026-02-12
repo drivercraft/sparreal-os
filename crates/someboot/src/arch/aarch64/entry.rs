@@ -2,7 +2,7 @@ use core::arch::naked_asm;
 
 use aarch64_cpu::registers::{CurrentEL, Readable};
 
-use crate::{arch::elx, consts::VM_LOAD_ADDRESS, entry::PrimaryCpuInitInfo, fdt};
+use crate::{arch::elx, consts::VM_LOAD_ADDRESS, entry::PrimaryCpuInitInfo};
 
 use super::switch_to_elx;
 
@@ -60,6 +60,7 @@ pub(crate) fn mmu_entry() -> ! {
     elx::set_user_table(kernutil::memory::PageTableInfo::zero());
     elx::flush_tlb(None);
     super::trap::setup();
+
     crate::mem::reset_memory_map();
     crate::arch::relocate::reset();
     crate::prime_entry()

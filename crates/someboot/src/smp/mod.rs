@@ -1,6 +1,7 @@
 use core::alloc::Layout;
 
 use arrayvec::ArrayVec;
+use kernutil::memory::MemoryType;
 use num_align::NumAlign;
 
 use crate::mem::{__va, page_size, stack_size};
@@ -46,7 +47,7 @@ fn __cpu_id_list() -> impl Iterator<Item = usize> {
 ///
 ///
 /// | Linker percpu data | PerCpuMeta | align padding to page size | Stack |
-pub fn init_percpu() -> Result<(), &'static str> {
+pub fn init_percpu() {
     println!("Initializing per-CPU data");
     let cpu_num = __cpu_id_list().count();
 
@@ -59,9 +60,13 @@ pub fn init_percpu() -> Result<(), &'static str> {
         percpu_all_secondary_size, cpu_num
     );
 
+    unsafe { crate::mem::ram::flush_to_memory_map("Some Rsv", MemoryType::Reserved) };
+
     let percpu_data = unsafe {
-        crate::mem::ram::alloc(
+        crate::mem::ram::alloc_and_flush_to_memory_map(
             Layout::from_size_align(percpu_all_secondary_size, page_size()).unwrap(),
+            "PerCPU Data",
+            MemoryType::PerCpuData,
         )
         .unwrap()
     };
@@ -98,8 +103,6 @@ pub fn init_percpu() -> Result<(), &'static str> {
             meta.cpu_id, meta.cpu_id, meta.stack_top
         );
     }
-
-    Ok(())
 }
 
 #[derive(Debug, Clone, Copy)]

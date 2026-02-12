@@ -178,22 +178,20 @@ pub fn page_size() -> usize {
 //     start..end.align_up(page_size())
 // }
 
-pub(crate) fn memory_map_setup() -> anyhow::Result<()> {
+pub(crate) fn memory_map_setup() {
     let kernel_range = kimage_range();
     let desc = MemoryDescriptor::new_with_range("Kernel", kernel_range, MemoryType::KImage);
 
-    add_memory_descriptor(desc)?;
+    add_memory_descriptor(desc).unwrap();
 
     let ram_range = ram::used_range();
-
-    let desc = MemoryDescriptor::new_with_range("Some Rsv", ram_range, MemoryType::Reserved);
-    add_memory_descriptor(desc)?;
-
-    if let Some(desc) = crate::console::debug_to_memory_desc() {
-        add_memory_descriptor(desc)?;
+    if !ram_range.is_empty() {
+        let desc = MemoryDescriptor::new_with_range("Some Rsv", ram_range, MemoryType::Reserved);
+        add_memory_descriptor(desc).unwrap();
     }
-
-    Ok(())
+    if let Some(desc) = crate::console::debug_to_memory_desc() {
+        add_memory_descriptor(desc).unwrap();
+    }
 }
 
 pub fn print_memory_map() {

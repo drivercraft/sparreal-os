@@ -42,6 +42,10 @@ impl<T> StaticCell<T> {
         unsafe { (*self.value.get()).as_mut_ptr().write(val) };
     }
 
+    pub fn is_init(&self) -> bool {
+        self.init.load(Ordering::Acquire)
+    }
+
     /// 初始化单核场景下的值
     /// # Safety
     /// thread-unsafe
