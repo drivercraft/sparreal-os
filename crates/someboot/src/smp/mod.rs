@@ -3,7 +3,7 @@ use core::alloc::Layout;
 use arrayvec::ArrayVec;
 use num_align::NumAlign;
 
-use crate::mem::{__va, page_size, ram::Ram, stack_size};
+use crate::mem::{__va, page_size, stack_size};
 
 static mut PERCPU_START: usize = 0;
 static mut PERCPU_END: usize = 0;
@@ -59,9 +59,12 @@ pub fn init_percpu() -> Result<(), &'static str> {
         percpu_all_secondary_size, cpu_num
     );
 
-    let percpu_data = Ram {}
-        .alloc(Layout::from_size_align(percpu_all_secondary_size, page_size()).unwrap())
-        .unwrap();
+    let percpu_data = unsafe {
+        crate::mem::ram::alloc(
+            Layout::from_size_align(percpu_all_secondary_size, page_size()).unwrap(),
+        )
+        .unwrap()
+    };
 
     unsafe {
         PERCPU_START = percpu_data;

@@ -54,9 +54,9 @@ pub(crate) fn save_fdt() {
     let size = fdt.header().totalsize as usize;
     let slice = unsafe { core::slice::from_raw_parts(FDT_ADDR as *const u8, size) };
 
-    let fdt_buff = crate::mem::ram::Ram
-        .alloc(core::alloc::Layout::from_size_align(size, 8).unwrap())
-        .unwrap();
+    let fdt_buff = unsafe {
+        crate::mem::ram::alloc(core::alloc::Layout::from_size_align(size, 8).unwrap()).unwrap()
+    };
 
     unsafe {
         core::ptr::copy_nonoverlapping(slice.as_ptr(), fdt_buff as _, size);

@@ -32,6 +32,7 @@ pub unsafe fn alloc(layout: Layout) -> Option<usize> {
     Some(start)
 }
 
+#[allow(dead_code)]
 /// 获取当前分配位置
 pub fn current() -> *mut u8 {
     unsafe { RAM_CURRENT as _ }
@@ -56,19 +57,8 @@ pub fn used_range() -> Range<usize> {
     }
 }
 
-/// RAM 分配器类型（保留用于 FrameAllocator trait）
 #[derive(Clone, Copy)]
-pub struct Ram;
-
-impl Ram {
-    pub fn current(&self) -> *mut u8 {
-        current()
-    }
-
-    pub fn alloc(&self, layout: Layout) -> Option<usize> {
-        unsafe { alloc(layout) }
-    }
-}
+pub(crate) struct Ram;
 
 impl FrameAllocator for Ram {
     fn alloc_frame(&self) -> Option<page_table_generic::PhysAddr> {
