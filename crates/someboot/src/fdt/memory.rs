@@ -34,20 +34,21 @@ pub fn init_memory_map() -> Option<()> {
         .unwrap();
     }
 
-    // for reserved in fdt.reserved_memory_regions().ok()?.flatten() {
-    //     if let Ok(mut itr) = reserved.reg()
-    //         && let Some(reg) = itr.next()
-    //         && let Some(size) = reg.size
-    //         && size > 0
-    //     {
-    //         add_memory_descriptor(MemoryDescriptor {
-    //             name: reserved.name(),
-    //             physical_start: reg.address as usize,
-    //             size_in_bytes: size,
-    //             memory_type: MemoryType::Reserved,
-    //         });
-    //     }
-    // }
+    for reserved in fdt.reserved_memory() {
+        if let Some(mut itr) = reserved.reg()
+            && let Some(reg) = itr.next()
+            && let Some(size) = reg.size
+            && size > 0
+        {
+            add_memory_descriptor(MemoryDescriptor {
+                name: reserved.name(),
+                physical_start: reg.address as usize,
+                size_in_bytes: size as usize,
+                memory_type: MemoryType::Reserved,
+            })
+            .unwrap();
+        }
+    }
 
     Some(())
 }

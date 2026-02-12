@@ -100,6 +100,32 @@ pub(crate) fn _fixmap_io(paddr: usize) -> *mut u8 {
 
 pub(crate) fn early_init2() {
     crate::fdt::init_memory_map();
+
+    let kernel_range = kimage_range();
+    add_memory_descriptor(MemoryDescriptor {
+        name: "KImage",
+        physical_start: kernel_range.start,
+        size_in_bytes: kernel_range.end - kernel_range.start,
+        memory_type: MemoryType::KImage,
+    })
+    .unwrap();
+
+    unsafe { MEMORY_MAP.update(|m| m.sort_by_key(|a| a.physical_start)) };
+
+    print_memory_map();
+
+    let mut free_range = None;
+
+    for desc in memory_map().iter() {
+        if desc.memory_type == MemoryType::Free && desc.size_in_bytes > 8 * MB {
+            free_range = Some(desc.physical_start..(desc.physical_start + desc.size_in_bytes));
+            break;
+        }
+    }
+
+    ram::init(free_range.expect("No free memory"));
+
+    crate::fdt::save_fdt();
 }
 
 pub(crate) fn early_init(range: core::ops::Range<usize>) {
@@ -131,8 +157,7 @@ pub(crate) fn reset_memory_map() {
 pub(crate) fn kimage_range() -> core::ops::Range<usize> {
     unsafe {
         let Some(start) = KIMAGE_START else {
-            println!("Kernel image start is not set");
-            panic!();
+            panic!("Kernel image start is not set");
         };
         let end = KIMAGE_END;
         start.raw()..end.raw()

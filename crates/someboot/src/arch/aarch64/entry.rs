@@ -51,8 +51,6 @@ pub fn el_entry() -> ! {
 
     println!("EL: {}", CurrentEL.read(CurrentEL::EL));
 
-    crate::mem::early_init(kernel_code_end_lma..usize::MAX);
-    fdt::init_memory_map();
     crate::arch::paging::enable_mmu()
 }
 
