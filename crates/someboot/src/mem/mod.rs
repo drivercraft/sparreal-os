@@ -60,6 +60,10 @@ pub fn __io(paddr: usize) -> *mut u8 {
     crate::arch::Arch::_io(paddr)
 }
 
+pub fn __percpu(paddr: usize) -> *mut u8 {
+    crate::arch::Arch::_percpu(paddr)
+}
+
 /// kernel image 物理地址转换为内核虚拟地址
 pub(crate) fn __kimage_va(paddr: usize) -> *mut u8 {
     (paddr as isize - vm_load_offset()) as usize as *mut u8
@@ -126,6 +130,7 @@ pub(crate) fn early_init2() {
     ram::init(free_range.expect("No free memory"));
 
     crate::fdt::save_fdt();
+    crate::smp::init_percpu();
 }
 
 pub(crate) fn early_init(range: core::ops::Range<usize>) {

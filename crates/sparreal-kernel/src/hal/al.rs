@@ -13,6 +13,7 @@ use crate::os::mem::{__io, page_size};
 pub trait Memory {
     fn _va(paddr: PhysAddr) -> VirtAddr;
     fn _io(paddr: PhysAddr) -> VirtAddr;
+    fn _percpu(paddr: PhysAddr) -> VirtAddr;
 
     /// 内核镜像在虚拟地址空间中的偏移
     fn kimage_offset() -> isize;

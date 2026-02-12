@@ -4,7 +4,7 @@ use arrayvec::ArrayVec;
 use kernutil::memory::MemoryType;
 use num_align::NumAlign;
 
-use crate::mem::{__va, page_size, stack_size};
+use crate::mem::{page_size, phys_to_virt, stack_size};
 
 static mut PERCPU_START: usize = 0;
 static mut PERCPU_END: usize = 0;
@@ -75,7 +75,7 @@ pub fn init_percpu() {
         PERCPU_START = percpu_data;
         PERCPU_END = PERCPU_START + percpu_all_secondary_size;
 
-        core::ptr::write_bytes(__va(percpu_data), 0, percpu_all_secondary_size);
+        core::ptr::write_bytes(phys_to_virt(percpu_data), 0, percpu_all_secondary_size);
     }
 
     println!(
@@ -90,7 +90,7 @@ pub fn init_percpu() {
             "Initializing per-CPU RAM for CPU{idx} - hard id {hard_id:#x} @ {cpu_percpu_start:#x}"
         );
         let meta_start = cpu_percpu_start + percpu_link_range().len();
-        let meta_va = __va(meta_start);
+        let meta_va = phys_to_virt(meta_start);
 
         let meta = unsafe { &mut *meta_va.cast::<PerCpuMeta>() };
         meta.cpu_id = hard_id;
@@ -122,6 +122,11 @@ fn percpu_data_size() -> usize {
     (stack_offset() + stack_size()).align_up(page_size())
 }
 
+/// Physical RAM allocated for per-CPU data should be mapped to this virtual address range in the kernel
+pub(crate) fn percpu_range() -> core::ops::Range<usize> {
+    unsafe { PERCPU_START..PERCPU_END }
+}
+
 pub fn cpu_meta_list() -> impl Iterator<Item = PerCpuMeta> {
     CpuMetaIter { next: 0 }
 }
@@ -133,7 +138,7 @@ pub fn cpu_meta(idx: usize) -> Option<PerCpuMeta> {
     }
 
     let meta_start = base + percpu_link_range().len();
-    Some(unsafe { *(__va(meta_start) as *const PerCpuMeta) })
+    Some(unsafe { *(phys_to_virt(meta_start) as *const PerCpuMeta) })
 }
 
 struct CpuMetaIter {

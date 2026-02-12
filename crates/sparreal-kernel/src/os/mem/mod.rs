@@ -23,6 +23,10 @@ pub(crate) fn __io(addr: PhysAddr) -> VirtAddr {
     crate::hal::al::memory::_io(addr)
 }
 
+pub(crate) fn __percpu(addr: PhysAddr) -> VirtAddr {
+    crate::hal::al::memory::_percpu(addr)
+}
+
 pub(crate) fn __kimage_va(addr: PhysAddr) -> VirtAddr {
     let offset = crate::hal::al::memory::kimage_offset();
     VirtAddr::new((addr.raw() as isize - offset) as usize)

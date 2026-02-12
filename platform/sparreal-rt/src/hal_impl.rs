@@ -45,6 +45,9 @@ impl Memory for MemoryImpl {
     fn _io(paddr: PhysAddr) -> VirtAddr {
         somehal::mem::__io(paddr.raw() as _).into()
     }
+    fn _percpu(paddr: PhysAddr) -> VirtAddr {
+        somehal::mem::__percpu(paddr.raw() as _).into()
+    }
 
     fn kimage_offset() -> isize {
         somehal::mem::vm_load_offset()

@@ -59,6 +59,9 @@ pub trait ArchTrait {
     fn _io(paddr: usize) -> *mut u8 {
         Self::_va(paddr)
     }
+    fn _percpu(paddr: usize) -> *mut u8 {
+        Self::_va(paddr)
+    }
 
     fn jump_to(entry: usize, sp: usize) -> !;
 
@@ -135,7 +138,6 @@ fn prime_entry() -> ! {
     println!("Trap vector at {:#x}", arch::Arch::trap_addr());
 
     mem::init_after_mmu();
-    crate::smp::init_percpu();
     mem::memory_map_setup();
     mem::print_memory_map();
 

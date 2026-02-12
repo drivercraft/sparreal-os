@@ -9,7 +9,7 @@ use crate::arch::elx::set_user_table;
 use crate::{
     arch::elx::{flush_tlb, set_kernal_table, setup_sctlr, setup_table_regs},
     console::print_mapping,
-    mem::{__kimage_va, __va, MB, PageTableInfo, page_size},
+    mem::{__kimage_va, __percpu, __va, MB, PageTableInfo, page_size},
 };
 
 mod pte;
@@ -98,6 +98,32 @@ fn setup_page_table() -> anyhow::Result<()> {
         allow_huge: true,
         flush: false,
     })?;
+
+    let percpu_range = crate::smp::percpu_range();
+    print_mapping(
+        "PerCpu",
+        __percpu(percpu_range.start) as _,
+        percpu_range.start,
+        percpu_range.len(),
+    );
+
+    table
+        .map(&MapConfig {
+            vaddr: __percpu(percpu_range.start).into(),
+            paddr: percpu_range.start.into(),
+            size: percpu_range.len(),
+            pte: PteConfig {
+                valid: true,
+                read: true,
+                writable: true,
+                executable: true,
+                mem_attr: MemAttributes::PerCpu,
+                ..Default::default()
+            },
+            allow_huge: true,
+            flush: false,
+        })
+        .unwrap();
 
     let debug_base = unsafe { crate::console::DEBUG_BASE };
     if debug_base != 0 {

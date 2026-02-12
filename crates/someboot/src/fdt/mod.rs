@@ -78,3 +78,11 @@ pub fn cpu_id_list() -> Option<impl Iterator<Item = usize>> {
             .unwrap_or(0)
     }))
 }
+
+/// 获取 FDT 占用的物理地址范围
+pub fn fdt_range() -> Option<core::ops::Range<usize>> {
+    let fdt = fdt_base()?;
+    let start = unsafe { FDT_ADDR };
+    let end = start + fdt.header().totalsize as usize;
+    Some(start..end)
+}

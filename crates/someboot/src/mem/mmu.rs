@@ -36,6 +36,7 @@ pub(crate) fn set_mmu_enabled() {
     MMU_ENABLED.store(true, core::sync::atomic::Ordering::Relaxed);
 }
 
+
 pub trait PageTableOp {
     /// 映射虚拟地址范围到物理地址范围
     fn map(&mut self, config: &page_table_generic::MapConfig) -> PagingResult;
