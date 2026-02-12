@@ -98,8 +98,8 @@ pub(crate) fn _fixmap_io(paddr: usize) -> *mut u8 {
     }
 }
 
-pub(crate) fn early_init2(){
-    
+pub(crate) fn early_init2() {
+    crate::fdt::init_memory_map();
 }
 
 pub(crate) fn early_init(range: core::ops::Range<usize>) {

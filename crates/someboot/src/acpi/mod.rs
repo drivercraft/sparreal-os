@@ -6,6 +6,7 @@ use core::{ffi::c_void, ptr::NonNull};
 pub(crate) mod earlycon;
 mod handle;
 pub mod power;
+// pub mod ram;
 
 use crate::mem::phys_to_virt;
 pub(crate) use handle::AcpiHandle;
