@@ -255,6 +255,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "buddy_system_allocator"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b672b945a3e4f4f40bfd4cd5ee07df9e796a42254ce7cd6d2599ad969244c44a"
+dependencies = [
+ "spin 0.10.0",
+]
+
+[[package]]
 name = "byte-unit"
 version = "5.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1136,7 +1145,7 @@ dependencies = [
  "anyhow",
  "arrayvec",
  "bitflags 2.10.0",
- "buddy_system_allocator",
+ "buddy_system_allocator 0.12.0",
  "byte-unit",
  "derive_more",
  "fdt-edit",
@@ -1199,7 +1208,7 @@ dependencies = [
  "ansi_rgb",
  "anstyle",
  "bitflags 2.10.0",
- "buddy_system_allocator",
+ "buddy_system_allocator 0.11.0",
  "byte-unit",
  "dma-api 0.7.0",
  "fdt-raw 0.1.5",

@@ -22,7 +22,7 @@ ansi_rgb = "0.2"
 anyhow = {workspace = true, default-features = false}
 arrayvec = {version = "0.7", default-features = false}
 bitflags = "2.9"
-buddy_system_allocator = "0.11"
+buddy_system_allocator = "0.12"
 byte-unit = {workspace = true}
 fdt-edit = "0.1"
 # fdt-raw = "0.1"
