@@ -98,6 +98,10 @@ pub(crate) fn _fixmap_io(paddr: usize) -> *mut u8 {
     }
 }
 
+pub(crate) fn early_init2(){
+    
+}
+
 pub(crate) fn early_init(range: core::ops::Range<usize>) {
     static mut INITIALIZED: bool = false;
     if unsafe { INITIALIZED } {

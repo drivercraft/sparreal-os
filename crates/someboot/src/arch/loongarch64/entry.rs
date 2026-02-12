@@ -91,6 +91,9 @@ fn rust_main() -> ! {
     let kernel_code_start_lma = to_phys(sym_running_addr!(_head));
     println!("Kernel LMA: {:#x}", kernel_code_start_lma);
     let kernel_code_end_lma = to_phys(sym_running_addr!(__kernel_code_end));
+    if unsafe { FW_ARG0 } == 1 {
+        eif_entry();
+    }
 
     crate::mem::setup_entry(
         kernel_code_start_lma.into(),
@@ -100,10 +103,6 @@ fn rust_main() -> ! {
 
     // crate::mem::set_kernel_range(kernel_code_start_lma, kernel_code_end_lma);
     // set_vm_load_offset(crate::mem::kimage_range().start as isize - VM_LOAD_ADDRESS as isize);
-
-    if unsafe { FW_ARG0 } == 1 {
-        eif_entry();
-    }
 
     println!("LoongArch64 Rust kernel entry.");
 

@@ -33,6 +33,7 @@ pub(crate) mod consts;
 #[cfg(efi)]
 mod efi_stub;
 mod elf;
+mod entry;
 mod err;
 pub(crate) mod fdt;
 pub mod irq;

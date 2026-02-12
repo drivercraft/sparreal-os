@@ -9,7 +9,7 @@ pub use memory::{init_memory_map, memories};
 
 use crate::mem::phys_to_virt;
 
-pub static mut FDT_ADDR: usize = 0;
+pub(crate) static mut FDT_ADDR: usize = 0;
 static FDT: StaticCell<fdt_edit::Fdt> = StaticCell::uninit();
 
 pub fn fdt_addr() -> Option<*mut u8> {
