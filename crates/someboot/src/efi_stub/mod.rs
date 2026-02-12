@@ -23,9 +23,11 @@ pub(crate) fn setup_service(system_table: *const ::core::ffi::c_void) {
     unsafe { table::set_system_table(system_table.cast()) };
     setup_console();
     find_acpi_rsdp();
+    mp::init_cpu_id_list();
 }
 
 pub(crate) mod memmap;
+pub(crate) mod mp;
 pub mod pe;
 
 /// EFI PE 入口点 - 符合 EFI ABI 的汇编包装

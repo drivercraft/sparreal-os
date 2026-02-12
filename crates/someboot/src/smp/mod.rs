@@ -1,5 +1,6 @@
 use core::alloc::Layout;
 
+use arrayvec::ArrayVec;
 use num_align::NumAlign;
 
 use crate::mem::{__va, page_size, ram::Ram, stack_size};
@@ -8,7 +9,37 @@ static mut PERCPU_START: usize = 0;
 static mut PERCPU_END: usize = 0;
 
 fn __cpu_id_list() -> impl Iterator<Item = usize> {
-    crate::fdt::cpu_id_list().into_iter().flatten()
+    let mut ids = ArrayVec::<usize, 256>::new();
+
+    let mut filled = false;
+
+    if let Some(list) = crate::fdt::cpu_id_list() {
+        filled = true;
+        for id in list {
+            let _ = ids.try_push(id);
+        }
+    } else if let Some(list) = crate::acpi::cpu_id_list() {
+        filled = true;
+        for id in list {
+            let _ = ids.try_push(id);
+        }
+    }
+
+    #[cfg(efi)]
+    if !filled {
+        if let Some(list) = crate::efi_stub::mp::cpu_id_list() {
+            filled = true;
+            for id in list {
+                let _ = ids.try_push(id);
+            }
+        }
+    }
+
+    if !filled {
+        let _ = ids.try_push(0);
+    }
+
+    ids.into_iter()
 }
 
 /// Per-CPU data layout:
