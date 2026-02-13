@@ -25,5 +25,5 @@ pub fn primary_init_early(params: PrimaryCpuInitInfo) {
     println!("VM Load @{:#x}", params.kernel_start);
     println!("VM Load Offset: {:#x}", crate::mem::vm_load_offset());
 
-    crate::mem::early_init2();
+    crate::mem::early_init();
 }

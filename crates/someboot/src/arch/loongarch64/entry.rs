@@ -1,7 +1,5 @@
 use core::{arch::naked_asm, ffi::c_void};
 
-use kernutil::memory::MemoryType;
-
 use crate::{arch::addrspace::*, entry::PrimaryCpuInitInfo};
 
 static mut FW_ARG0: usize = 0;
@@ -106,41 +104,6 @@ fn rust_main() -> ! {
     });
 
     super::trap::per_cpu_trap_init(true);
-
-    // crate::mem::setup_entry(
-    //     kernel_code_start_lma.into(),
-    //     kernel_code_end_lma.into(),
-    //     VM_LOAD_ADDRESS.into(),
-    // );
-
-    // println!("Kernel code end LMA: {:#x}", kernel_code_end_lma);
-
-    // let _ = crate::acpi::earlycon::acpi_setup_earlycon();
-    // crate::efi_stub::exit_boot_services();
-
-    // let max_ram_range = crate::mem::memory_map()
-    //     .iter()
-    //     .filter(|desc| desc.memory_type == MemoryType::Free)
-    //     .max_by_key(|desc| desc.size_in_bytes);
-
-    // let Some(ram_range) = max_ram_range else {
-    //     println!("No usable RAM found!");
-    //     panic!();
-    // };
-
-    // // crate::mem::early_init(crate::mem::kimage_range().end..usize::MAX);
-    // crate::mem::early_init(
-    //     ram_range.physical_start..ram_range.physical_start + ram_range.size_in_bytes,
-    // );
-
-    // println!("Trap enabled.");
-
-    // println!("Rust main.");
-
-    // if let Some(cmdline) = crate::cmdline::cmdline() {
-    //     println!("{cmdline}");
-    // }
-
     super::paging::relocate_kernel_to_vm_code()
 }
 

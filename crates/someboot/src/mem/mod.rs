@@ -103,7 +103,7 @@ pub(crate) fn _fixmap_io(paddr: usize) -> *mut u8 {
     }
 }
 
-pub(crate) fn early_init2() {
+pub(crate) fn early_init() {
     crate::fdt::init_memory_map();
 
     let kernel_range = kimage_range();

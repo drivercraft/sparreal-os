@@ -92,6 +92,7 @@ fn percpu_data_size() -> usize {
     (stack_offset() + stack_size()).align_up(page_size())
 }
 
+#[allow(dead_code)]
 /// Physical RAM allocated for per-CPU data should be mapped to this virtual address range in the kernel
 pub(crate) fn percpu_range() -> core::ops::Range<usize> {
     unsafe { PERCPU_START..PERCPU_END }
