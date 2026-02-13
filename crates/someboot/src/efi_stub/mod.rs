@@ -27,7 +27,6 @@ pub(crate) fn setup_service(system_table: *const ::core::ffi::c_void) {
 }
 
 pub(crate) mod memmap;
-pub(crate) mod mp;
 pub mod pe;
 
 /// EFI PE 入口点 - 符合 EFI ABI 的汇编包装
