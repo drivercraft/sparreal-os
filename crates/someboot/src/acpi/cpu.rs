@@ -32,6 +32,7 @@ pub struct CpuInfo {
     /// - LoongArch64: core ID
     pub physical_id: u32,
     /// ACPI 处理器 ID
+    #[allow(dead_code)]
     pub processor_id: u32,
     /// 是否启用
     pub enabled: bool,
@@ -559,21 +560,25 @@ pub use loongarch64_impl::*;
 /// - RISC-V 64: RINTC
 /// - LoongArch64: Core PIC
 #[cfg(target_arch = "x86_64")]
+#[allow(dead_code)]
 pub fn cpu_info() -> Option<impl Iterator<Item = CpuInfo>> {
     x86_64_cpu_info()
 }
 
 #[cfg(target_arch = "aarch64")]
+#[allow(dead_code)]
 pub fn cpu_info() -> Option<impl Iterator<Item = CpuInfo>> {
     aarch64_cpu_info()
 }
 
 #[cfg(target_arch = "riscv64")]
+#[allow(dead_code)]
 pub fn cpu_info() -> Option<impl Iterator<Item = CpuInfo>> {
     riscv64_cpu_info()
 }
 
 #[cfg(target_arch = "loongarch64")]
+#[allow(dead_code)]
 pub fn cpu_info() -> Option<impl Iterator<Item = CpuInfo>> {
     loongarch64_cpu_info()
 }
