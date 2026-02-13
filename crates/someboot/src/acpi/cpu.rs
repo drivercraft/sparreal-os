@@ -16,7 +16,7 @@ const ACPI_MADT_ENABLED: u32 = 1;
 
 // 条件导入：用于 acpi crate 支持的架构
 #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-use acpi::sdt::madt::{Madt, MadtEntry};
+use acpi::sdt::madt::Madt;
 
 // ============================================================================
 // 通用 CPU 信息结构
@@ -37,6 +37,25 @@ pub struct CpuInfo {
     pub enabled: bool,
 }
 
+fn non_empty_cpu_info_iter<I>(mut iter: I) -> Option<impl Iterator<Item = CpuInfo>>
+where
+    I: Iterator<Item = CpuInfo>,
+{
+    let first = iter.next()?;
+    Some(core::iter::once(first).chain(iter))
+}
+
+fn non_empty_enabled_cpu_id_iter<I>(cpu_info: I) -> Option<impl Iterator<Item = usize>>
+where
+    I: Iterator<Item = CpuInfo>,
+{
+    let mut ids = cpu_info
+        .filter(|info| info.enabled)
+        .map(|info| info.physical_id as usize);
+    let first = ids.next()?;
+    Some(core::iter::once(first).chain(ids))
+}
+
 // ============================================================================
 // x86_64 实现 (使用 acpi crate)
 // ============================================================================
@@ -44,65 +63,116 @@ pub struct CpuInfo {
 #[cfg(target_arch = "x86_64")]
 mod x86_64_impl {
     use super::super::tables;
-    use super::{ACPI_MADT_ENABLED, CpuInfo, Madt, MadtEntry};
-    use arrayvec::ArrayVec;
+    use super::{
+        ACPI_MADT_ENABLED, CpuInfo, MADT_HEADER_SIZE, Madt, non_empty_cpu_info_iter,
+        non_empty_enabled_cpu_id_iter,
+    };
+
+    const MADT_TYPE_LOCAL_APIC: u8 = 0;
+    const MADT_TYPE_LOCAL_X2APIC: u8 = 9;
+
+    #[derive(Clone, Copy, Debug)]
+    #[repr(C, packed)]
+    struct LocalApicEntry {
+        entry_type: u8,
+        length: u8,
+        processor_id: u8,
+        apic_id: u8,
+        flags: u32,
+    }
+
+    #[derive(Clone, Copy, Debug)]
+    #[repr(C, packed)]
+    struct LocalX2ApicEntry {
+        entry_type: u8,
+        length: u8,
+        _reserved: u16,
+        x2apic_id: u32,
+        flags: u32,
+        processor_id: u32,
+    }
+
+    const _: () = assert!(core::mem::size_of::<LocalApicEntry>() == 8);
+    const _: () = assert!(core::mem::size_of::<LocalX2ApicEntry>() == 16);
+
+    struct X86CpuIter {
+        _madt_mapping: acpi::PhysicalMapping<super::super::AcpiHandle, Madt>,
+        madt_ptr: *const u8,
+        madt_len: usize,
+        offset: usize,
+    }
+
+    impl Iterator for X86CpuIter {
+        type Item = CpuInfo;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            while self.offset + 2 <= self.madt_len {
+                unsafe {
+                    let entry_type = *self.madt_ptr.add(self.offset);
+                    let entry_len = *self.madt_ptr.add(self.offset + 1) as usize;
+
+                    if entry_len < 2 || self.offset + entry_len > self.madt_len {
+                        return None;
+                    }
+
+                    let mut cpu_info = None;
+
+                    if entry_type == MADT_TYPE_LOCAL_APIC
+                        && entry_len >= core::mem::size_of::<LocalApicEntry>()
+                    {
+                        let entry = core::ptr::read_unaligned(
+                            self.madt_ptr.add(self.offset) as *const LocalApicEntry
+                        );
+                        cpu_info = Some(CpuInfo {
+                            physical_id: entry.apic_id as u32,
+                            processor_id: entry.processor_id as u32,
+                            enabled: (entry.flags & ACPI_MADT_ENABLED) != 0,
+                        });
+                    } else if entry_type == MADT_TYPE_LOCAL_X2APIC
+                        && entry_len >= core::mem::size_of::<LocalX2ApicEntry>()
+                    {
+                        let entry = core::ptr::read_unaligned(
+                            self.madt_ptr.add(self.offset) as *const LocalX2ApicEntry
+                        );
+                        cpu_info = Some(CpuInfo {
+                            physical_id: entry.x2apic_id,
+                            processor_id: entry.processor_id,
+                            enabled: (entry.flags & ACPI_MADT_ENABLED) != 0,
+                        });
+                    }
+
+                    self.offset += entry_len;
+
+                    if let Some(info) = cpu_info {
+                        return Some(info);
+                    }
+                }
+            }
+
+            None
+        }
+    }
 
     /// 获取 x86_64 CPU 信息列表
     ///
     /// 通过解析 MADT 表中的 LocalApic/LocalX2Apic 条目获取所有 CPU 核心信息。
     pub fn x86_64_cpu_info() -> Option<impl Iterator<Item = CpuInfo>> {
         let tables = tables().ok()?;
-        let madt = tables.find_table::<Madt>()?;
-        let madt = madt.get();
+        let madt_mapping = tables.find_table::<Madt>()?;
+        let madt_ptr = madt_mapping.virtual_start.as_ptr() as *const u8;
+        let madt_len = madt_mapping.region_length;
 
-        let mut cpu_list = ArrayVec::<CpuInfo, 256>::new();
-
-        for entry in madt.entries() {
-            match entry {
-                MadtEntry::LocalApic(e) => {
-                    let info = CpuInfo {
-                        physical_id: e.apic_id as u32,
-                        processor_id: e.processor_id as u32,
-                        enabled: (e.flags & ACPI_MADT_ENABLED) != 0,
-                    };
-                    let _ = cpu_list.try_push(info);
-                }
-                MadtEntry::LocalX2Apic(e) => {
-                    let info = CpuInfo {
-                        physical_id: e.x2apic_id,
-                        processor_id: e.processor_id,
-                        enabled: (e.flags & ACPI_MADT_ENABLED) != 0,
-                    };
-                    let _ = cpu_list.try_push(info);
-                }
-                _ => {}
-            }
-        }
-
-        if cpu_list.is_empty() {
-            None
-        } else {
-            Some(cpu_list.into_iter())
-        }
+        non_empty_cpu_info_iter(X86CpuIter {
+            _madt_mapping: madt_mapping,
+            madt_ptr,
+            madt_len,
+            offset: MADT_HEADER_SIZE,
+        })
     }
 
     /// 获取 x86_64 CPU ID 列表（仅返回已启用的）
     pub fn x86_64_cpu_id_list() -> Option<impl Iterator<Item = usize>> {
-        let cpu_info = x86_64_cpu_info()?;
-
-        let mut ids = ArrayVec::<usize, 256>::new();
-
-        for info in cpu_info {
-            if info.enabled {
-                let _ = ids.try_push(info.physical_id as usize);
-            }
-        }
-
-        if ids.is_empty() {
-            None
-        } else {
-            Some(ids.into_iter())
-        }
+        non_empty_enabled_cpu_id_iter(x86_64_cpu_info()?)
     }
 }
 
@@ -116,8 +186,71 @@ pub use x86_64_impl::*;
 #[cfg(target_arch = "aarch64")]
 mod aarch64_impl {
     use super::super::tables;
-    use super::{ACPI_MADT_ENABLED, CpuInfo, Madt, MadtEntry};
-    use arrayvec::ArrayVec;
+    use super::{
+        ACPI_MADT_ENABLED, CpuInfo, MADT_HEADER_SIZE, Madt, non_empty_cpu_info_iter,
+        non_empty_enabled_cpu_id_iter,
+    };
+
+    const MADT_TYPE_GICC: u8 = 11;
+
+    #[derive(Clone, Copy, Debug)]
+    #[repr(C, packed)]
+    struct GiccHead {
+        entry_type: u8,
+        length: u8,
+        _reserved: u16,
+        cpu_interface_number: u32,
+        uid: u32,
+        flags: u32,
+    }
+
+    const _: () = assert!(core::mem::size_of::<GiccHead>() == 16);
+
+    struct Aarch64CpuIter {
+        _madt_mapping: acpi::PhysicalMapping<super::super::AcpiHandle, Madt>,
+        madt_ptr: *const u8,
+        madt_len: usize,
+        offset: usize,
+    }
+
+    impl Iterator for Aarch64CpuIter {
+        type Item = CpuInfo;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            while self.offset + 2 <= self.madt_len {
+                unsafe {
+                    let entry_type = *self.madt_ptr.add(self.offset);
+                    let entry_len = *self.madt_ptr.add(self.offset + 1) as usize;
+
+                    if entry_len < 2 || self.offset + entry_len > self.madt_len {
+                        return None;
+                    }
+
+                    let mut cpu_info = None;
+
+                    if entry_type == MADT_TYPE_GICC && entry_len >= core::mem::size_of::<GiccHead>()
+                    {
+                        let entry = core::ptr::read_unaligned(
+                            self.madt_ptr.add(self.offset) as *const GiccHead
+                        );
+                        cpu_info = Some(CpuInfo {
+                            physical_id: entry.cpu_interface_number,
+                            processor_id: entry.uid,
+                            enabled: (entry.flags & ACPI_MADT_ENABLED) != 0,
+                        });
+                    }
+
+                    self.offset += entry_len;
+
+                    if let Some(info) = cpu_info {
+                        return Some(info);
+                    }
+                }
+            }
+
+            None
+        }
+    }
 
     /// 获取 AArch64 CPU 信息列表
     ///
@@ -125,46 +258,21 @@ mod aarch64_impl {
     /// MPIDR 是 PSCI/启动次核常用的硬件 ID。
     pub fn aarch64_cpu_info() -> Option<impl Iterator<Item = CpuInfo>> {
         let tables = tables().ok()?;
-        let madt = tables.find_table::<Madt>()?;
-        let madt = madt.get();
+        let madt_mapping = tables.find_table::<Madt>()?;
+        let madt_ptr = madt_mapping.virtual_start.as_ptr() as *const u8;
+        let madt_len = madt_mapping.region_length;
 
-        let mut cpu_list = ArrayVec::<CpuInfo, 256>::new();
-
-        for entry in madt.entries() {
-            if let MadtEntry::Gicc(e) = entry {
-                let info = CpuInfo {
-                    physical_id: e.mpidr as u32,
-                    processor_id: e.cpu_interface_number as u32,
-                    enabled: (e.flags & ACPI_MADT_ENABLED) != 0,
-                };
-                let _ = cpu_list.try_push(info);
-            }
-        }
-
-        if cpu_list.is_empty() {
-            None
-        } else {
-            Some(cpu_list.into_iter())
-        }
+        non_empty_cpu_info_iter(Aarch64CpuIter {
+            _madt_mapping: madt_mapping,
+            madt_ptr,
+            madt_len,
+            offset: MADT_HEADER_SIZE,
+        })
     }
 
     /// 获取 AArch64 CPU ID 列表（仅返回已启用的）
     pub fn aarch64_cpu_id_list() -> Option<impl Iterator<Item = usize>> {
-        let cpu_info = aarch64_cpu_info()?;
-
-        let mut ids = ArrayVec::<usize, 256>::new();
-
-        for info in cpu_info {
-            if info.enabled {
-                let _ = ids.try_push(info.physical_id as usize);
-            }
-        }
-
-        if ids.is_empty() {
-            None
-        } else {
-            Some(ids.into_iter())
-        }
+        non_empty_enabled_cpu_id_iter(aarch64_cpu_info()?)
     }
 }
 
@@ -178,9 +286,11 @@ pub use aarch64_impl::*;
 #[cfg(target_arch = "riscv64")]
 mod riscv64_impl {
     use super::super::tables;
-    use super::{ACPI_MADT_ENABLED, CpuInfo, MADT_HEADER_SIZE};
+    use super::{
+        ACPI_MADT_ENABLED, CpuInfo, MADT_HEADER_SIZE, non_empty_cpu_info_iter,
+        non_empty_enabled_cpu_id_iter,
+    };
     use acpi::sdt::madt::Madt;
-    use arrayvec::ArrayVec;
 
     /// MADT RINTC 条目类型 (RISC-V)
     /// 参考 Linux: include/acpi/actbl2.h - ACPI_MADT_TYPE_RINTC
@@ -241,69 +351,74 @@ mod riscv64_impl {
     // 确保结构体大小正确 (36 字节)
     const _: () = assert!(core::mem::size_of::<RintcEntry>() == 36);
 
+    struct Riscv64CpuIter {
+        _madt_mapping: acpi::PhysicalMapping<super::super::AcpiHandle, Madt>,
+        madt_ptr: *const u8,
+        madt_len: usize,
+        offset: usize,
+    }
+
+    impl Iterator for Riscv64CpuIter {
+        type Item = CpuInfo;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            while self.offset + 2 <= self.madt_len {
+                unsafe {
+                    let entry_type = *self.madt_ptr.add(self.offset);
+                    let entry_len = *self.madt_ptr.add(self.offset + 1) as usize;
+
+                    if entry_len < 2 || self.offset + entry_len > self.madt_len {
+                        return None;
+                    }
+
+                    let mut cpu_info = None;
+
+                    if entry_type == MADT_TYPE_RINTC
+                        && entry_len >= core::mem::size_of::<RintcEntry>()
+                    {
+                        let rintc = core::ptr::read_unaligned(
+                            self.madt_ptr.add(self.offset) as *const RintcEntry
+                        );
+
+                        cpu_info = Some(CpuInfo {
+                            physical_id: rintc.hart_id as u32,
+                            processor_id: rintc.uid,
+                            enabled: rintc.is_enabled(),
+                        });
+                    }
+
+                    self.offset += entry_len;
+
+                    if let Some(info) = cpu_info {
+                        return Some(info);
+                    }
+                }
+            }
+
+            None
+        }
+    }
+
     /// 获取 RISC-V CPU 信息列表
     ///
     /// 通过解析 MADT 表中的 RINTC 条目获取所有 CPU 核心信息。
     pub fn riscv64_cpu_info() -> Option<impl Iterator<Item = CpuInfo>> {
         let tables = tables().ok()?;
         let madt_mapping = tables.find_table::<Madt>()?;
-
         let madt_ptr = madt_mapping.virtual_start.as_ptr() as *const u8;
         let madt_len = madt_mapping.region_length;
 
-        let mut cpu_list = ArrayVec::<CpuInfo, 256>::new();
-        let mut offset = MADT_HEADER_SIZE;
-
-        while offset + 2 <= madt_len {
-            unsafe {
-                let entry_type = *madt_ptr.add(offset);
-                let entry_len = *madt_ptr.add(offset + 1) as usize;
-
-                if entry_len < 2 || offset + entry_len > madt_len {
-                    break;
-                }
-
-                if entry_type == MADT_TYPE_RINTC && entry_len >= core::mem::size_of::<RintcEntry>()
-                {
-                    let rintc = &*(madt_ptr.add(offset) as *const RintcEntry);
-
-                    let info = CpuInfo {
-                        physical_id: rintc.hart_id as u32,
-                        processor_id: rintc.uid,
-                        enabled: rintc.is_enabled(),
-                    };
-
-                    let _ = cpu_list.try_push(info);
-                }
-
-                offset += entry_len;
-            }
-        }
-
-        if cpu_list.is_empty() {
-            None
-        } else {
-            Some(cpu_list.into_iter())
-        }
+        non_empty_cpu_info_iter(Riscv64CpuIter {
+            _madt_mapping: madt_mapping,
+            madt_ptr,
+            madt_len,
+            offset: MADT_HEADER_SIZE,
+        })
     }
 
     /// 获取 RISC-V CPU ID 列表（仅返回已启用的）
     pub fn riscv64_cpu_id_list() -> Option<impl Iterator<Item = usize>> {
-        let cpu_info = riscv64_cpu_info()?;
-
-        let mut ids = ArrayVec::<usize, 256>::new();
-
-        for info in cpu_info {
-            if info.enabled {
-                let _ = ids.try_push(info.physical_id as usize);
-            }
-        }
-
-        if ids.is_empty() {
-            None
-        } else {
-            Some(ids.into_iter())
-        }
+        non_empty_enabled_cpu_id_iter(riscv64_cpu_info()?)
     }
 }
 
@@ -317,9 +432,11 @@ pub use riscv64_impl::*;
 #[cfg(target_arch = "loongarch64")]
 mod loongarch64_impl {
     use super::super::tables;
-    use super::{ACPI_MADT_ENABLED, CpuInfo, MADT_HEADER_SIZE};
+    use super::{
+        ACPI_MADT_ENABLED, CpuInfo, MADT_HEADER_SIZE, non_empty_cpu_info_iter,
+        non_empty_enabled_cpu_id_iter,
+    };
     use acpi::sdt::madt::Madt;
-    use arrayvec::ArrayVec;
 
     /// MADT Core PIC 条目类型 (LoongArch64)
     /// 参考 Linux: include/acpi/actbl2.h - ACPI_MADT_TYPE_CORE_PIC
@@ -356,70 +473,74 @@ mod loongarch64_impl {
     // 确保结构体大小正确 (15 字节)
     const _: () = assert!(core::mem::size_of::<CorePicEntry>() == 15);
 
+    struct LoongArch64CpuIter {
+        _madt_mapping: acpi::PhysicalMapping<super::super::AcpiHandle, Madt>,
+        madt_ptr: *const u8,
+        madt_len: usize,
+        offset: usize,
+    }
+
+    impl Iterator for LoongArch64CpuIter {
+        type Item = CpuInfo;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            while self.offset + 2 <= self.madt_len {
+                unsafe {
+                    let entry_type = *self.madt_ptr.add(self.offset);
+                    let entry_len = *self.madt_ptr.add(self.offset + 1) as usize;
+
+                    if entry_len < 2 || self.offset + entry_len > self.madt_len {
+                        return None;
+                    }
+
+                    let mut cpu_info = None;
+
+                    if entry_type == MADT_TYPE_CORE_PIC
+                        && entry_len >= core::mem::size_of::<CorePicEntry>()
+                    {
+                        let core_pic = core::ptr::read_unaligned(
+                            self.madt_ptr.add(self.offset) as *const CorePicEntry
+                        );
+
+                        cpu_info = Some(CpuInfo {
+                            physical_id: core_pic.core_id,
+                            processor_id: core_pic.processor_id,
+                            enabled: core_pic.is_enabled(),
+                        });
+                    }
+
+                    self.offset += entry_len;
+
+                    if let Some(info) = cpu_info {
+                        return Some(info);
+                    }
+                }
+            }
+
+            None
+        }
+    }
+
     /// 获取 LoongArch64 CPU 信息列表
     ///
     /// 通过解析 MADT 表中的 Core PIC 条目获取所有 CPU 核心信息。
     pub fn loongarch64_cpu_info() -> Option<impl Iterator<Item = CpuInfo>> {
         let tables = tables().ok()?;
         let madt_mapping = tables.find_table::<Madt>()?;
-
         let madt_ptr = madt_mapping.virtual_start.as_ptr() as *const u8;
         let madt_len = madt_mapping.region_length;
 
-        let mut cpu_list = ArrayVec::<CpuInfo, 256>::new();
-        let mut offset = MADT_HEADER_SIZE;
-
-        while offset + 2 <= madt_len {
-            unsafe {
-                let entry_type = *madt_ptr.add(offset);
-                let entry_len = *madt_ptr.add(offset + 1) as usize;
-
-                if entry_len < 2 || offset + entry_len > madt_len {
-                    break;
-                }
-
-                if entry_type == MADT_TYPE_CORE_PIC
-                    && entry_len >= core::mem::size_of::<CorePicEntry>()
-                {
-                    let core_pic = &*(madt_ptr.add(offset) as *const CorePicEntry);
-
-                    let info = CpuInfo {
-                        physical_id: core_pic.core_id,
-                        processor_id: core_pic.processor_id,
-                        enabled: core_pic.is_enabled(),
-                    };
-
-                    let _ = cpu_list.try_push(info);
-                }
-
-                offset += entry_len;
-            }
-        }
-
-        if cpu_list.is_empty() {
-            None
-        } else {
-            Some(cpu_list.into_iter())
-        }
+        non_empty_cpu_info_iter(LoongArch64CpuIter {
+            _madt_mapping: madt_mapping,
+            madt_ptr,
+            madt_len,
+            offset: MADT_HEADER_SIZE,
+        })
     }
 
     /// 获取 LoongArch64 CPU ID 列表（仅返回已启用的）
     pub fn loongarch64_cpu_id_list() -> Option<impl Iterator<Item = usize>> {
-        let cpu_info = loongarch64_cpu_info()?;
-
-        let mut ids = ArrayVec::<usize, 256>::new();
-
-        for info in cpu_info {
-            if info.enabled {
-                let _ = ids.try_push(info.physical_id as usize);
-            }
-        }
-
-        if ids.is_empty() {
-            None
-        } else {
-            Some(ids.into_iter())
-        }
+        non_empty_enabled_cpu_id_iter(loongarch64_cpu_info()?)
     }
 }
 
