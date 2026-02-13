@@ -158,8 +158,8 @@ mod tests {
 
     struct DummyMmioOp;
     impl super::MmioOp for DummyMmioOp {
-        fn ioremap(&self, addr: super::PhysAddr, size: usize) -> Option<Mmio> {
-            Some(Mmio {
+        fn ioremap(&self, addr: super::MmioAddr, size: usize) -> Result<Mmio, super::Error> {
+            Ok(Mmio {
                 phys: addr,
                 virt: core::ptr::NonNull::dangling(),
                 size,
@@ -174,7 +174,7 @@ mod tests {
         super::init(&DummyMmioOp);
 
         let addr = Mmio {
-            phys: super::PhysAddr(0x1000),
+            phys: super::MmioAddr(0x1000),
             virt: core::ptr::NonNull::dangling(),
             size: 0x100,
         };

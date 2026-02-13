@@ -58,8 +58,8 @@ fn map_regions(pt: &mut Box<dyn PageTable>) {
         }
         let config = MemConfig { access, attrs };
         debug!(
-            "Mapping `{:<16}`: [0x{:>016x}, 0x{:>016x}) -> [0x{:>016x}, 0x{:>016x}) {} ({:#.2})",
-            region.name,
+            "Mapping `{}`: [0x{:>016x}, 0x{:>016x}) -> [0x{:>016x}, 0x{:>016x}) {} ({:#.2})",
+            region.memory_type,
             virt.raw(),
             (virt.raw() + size),
             phys.raw(),

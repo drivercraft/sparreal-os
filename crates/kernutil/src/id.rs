@@ -211,7 +211,7 @@ mod tests {
 
         // 减法
         assert_eq!((id - 3).raw(), 7);
-        assert_eq!((id - TestId::new(2)).raw(), 8);
+        assert_eq!(id - TestId::new(2), 8);
     }
 
     #[test]

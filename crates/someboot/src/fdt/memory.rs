@@ -13,19 +13,24 @@ pub fn init_memory_map() -> Option<()> {
 
     for memory in fdt.memory() {
         for region in memory.regions() {
+            if region.size == 0 {
+                continue;
+            }
+
             add_memory_descriptor(MemoryDescriptor {
-                name: "RAM",
                 physical_start: region.address as usize,
                 size_in_bytes: region.size as _,
                 memory_type: MemoryType::Free,
             })
             .unwrap();
+            crate::mem::add_ram_region(
+                region.address as usize..(region.address + region.size) as usize,
+            );
         }
     }
 
     for reserved in fdt.memory_reservations() {
         add_memory_descriptor(MemoryDescriptor::new_aligned(
-            "Reserved Block",
             reserved.address as usize,
             reserved.size as usize,
             MemoryType::Reserved,
@@ -41,7 +46,6 @@ pub fn init_memory_map() -> Option<()> {
             && size > 0
         {
             add_memory_descriptor(MemoryDescriptor {
-                name: reserved.name(),
                 physical_start: reg.address as usize,
                 size_in_bytes: size as usize,
                 memory_type: MemoryType::Reserved,

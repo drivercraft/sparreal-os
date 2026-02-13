@@ -33,26 +33,22 @@ pub unsafe fn alloc(layout: Layout) -> Option<usize> {
     Some(start)
 }
 
-pub unsafe fn alloc_and_flush_to_memory_map(
-    layout: Layout,
-    name: &'static str,
-    kind: MemoryType,
-) -> Option<usize> {
+pub unsafe fn alloc_and_flush_to_memory_map(layout: Layout, kind: MemoryType) -> Option<usize> {
     unsafe {
         let addr = alloc(layout)?;
-        flush_to_memory_map(name, kind);
+        flush_to_memory_map(kind);
         Some(addr)
     }
 }
 
-pub unsafe fn flush_to_memory_map(name: &'static str, kind: MemoryType) {
+pub unsafe fn flush_to_memory_map(kind: MemoryType) {
     let range = used_range();
     if range.is_empty() {
         return;
     }
 
     let end = range.end;
-    let desc = MemoryDescriptor::new_with_range(name, range.clone(), kind);
+    let desc = MemoryDescriptor::new_with_range(range.clone(), kind);
     add_memory_descriptor(desc).unwrap();
     println!(
         "Flushed RAM used range to memory map: {:#x?}, current: {:#x}",

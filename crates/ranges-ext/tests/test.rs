@@ -1,5 +1,5 @@
-use ranges_ext2::VecOp;
-use ranges_ext2::test_helper::{RangeKind, TestRange};
+use ranges_ext::VecOp;
+use ranges_ext::test_helper::{RangeKind, TestRange};
 
 #[test]
 fn test_merge_same_kind() {
@@ -189,7 +189,7 @@ fn test_merge_same_kind_idempotent() {
 #[cfg(feature = "alloc")]
 #[test]
 fn test_alloc_vec_impl() {
-    use ranges_ext2::VecOp;
+    use ranges_ext::VecOp;
 
     // 测试 alloc::vec::Vec 的实现
     let mut vec: Vec<TestRange> = vec![
@@ -215,7 +215,7 @@ fn test_alloc_vec_impl() {
 #[test]
 fn test_heapless_vec_impl() {
     use heapless::Vec as HeaplessVec;
-    use ranges_ext2::VecOp;
+    use ranges_ext::VecOp;
 
     // 测试 heapless::Vec 的实现
     let mut vec: HeaplessVec<TestRange, 10> = HeaplessVec::new();
@@ -243,7 +243,7 @@ fn test_heapless_vec_impl() {
 #[test]
 fn test_heapless_vec_capacity_error() {
     use heapless::Vec as HeaplessVec;
-    use ranges_ext2::{RangeError, VecOp};
+    use ranges_ext::{RangeError, VecOp};
 
     // 测试容量限制错误
     let mut vec: HeaplessVec<TestRange, 2> = HeaplessVec::new();
@@ -259,8 +259,8 @@ fn test_heapless_vec_capacity_error() {
 
 #[test]
 fn test_merge_add() {
-    use ranges_ext2::VecOp;
-    use ranges_ext2::test_helper::RangeKind;
+    use ranges_ext::VecOp;
+    use ranges_ext::test_helper::RangeKind;
 
     // 测试用例集合
     let test_cases: &[(&str, Vec<TestRange>, TestRange, Result<Vec<TestRange>, ()>)] = &[
@@ -373,8 +373,8 @@ fn test_merge_add() {
 
 #[test]
 fn test_merge_add_conflict() {
-    use ranges_ext2::test_helper::{RangeKind, TestRange};
-    use ranges_ext2::{RangeError, VecOp};
+    use ranges_ext::test_helper::{RangeKind, TestRange};
+    use ranges_ext::{RangeError, VecOp};
 
     // 测试不可覆盖的冲突
     let mut vec: Vec<TestRange> = vec![TestRange::new_with_overwritable(

@@ -60,12 +60,11 @@ pub fn init_percpu() {
         percpu_all_secondary_size, cpu_num
     );
 
-    unsafe { crate::mem::ram::flush_to_memory_map("Some Rsv", MemoryType::Reserved) };
+    unsafe { crate::mem::ram::flush_to_memory_map(MemoryType::Reserved) };
 
     let percpu_data = unsafe {
         crate::mem::ram::alloc_and_flush_to_memory_map(
             Layout::from_size_align(percpu_all_secondary_size, page_size()).unwrap(),
-            "PerCPU Data",
             MemoryType::PerCpuData,
         )
         .unwrap()

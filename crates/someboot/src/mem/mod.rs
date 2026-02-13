@@ -18,6 +18,9 @@ pub const GB: usize = 1024 * MB;
 
 static mut VM_LOAD_OFFSET: isize = 0;
 static MEMORY_MAP: StaticCell<MemoryMap> = StaticCell::new(MemoryMap::new());
+static RAM_REGIONS: StaticCell<heapless::Vec<core::ops::Range<usize>, 16>> =
+    StaticCell::new(heapless::Vec::new());
+
 /// Load address of the kernel start
 static mut KIMAGE_START: Option<PhysAddr> = None;
 /// Load address of the kernel end
@@ -107,7 +110,6 @@ pub(crate) fn early_init2() {
 
     let kernel_range = kimage_range();
     add_memory_descriptor(MemoryDescriptor {
-        name: "KImage",
         physical_start: kernel_range.start,
         size_in_bytes: kernel_range.end - kernel_range.start,
         memory_type: MemoryType::KImage,
@@ -184,14 +186,14 @@ pub fn page_size() -> usize {
 // }
 
 pub(crate) fn memory_map_setup() {
-    let kernel_range = kimage_range();
-    let desc = MemoryDescriptor::new_with_range("Kernel", kernel_range, MemoryType::KImage);
+    // let kernel_range = kimage_range();
+    // let desc = MemoryDescriptor::new_with_range(kernel_range, MemoryType::KImage);
 
-    add_memory_descriptor(desc).unwrap();
+    // add_memory_descriptor(desc).unwrap();
 
     let ram_range = ram::used_range();
     if !ram_range.is_empty() {
-        let desc = MemoryDescriptor::new_with_range("Some Rsv", ram_range, MemoryType::Reserved);
+        let desc = MemoryDescriptor::new_with_range(ram_range, MemoryType::Reserved);
         add_memory_descriptor(desc).unwrap();
     }
     if let Some(desc) = crate::console::debug_to_memory_desc() {
@@ -201,11 +203,13 @@ pub(crate) fn memory_map_setup() {
 
 pub fn print_memory_map() {
     println!("Memory Map:");
+    unsafe { MEMORY_MAP.update(|m| m.sort_by_key(|m| m.physical_start)) };
+
     for desc in memory_map().iter() {
         let fmt = Byte::from(desc.size_in_bytes).get_appropriate_unit(UnitType::Binary);
         println!(
-            "  {:<20} {:>#016x} - {:>#016x} ({:#.2})",
-            desc.name,
+            "  {} {:>#016x} - {:>#016x} ({:#.2})",
+            desc.memory_type,
             desc.physical_start,
             desc.physical_start + desc.size_in_bytes,
             fmt
@@ -217,4 +221,16 @@ pub(crate) fn add_memory_descriptor(
     desc: MemoryDescriptor,
 ) -> Result<(), RangeError<MemoryDescriptor>> {
     unsafe { MEMORY_MAP.update(|mem| mem.merge_add(desc)) }
+}
+
+pub(crate) fn add_ram_region(region: core::ops::Range<usize>) {
+    unsafe {
+        RAM_REGIONS
+            .update(|regions| regions.push(region).map_err(|_| ()))
+            .unwrap()
+    }
+}
+
+pub(crate) fn ram_regions() -> &'static [core::ops::Range<usize>] {
+    RAM_REGIONS.as_slice()
 }

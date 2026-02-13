@@ -1,21 +1,17 @@
+use core::fmt::{Debug, Display};
+
 use num_align::NumAlign;
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct MemoryDescriptor {
-    pub name: &'static str,
     pub physical_start: usize,
     pub size_in_bytes: usize,
     pub memory_type: MemoryType,
 }
 
 impl MemoryDescriptor {
-    pub fn new_with_range(
-        name: &'static str,
-        range: core::ops::Range<usize>,
-        memory_type: MemoryType,
-    ) -> Self {
+    pub fn new_with_range(range: core::ops::Range<usize>, memory_type: MemoryType) -> Self {
         MemoryDescriptor {
-            name,
             physical_start: range.start,
             size_in_bytes: range.end - range.start,
             memory_type,
@@ -23,7 +19,6 @@ impl MemoryDescriptor {
     }
 
     pub fn new_with_range_aligned(
-        name: &'static str,
         range: core::ops::Range<usize>,
         memory_type: MemoryType,
         align: usize,
@@ -31,7 +26,6 @@ impl MemoryDescriptor {
         let start = range.start.align_down(align);
         let end = range.end.align_up(align);
         MemoryDescriptor {
-            name,
             physical_start: start,
             size_in_bytes: end - start,
             memory_type,
@@ -39,7 +33,6 @@ impl MemoryDescriptor {
     }
 
     pub fn new_aligned(
-        name: &'static str,
         physical_start: usize,
         size_in_bytes: usize,
         memory_type: MemoryType,
@@ -48,7 +41,6 @@ impl MemoryDescriptor {
         let start = physical_start.align_down(align);
         let end = (physical_start + size_in_bytes).align_up(align);
         MemoryDescriptor {
-            name,
             physical_start: start,
             size_in_bytes: end - start,
             memory_type,
@@ -60,10 +52,25 @@ impl MemoryDescriptor {
 pub enum MemoryType {
     #[default]
     Free,
+    Ram,
     KImage,
     Reserved,
     Mmio,
     PerCpuData,
+}
+
+impl Display for MemoryType {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let s = match self {
+            MemoryType::Free => "Free  ",
+            MemoryType::Ram => "RAM   ",
+            MemoryType::KImage => "KImg  ",
+            MemoryType::Reserved => "Rsv   ",
+            MemoryType::Mmio => "MMIO  ",
+            MemoryType::PerCpuData => "PerCPU",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 impl ranges_ext::RangeOp for MemoryDescriptor {
@@ -85,7 +92,6 @@ impl ranges_ext::RangeOp for MemoryDescriptor {
 
     fn clone_with_range(&self, range: core::ops::Range<Self::Type>) -> Self {
         MemoryDescriptor {
-            name: self.name,
             physical_start: range.start,
             size_in_bytes: range.end - range.start,
             memory_type: self.memory_type,

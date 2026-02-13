@@ -16,7 +16,6 @@ pub(crate) fn debug_to_memory_desc() -> Option<MemoryDescriptor> {
     }
 
     Some(MemoryDescriptor::new_aligned(
-        "Debug Console",
         debug_base,
         100,
         MemoryType::Mmio,

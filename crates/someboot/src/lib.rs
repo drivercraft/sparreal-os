@@ -137,7 +137,7 @@ fn prime_entry() -> ! {
 
     println!("Trap vector at {:#x}", arch::Arch::trap_addr());
 
-    mem::init_after_mmu();
+    // mem::init_after_mmu();
     mem::memory_map_setup();
     mem::print_memory_map();
 
