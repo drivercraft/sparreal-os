@@ -133,19 +133,6 @@ pub(crate) fn early_init2() {
     crate::smp::init_percpu();
 }
 
-pub(crate) fn early_init(range: core::ops::Range<usize>) {
-    static mut INITIALIZED: bool = false;
-    if unsafe { INITIALIZED } {
-        return;
-    }
-
-    ram::init(range);
-    crate::fdt::save_fdt();
-    unsafe {
-        INITIALIZED = true;
-    }
-}
-
 /// Get the physical range of the kernel image
 pub(crate) fn kimage_range() -> core::ops::Range<usize> {
     unsafe {

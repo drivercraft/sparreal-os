@@ -22,8 +22,8 @@ use crate::{
 pub(crate) fn setup_service(system_table: *const ::core::ffi::c_void) {
     unsafe { table::set_system_table(system_table.cast()) };
     setup_console();
+    println!("UEFI console ok.");
     find_acpi_rsdp();
-    mp::init_cpu_id_list();
 }
 
 pub(crate) mod memmap;
@@ -50,6 +50,7 @@ pub unsafe extern "C" fn efi_pe_entry(
 }
 
 pub(crate) fn exit_boot_services() {
+    println!("Exiting UEFI boot services...");
     UEFI_SERVICE_EXIT.store(true, core::sync::atomic::Ordering::Relaxed);
     let mem_map = unsafe { boot::exit_boot_services(None) };
     println!("Exited boot services, owned memory map obtained.");
@@ -79,10 +80,10 @@ pub(crate) fn exit_boot_services() {
         }
     }
 
-    memmap::setup_memory_map(mem_map.entries()).unwrap();
+    memmap::setup_memory_map(mem_map.entries());
 }
 
-fn setup_console() {
+pub(crate) fn setup_console() {
     unsafe { crate::console::set_out(&UefiPrinter) };
 }
 

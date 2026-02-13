@@ -2,7 +2,7 @@ use core::{arch::naked_asm, ffi::c_void};
 
 use kernutil::memory::MemoryType;
 
-use crate::arch::addrspace::*;
+use crate::{arch::addrspace::*, entry::PrimaryCpuInitInfo};
 
 static mut FW_ARG0: usize = 0;
 static mut FW_ARG1: usize = 0;
@@ -88,59 +88,63 @@ pub unsafe extern "C" fn kernel_entry(
 fn rust_main() -> ! {
     // 执行重定位，将所有地址从物理地址转换为虚拟地址
     super::relocate();
+    println!("LoongArch64 Rust kernel entry.");
+
+    crate::mem::mmu::set_mmu_enabled();
+    if is_boot_from_uefi() {
+        efi_entry();
+    }
+
     let kernel_code_start_lma = to_phys(sym_running_addr!(_head));
     println!("Kernel LMA: {:#x}", kernel_code_start_lma);
     let kernel_code_end_lma = to_phys(sym_running_addr!(__kernel_code_end));
-    if unsafe { FW_ARG0 } == 1 {
-        eif_entry();
-    }
 
-    crate::mem::setup_entry(
-        kernel_code_start_lma.into(),
-        kernel_code_end_lma.into(),
-        VM_LOAD_ADDRESS.into(),
-    );
-
-    // crate::mem::set_kernel_range(kernel_code_start_lma, kernel_code_end_lma);
-    // set_vm_load_offset(crate::mem::kimage_range().start as isize - VM_LOAD_ADDRESS as isize);
-
-    println!("LoongArch64 Rust kernel entry.");
-
-    println!("Kernel code end LMA: {:#x}", kernel_code_end_lma);
-    crate::mem::mmu::set_mmu_enabled();
-
-    let _ = crate::acpi::earlycon::acpi_setup_earlycon();
-    crate::efi_stub::exit_boot_services();
-
-    let max_ram_range = crate::mem::memory_map()
-        .iter()
-        .filter(|desc| desc.memory_type == MemoryType::Free)
-        .max_by_key(|desc| desc.size_in_bytes);
-
-    let Some(ram_range) = max_ram_range else {
-        println!("No usable RAM found!");
-        panic!();
-    };
-
-    // crate::mem::early_init(crate::mem::kimage_range().end..usize::MAX);
-    crate::mem::early_init(
-        ram_range.physical_start..ram_range.physical_start + ram_range.size_in_bytes,
-    );
+    crate::entry::primary_init_early(PrimaryCpuInitInfo {
+        kernel_start: kernel_code_start_lma.into(),
+        kernel_end: kernel_code_end_lma.into(),
+        kernel_start_link: VM_LOAD_ADDRESS.into(),
+    });
 
     super::trap::per_cpu_trap_init(true);
 
-    println!("Trap enabled.");
+    // crate::mem::setup_entry(
+    //     kernel_code_start_lma.into(),
+    //     kernel_code_end_lma.into(),
+    //     VM_LOAD_ADDRESS.into(),
+    // );
 
-    println!("Rust main.");
+    // println!("Kernel code end LMA: {:#x}", kernel_code_end_lma);
 
-    if let Some(cmdline) = crate::cmdline::cmdline() {
-        println!("{cmdline}");
-    }
+    // let _ = crate::acpi::earlycon::acpi_setup_earlycon();
+    // crate::efi_stub::exit_boot_services();
+
+    // let max_ram_range = crate::mem::memory_map()
+    //     .iter()
+    //     .filter(|desc| desc.memory_type == MemoryType::Free)
+    //     .max_by_key(|desc| desc.size_in_bytes);
+
+    // let Some(ram_range) = max_ram_range else {
+    //     println!("No usable RAM found!");
+    //     panic!();
+    // };
+
+    // // crate::mem::early_init(crate::mem::kimage_range().end..usize::MAX);
+    // crate::mem::early_init(
+    //     ram_range.physical_start..ram_range.physical_start + ram_range.size_in_bytes,
+    // );
+
+    // println!("Trap enabled.");
+
+    // println!("Rust main.");
+
+    // if let Some(cmdline) = crate::cmdline::cmdline() {
+    //     println!("{cmdline}");
+    // }
 
     super::paging::relocate_kernel_to_vm_code()
 }
 
-fn eif_entry() {
+fn efi_entry() {
     unsafe {
         crate::efi_stub::setup_service(FW_ARG2 as _);
         println!("UEFI setup.");
@@ -150,4 +154,8 @@ fn eif_entry() {
 pub(crate) fn mmu_entry() -> ! {
     println!("MMU ok...");
     crate::prime_entry()
+}
+
+fn is_boot_from_uefi() -> bool {
+    unsafe { FW_ARG0 == 1 }
 }

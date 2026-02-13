@@ -14,6 +14,11 @@ pub fn primary_init_early(params: PrimaryCpuInitInfo) {
     );
 
     crate::fdt::setup_earlycon();
+    let _ = crate::acpi::earlycon::acpi_setup_earlycon();
+
+    #[cfg(efi)]
+    crate::efi_stub::exit_boot_services();
+
     if let Some(cmdline) = crate::cmdline::cmdline() {
         println!("{cmdline}");
     }
