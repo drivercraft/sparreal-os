@@ -1,8 +1,8 @@
 use acpi::AcpiTables;
 use core::{ffi::c_void, ptr::NonNull};
 
-pub(crate) mod earlycon;
 pub mod cpu;
+pub(crate) mod earlycon;
 mod handle;
 pub mod power;
 // pub mod ram;
