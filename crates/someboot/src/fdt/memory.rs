@@ -23,9 +23,6 @@ pub fn init_memory_map() -> Option<()> {
                 memory_type: MemoryType::Free,
             })
             .unwrap();
-            crate::mem::add_ram_region(
-                region.address as usize..(region.address + region.size) as usize,
-            );
         }
     }
 

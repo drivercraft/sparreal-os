@@ -18,8 +18,6 @@ pub const GB: usize = 1024 * MB;
 
 static mut VM_LOAD_OFFSET: isize = 0;
 static MEMORY_MAP: StaticCell<MemoryMap> = StaticCell::new(MemoryMap::new());
-static RAM_REGIONS: StaticCell<heapless::Vec<core::ops::Range<usize>, 16>> =
-    StaticCell::new(heapless::Vec::new());
 
 /// Load address of the kernel start
 static mut KIMAGE_START: Option<PhysAddr> = None;
@@ -148,18 +146,6 @@ pub(crate) fn early_init(range: core::ops::Range<usize>) {
     }
 }
 
-pub(crate) fn init_after_mmu() -> Option<()> {
-    super::fdt::init_memory_map();
-    Some(())
-}
-
-#[allow(dead_code)]
-pub(crate) fn reset_memory_map() {
-    unsafe {
-        MEMORY_MAP.update(|m| *m = MemoryMap::new());
-    }
-}
-
 /// Get the physical range of the kernel image
 pub(crate) fn kimage_range() -> core::ops::Range<usize> {
     unsafe {
@@ -177,13 +163,6 @@ pub fn page_size() -> usize {
     }
     core::ptr::addr_of!(PAGE_SIZE) as usize
 }
-
-// fn ram_used_range() -> core::ops::Range<usize> {
-//     // let kernel = kimage_range();
-//     let start = ;
-//     let end = ram::current() as usize;
-//     start..end.align_up(page_size())
-// }
 
 pub(crate) fn memory_map_setup() {
     // let kernel_range = kimage_range();
@@ -221,16 +200,4 @@ pub(crate) fn add_memory_descriptor(
     desc: MemoryDescriptor,
 ) -> Result<(), RangeError<MemoryDescriptor>> {
     unsafe { MEMORY_MAP.update(|mem| mem.merge_add(desc)) }
-}
-
-pub(crate) fn add_ram_region(region: core::ops::Range<usize>) {
-    unsafe {
-        RAM_REGIONS
-            .update(|regions| regions.push(region).map_err(|_| ()))
-            .unwrap()
-    }
-}
-
-pub(crate) fn ram_regions() -> &'static [core::ops::Range<usize>] {
-    RAM_REGIONS.as_slice()
 }

@@ -48,7 +48,7 @@ pub use somehal_macros::{entry, irq_handler, secondary_entry};
 
 use crate::{
     irq::IrqId,
-    mem::{__va, PageTableInfo},
+    mem::{__percpu, PageTableInfo},
 };
 
 #[allow(unused)]
@@ -147,7 +147,7 @@ fn prime_entry() -> ! {
 
     let entry = __someboot_main as *const () as usize;
     let sp = crate::smp::cpu_meta(0).unwrap().stack_top;
-    let sp = __va(sp);
+    let sp = __percpu(sp);
     println!(
         "Jumping to main entry point at {:#x} with SP {:#p}",
         entry, sp
