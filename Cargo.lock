@@ -655,7 +655,7 @@ dependencies = [
 
 [[package]]
 name = "kernutil"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "heapless",
  "num-align",
@@ -730,7 +730,7 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
 name = "mmio-api"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -897,7 +897,7 @@ checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 
 [[package]]
 name = "ranges-ext"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "heapless",
  "thiserror",
@@ -1137,7 +1137,7 @@ dependencies = [
 
 [[package]]
 name = "someboot"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "aarch64-cpu-ext",
@@ -1178,7 +1178,7 @@ dependencies = [
 
 [[package]]
 name = "somehal"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "anyhow",
@@ -1207,7 +1207,7 @@ dependencies = [
 
 [[package]]
 name = "sparreal-kernel"
-version = "0.13.1"
+version = "0.14.0"
 dependencies = [
  "ansi_rgb",
  "anstyle",
@@ -1243,7 +1243,7 @@ dependencies = [
 
 [[package]]
 name = "sparreal-rt"
-version = "0.13.1"
+version = "0.13.2"
 dependencies = [
  "log",
  "somehal",

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0](https://github.com/drivercraft/sparreal-os/compare/sparreal-kernel-v0.13.1...sparreal-kernel-v0.14.0) - 2026-02-13
+
+### Other
+
+- ✨ feat: 添加 PerCpuData 内存类型，优化内存映射和分配逻辑 ([#19](https://github.com/drivercraft/sparreal-os/pull/19))
+
 ## [0.13.1](https://github.com/drivercraft/sparreal-os/compare/sparreal-kernel-v0.13.0...sparreal-kernel-v0.13.1) - 2026-02-09
 
 ### Other
