@@ -4,6 +4,8 @@ args = [
   "int,mmu,guest_errors",
   "-D",
   "qemu.log",
+  "--smp",
+  "4",
 ]
 fail_regex = [
   "Panicked:",

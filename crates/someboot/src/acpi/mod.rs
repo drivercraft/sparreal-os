@@ -1,9 +1,8 @@
 use acpi::AcpiTables;
-use acpi::sdt::madt::{Madt, MadtEntry};
-use arrayvec::ArrayVec;
 use core::{ffi::c_void, ptr::NonNull};
 
 pub(crate) mod earlycon;
+pub mod cpu;
 mod handle;
 pub mod power;
 // pub mod ram;
@@ -47,37 +46,17 @@ pub fn tables() -> Result<AcpiTables<AcpiHandle>, acpi::AcpiError> {
     }
 }
 
+/// 获取 CPU ID 列表
+///
+/// 根据目标架构使用不同的解析方式：
+/// - x86_64: 解析 MADT 中的 LocalApic/LocalX2Apic 条目
+/// - AArch64: 解析 MADT 中的 Gicc 条目
+/// - RISC-V 64: 解析 MADT 中的 RINTC 条目
+/// - LoongArch64: 解析 MADT 中的 Core PIC 条目
+///
+/// # Returns
+/// - `Some(iterator)`: 成功获取 CPU ID 列表
+/// - `None`: 无法获取 MADT 表或没有已启用的 CPU
 pub fn cpu_id_list() -> Option<impl Iterator<Item = usize>> {
-    let tables = tables().ok()?;
-    let madt = tables.find_table::<Madt>()?;
-    let madt = madt.get();
-
-    // 仅用于枚举 CPU ID，避免引入动态分配。
-    // 若平台 CPU 数量超过容量，将静默截断。
-    let mut ids = ArrayVec::<usize, 256>::new();
-
-    for entry in madt.entries() {
-        match entry {
-            // x86 (APIC/x2APIC)
-            MadtEntry::LocalApic(e) if (e.flags & 1) != 0 => {
-                let _ = ids.try_push(e.apic_id as usize);
-            }
-            MadtEntry::LocalX2Apic(e) if (e.flags & 1) != 0 => {
-                let _ = ids.try_push(e.x2apic_id as usize);
-            }
-
-            // ARM (GIC) - MPIDR 是 PSCI/启动次核常用的硬件 ID
-            MadtEntry::Gicc(e) if (e.flags & 1) != 0 => {
-                let _ = ids.try_push(e.mpidr as usize);
-            }
-
-            _ => {}
-        }
-    }
-
-    if ids.is_empty() {
-        return None;
-    }
-
-    Some(ids.into_iter())
+    cpu::cpu_id_list()
 }
