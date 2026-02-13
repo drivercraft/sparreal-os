@@ -499,6 +499,8 @@ dependencies = [
 [[package]]
 name = "fdt-raw"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cce2d6b3100c219add1cf704f0996cd45003fee5f1a2567397625c62cb7688f4"
 dependencies = [
  "heapless",
  "log",

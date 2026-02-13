@@ -12,11 +12,11 @@
     "lldb.displayFormat": "auto",
     "lldb.dereferencePointers": true,
     "lldb.consoleMode": "commands",
-    "rust-targets.targets": [
-        "aarch64-unknown-none-softfloat",
-        "loongarch64-unknown-none-softfloat",
-        "system"
-    ],
+    // "rust-targets.targets": [
+    //     "aarch64-unknown-none-softfloat",
+    //     "loongarch64-unknown-none-softfloat",
+    //     "system"
+    // ],
     "chat.tools.terminal.autoApprove": {
         "./test_la64.sh": true,
         "rust-analyzer": true,

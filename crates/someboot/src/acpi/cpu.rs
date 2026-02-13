@@ -195,36 +195,39 @@ mod riscv64_impl {
     /// | Offset | Size | Field         |
     /// |--------|------|---------------|
     /// | 0      | 1    | entry_type    | (0x18)
-    /// | 1      | 1    | length        | (20)
-    /// | 2      | 2    | reserved      |
-    /// | 4      | 4    | acpi_proc_id  |
-    /// | 8      | 4    | hart_id       |
-    /// | 12     | 4    | flags         |
-    /// | 16     | 2    | ext_intc_id   |
-    /// | 18     | 1    | imsic_addr    |
-    /// | 19     | 1    | reserved      |
+    /// | 1      | 1    | length        |
+    /// | 2      | 1    | version       |
+    /// | 3      | 1    | reserved      |
+    /// | 4      | 4    | flags         |
+    /// | 8      | 8    | hart_id       |
+    /// | 16     | 4    | uid           |
+    /// | 20     | 4    | ext_intc_id   |
+    /// | 24     | 8    | imsic_addr    |
+    /// | 32     | 4    | imsic_size    |
     /// ```
     #[derive(Clone, Copy, Debug)]
     #[repr(C, packed)]
     pub struct RintcEntry {
         /// 条目类型，应为 0x18 (MADT_TYPE_RINTC)
         pub entry_type: u8,
-        /// 条目长度，应为 20 字节
+        /// 条目长度
         pub length: u8,
+        /// 版本号
+        pub version: u8,
         /// 保留字段
-        _reserved1: u16,
-        /// ACPI 处理器 ID
-        pub acpi_proc_id: u32,
-        /// RISC-V Hart ID
-        pub hart_id: u32,
+        _reserved1: u8,
         /// 标志位 (bit 0: enabled)
         pub flags: u32,
+        /// RISC-V Hart ID
+        pub hart_id: u64,
+        /// ACPI 处理器 UID
+        pub uid: u32,
         /// 外部中断控制器 ID
-        pub ext_intc_id: u16,
-        /// IMSIC 地址（低 8 位）
-        pub imsic_addr: u8,
-        /// 保留字段
-        _reserved2: u8,
+        pub ext_intc_id: u32,
+        /// IMSIC 基地址
+        pub imsic_addr: u64,
+        /// IMSIC 大小
+        pub imsic_size: u32,
     }
 
     impl RintcEntry {
@@ -235,8 +238,8 @@ mod riscv64_impl {
         }
     }
 
-    // 确保结构体大小正确 (20 字节)
-    const _: () = assert!(core::mem::size_of::<RintcEntry>() == 20);
+    // 确保结构体大小正确 (36 字节)
+    const _: () = assert!(core::mem::size_of::<RintcEntry>() == 36);
 
     /// 获取 RISC-V CPU 信息列表
     ///
@@ -266,8 +269,8 @@ mod riscv64_impl {
                     let rintc = &*(madt_ptr.add(offset) as *const RintcEntry);
 
                     let info = CpuInfo {
-                        physical_id: rintc.hart_id,
-                        processor_id: rintc.acpi_proc_id,
+                        physical_id: rintc.hart_id as u32,
+                        processor_id: rintc.uid,
                         enabled: rintc.is_enabled(),
                     };
 
@@ -331,12 +334,10 @@ mod loongarch64_impl {
     pub struct CorePicEntry {
         /// 条目类型，应为 0x11 (MADT_TYPE_CORE_PIC)
         pub entry_type: u8,
-        /// 条目长度，应为 16 字节
+        /// 条目长度
         pub length: u8,
         /// 版本号
         pub version: u8,
-        /// 保留字段
-        _reserved: u8,
         /// ACPI 处理器 ID
         pub processor_id: u32,
         /// 物理 CPU ID (核心 ID)
@@ -353,8 +354,8 @@ mod loongarch64_impl {
         }
     }
 
-    // 确保结构体大小正确 (16 字节)
-    const _: () = assert!(core::mem::size_of::<CorePicEntry>() == 16);
+    // 确保结构体大小正确 (15 字节)
+    const _: () = assert!(core::mem::size_of::<CorePicEntry>() == 15);
 
     /// 获取 LoongArch64 CPU 信息列表
     ///
