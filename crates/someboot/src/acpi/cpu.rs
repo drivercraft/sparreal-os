@@ -44,7 +44,7 @@ pub struct CpuInfo {
 #[cfg(target_arch = "x86_64")]
 mod x86_64_impl {
     use super::super::tables;
-    use super::{CpuInfo, Madt, MadtEntry, ACPI_MADT_ENABLED};
+    use super::{ACPI_MADT_ENABLED, CpuInfo, Madt, MadtEntry};
     use arrayvec::ArrayVec;
 
     /// 获取 x86_64 CPU 信息列表
@@ -116,7 +116,7 @@ pub use x86_64_impl::*;
 #[cfg(target_arch = "aarch64")]
 mod aarch64_impl {
     use super::super::tables;
-    use super::{CpuInfo, Madt, MadtEntry, ACPI_MADT_ENABLED};
+    use super::{ACPI_MADT_ENABLED, CpuInfo, Madt, MadtEntry};
     use arrayvec::ArrayVec;
 
     /// 获取 AArch64 CPU 信息列表
@@ -178,7 +178,7 @@ pub use aarch64_impl::*;
 #[cfg(target_arch = "riscv64")]
 mod riscv64_impl {
     use super::super::tables;
-    use super::{CpuInfo, MADT_HEADER_SIZE, ACPI_MADT_ENABLED};
+    use super::{ACPI_MADT_ENABLED, CpuInfo, MADT_HEADER_SIZE};
     use acpi::sdt::madt::Madt;
     use arrayvec::ArrayVec;
 
@@ -263,8 +263,7 @@ mod riscv64_impl {
                     break;
                 }
 
-                if entry_type == MADT_TYPE_RINTC
-                    && entry_len >= core::mem::size_of::<RintcEntry>()
+                if entry_type == MADT_TYPE_RINTC && entry_len >= core::mem::size_of::<RintcEntry>()
                 {
                     let rintc = &*(madt_ptr.add(offset) as *const RintcEntry);
 
@@ -318,7 +317,7 @@ pub use riscv64_impl::*;
 #[cfg(target_arch = "loongarch64")]
 mod loongarch64_impl {
     use super::super::tables;
-    use super::{CpuInfo, MADT_HEADER_SIZE, ACPI_MADT_ENABLED};
+    use super::{ACPI_MADT_ENABLED, CpuInfo, MADT_HEADER_SIZE};
     use acpi::sdt::madt::Madt;
     use arrayvec::ArrayVec;
 
