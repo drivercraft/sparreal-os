@@ -39,7 +39,7 @@ pub(crate) mod fdt;
 pub mod irq;
 pub mod mem;
 pub mod power;
-mod smp;
+pub mod smp;
 pub mod timer;
 
 pub use fdt::fdt_addr;
