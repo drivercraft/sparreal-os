@@ -161,4 +161,15 @@ impl ArchTrait for Arch {
             );
         }
     }
+
+    fn cpu_current_hartid() -> usize {
+        const ATTR0: usize = 0xFF;
+        const ATTR1: usize = 0xFF << 8;
+        const ATTR2: usize = 0xFF << 16;
+        const ATTR3: usize = 0xFF << 32;
+
+        const MASK: usize = ATTR0 | ATTR1 | ATTR2 | ATTR3;
+
+        MPIDR_EL1.get() as usize & MASK
+    }
 }

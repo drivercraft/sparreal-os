@@ -3,7 +3,11 @@ use core::alloc::Layout;
 use kernutil::memory::MemoryType;
 use num_align::NumAlign;
 
-use crate::mem::{page_size, phys_to_virt, stack_size};
+use crate::{
+    ArchTrait,
+    arch::Arch,
+    mem::{page_size, phys_to_virt, stack_size},
+};
 
 mod cpu_iter;
 
@@ -70,6 +74,7 @@ pub fn init_percpu() {
 
         let meta = unsafe { &mut *meta_va.cast::<PerCpuMeta>() };
         meta.cpu_id = hard_id;
+        meta.cpu_idx = idx;
         meta.stack_top = cpu_percpu_start + stack_offset() + stack_size();
     }
 
@@ -85,7 +90,10 @@ pub fn init_percpu() {
 #[repr(C)]
 pub struct PerCpuMeta {
     pub stack_top: usize,
+    /// The hardware ID of the CPU, e.g. hart id in RISC-V or MPIDR in ARM
     pub cpu_id: usize,
+    /// The logical index of the CPU, assigned by the bootloader or determined by the OS
+    pub cpu_idx: usize,
 }
 
 fn stack_offset() -> usize {
@@ -124,6 +132,20 @@ pub fn percpu_data_ptr(idx: usize) -> Option<*mut u8> {
         return None;
     }
     Some(phys_to_virt(base) as *mut u8)
+}
+
+pub fn cpu_hart_id() -> usize {
+    Arch::cpu_current_hartid()
+}
+
+pub fn cpu_idx() -> usize {
+    let hart_id = cpu_hart_id();
+    for (idx, id) in __cpu_id_list().enumerate() {
+        if id == hart_id {
+            return idx;
+        }
+    }
+    panic!("Current CPU hart id {hart_id:#x} not found in CPU list");
 }
 
 struct CpuMetaIter {

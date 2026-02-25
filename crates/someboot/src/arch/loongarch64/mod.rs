@@ -218,4 +218,8 @@ impl ArchTrait for Arch {
             );
         }
     }
+
+    fn cpu_current_hartid() -> usize {
+        cpuid::read().core_id()
+    }
 }

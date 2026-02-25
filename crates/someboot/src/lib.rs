@@ -63,6 +63,8 @@ pub trait ArchTrait {
         Self::_va(paddr)
     }
 
+    fn cpu_current_hartid() -> usize;
+
     fn jump_to(entry: usize, sp: usize) -> !;
 
     fn post_allocator();
