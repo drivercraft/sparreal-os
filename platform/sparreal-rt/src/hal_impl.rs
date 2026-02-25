@@ -12,9 +12,7 @@ struct InitImpl;
 
 impl_trait! {
 impl Platform for InitImpl {
-    fn post_allocator() {
-        somehal::post_allocator();
-    }
+
     fn shutdown() -> ! {
         somehal::power::shutdown()
     }

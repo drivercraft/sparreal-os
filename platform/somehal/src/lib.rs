@@ -31,6 +31,7 @@ pub fn init(kernel: &'static dyn KernelOp) {
 }
 
 pub fn post_paging() {
+    someboot::post_allocator();
     // note: irq controller should be initialized when probe.
     driver::rdrive_setup();
 }

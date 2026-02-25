@@ -20,6 +20,14 @@ pub fn fdt_addr() -> Option<*mut u8> {
     Some(phys_to_virt(fdt_addr))
 }
 
+pub fn fdt_addr_phys() -> Option<usize> {
+    let fdt_addr = unsafe { FDT_ADDR };
+    if fdt_addr == 0 {
+        return None;
+    }
+    Some(fdt_addr)
+}
+
 fn fdt_base() -> Option<fdt_raw::Fdt<'static>> {
     let fdt_addr = fdt_addr()?;
     let fdt = unsafe { fdt_raw::Fdt::from_ptr(fdt_addr).ok()? };

@@ -28,6 +28,7 @@ use crate::{
     arch::{addrspace::PAGE_OFFSET, trap::trap_addr},
     consts::VM_LOAD_ADDRESS,
     mem::{__kimage_va_to_pa, PageTableInfo},
+    smp::percpu_va_range,
 };
 
 pub struct Arch;
@@ -136,7 +137,9 @@ impl ArchTrait for Arch {
 
     fn virt_to_phys(vaddr: *const u8) -> usize {
         if is_mmu_enabled() {
-            if vaddr as usize >= VM_LOAD_ADDRESS {
+            if percpu_va_range().contains(&(vaddr as usize)) {
+                vaddr as usize - 0xFF00_0000_0000 - PAGE_OFFSET
+            } else if vaddr as usize >= VM_LOAD_ADDRESS {
                 __kimage_va_to_pa(vaddr)
             } else {
                 vaddr as usize & 0xffff_ffff_ffff
@@ -172,7 +175,7 @@ impl ArchTrait for Arch {
 
         MPIDR_EL1.get() as usize & MASK
     }
-    
+
     fn kernal_space() -> core::ops::Range<usize> {
         PAGE_OFFSET..usize::MAX
     }

@@ -6,7 +6,7 @@ impl PlatOp for Plat {
     fn irq_set_enable(_irq: rdrive::IrqId, _enable: bool) {}
 
     fn irq_handler() -> someboot::irq::IrqId {
-       todo!()
+        todo!()
     }
 
     fn systick_irq() -> rdrive::IrqId {

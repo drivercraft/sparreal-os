@@ -6,7 +6,7 @@ use num_align::NumAlign;
 use crate::{
     ArchTrait,
     arch::Arch,
-    mem::{page_size, phys_to_virt, stack_size},
+    mem::{__percpu, page_size, phys_to_virt, stack_size},
 };
 
 mod cpu_iter;
@@ -110,6 +110,13 @@ fn percpu_data_size() -> usize {
 /// Physical RAM allocated for per-CPU data should be mapped to this virtual address range in the kernel
 pub(crate) fn percpu_range() -> core::ops::Range<usize> {
     unsafe { PERCPU_START..PERCPU_END }
+}
+
+#[allow(dead_code)]
+pub(crate) fn percpu_va_range() -> core::ops::Range<usize> {
+    let start = __percpu(unsafe { PERCPU_START });
+    let end = __percpu(unsafe { PERCPU_END });
+    start as usize..end as usize
 }
 
 pub fn cpu_meta_list() -> impl Iterator<Item = PerCpuMeta> {

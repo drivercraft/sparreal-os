@@ -34,7 +34,6 @@ pub trait Memory {
 
 #[trait_ffi::def_extern_trait(not_def_impl, mod_path = "hal::al")]
 pub trait Platform {
-    fn post_allocator();
     fn irq_is_enabled(irq: IrqId) -> bool;
     fn irq_set_enabled(irq: IrqId, enabled: bool);
 

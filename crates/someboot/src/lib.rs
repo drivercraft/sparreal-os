@@ -42,7 +42,7 @@ pub mod power;
 pub mod smp;
 pub mod timer;
 
-pub use fdt::fdt_addr;
+pub use fdt::{fdt_addr, fdt_addr_phys};
 pub use page_table_generic::*;
 pub use somehal_macros::{entry, irq_handler, secondary_entry};
 
