@@ -74,6 +74,8 @@ pub trait ArchTrait {
 
     fn virt_to_phys(vaddr: *const u8) -> usize;
 
+    fn kernal_space() -> core::ops::Range<usize>;
+
     fn kernel_page_table() -> PageTableInfo;
     fn set_kernel_page_table(val: PageTableInfo);
     #[cfg(uspace)]

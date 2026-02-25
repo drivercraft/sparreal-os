@@ -222,4 +222,8 @@ impl ArchTrait for Arch {
     fn cpu_current_hartid() -> usize {
         cpuid::read().core_id()
     }
+
+    fn kernal_space() -> core::ops::Range<usize> {
+        0xFFFF_0000_0000_0000..usize::MAX
+    }
 }

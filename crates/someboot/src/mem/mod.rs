@@ -1,3 +1,5 @@
+use core::ops::Range;
+
 use byte_unit::{Byte, UnitType};
 use kernutil::StaticCell;
 pub use kernutil::memory::{MemoryDescriptor, MemoryType, PageTableInfo};
@@ -8,7 +10,7 @@ pub mod mmu;
 pub(crate) mod ram;
 pub(crate) mod region;
 
-use crate::ArchTrait;
+use crate::{ArchTrait, arch::Arch, smp::percpu_range};
 
 pub use page_table_generic::*;
 
@@ -83,6 +85,8 @@ pub fn phys_to_virt(paddr: usize) -> *mut u8 {
     if mmu::is_mmu_enabled() {
         if kimage_range().contains(&paddr) {
             __kimage_va(paddr)
+        } else if percpu_range().contains(&paddr) {
+            __percpu(paddr)
         } else {
             __va(paddr)
         }
@@ -187,4 +191,8 @@ pub(crate) fn add_memory_descriptor(
     desc: MemoryDescriptor,
 ) -> Result<(), RangeError<MemoryDescriptor>> {
     unsafe { MEMORY_MAP.update(|mem| mem.merge_add(desc)) }
+}
+
+pub fn kernel_space() -> Range<usize> {
+    Arch::kernal_space()
 }
