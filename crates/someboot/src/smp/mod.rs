@@ -14,6 +14,12 @@ fn __cpu_id_list() -> impl Iterator<Item = usize> {
     cpu_iter::cpu_id_list()
 }
 
+fn meta_offset() -> usize {
+    let link_size = percpu_link_range().len();
+    let meta_align = core::mem::align_of::<PerCpuMeta>();
+    link_size.align_up(meta_align)
+}
+
 /// Per-CPU data layout:
 ///
 ///
@@ -59,7 +65,7 @@ pub fn init_percpu() {
         println!(
             "Initializing per-CPU RAM for CPU{idx} - hard id {hard_id:#x} @ {cpu_percpu_start:#x}"
         );
-        let meta_start = cpu_percpu_start + percpu_link_range().len();
+        let meta_start = cpu_percpu_start + meta_offset();
         let meta_va = phys_to_virt(meta_start);
 
         let meta = unsafe { &mut *meta_va.cast::<PerCpuMeta>() };
@@ -83,13 +89,13 @@ pub struct PerCpuMeta {
 }
 
 fn stack_offset() -> usize {
-    let link_size = percpu_link_range().len();
+    let meta_offset = meta_offset();
     let meta_size = core::mem::size_of::<PerCpuMeta>();
-    (link_size + meta_size).align_up(page_size())
+    (meta_offset + meta_size).align_up(page_size())
 }
 
 fn percpu_data_size() -> usize {
-    (stack_offset() + stack_size()).align_up(page_size())
+    stack_offset() + stack_size()
 }
 
 #[allow(dead_code)]
@@ -108,7 +114,7 @@ pub fn cpu_meta(idx: usize) -> Option<PerCpuMeta> {
         return None;
     }
 
-    let meta_start = base + percpu_link_range().len();
+    let meta_start = base + meta_offset();
     Some(unsafe { *(phys_to_virt(meta_start) as *const PerCpuMeta) })
 }
 

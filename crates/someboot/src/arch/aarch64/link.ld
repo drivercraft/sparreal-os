@@ -47,6 +47,7 @@ SECTIONS
         *(.init.data)
         *(.sdata .sdata.*)
 
+        . = ALIGN(64);
         __percpu_start = .;
         *(.percpu_data .percpu_data.* .percpu .percpu.*)
         __percpu_end = .;
