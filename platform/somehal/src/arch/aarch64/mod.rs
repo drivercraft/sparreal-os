@@ -13,4 +13,8 @@ impl PlatOp for Plat {
     fn systick_irq() -> rdrive::IrqId {
         systick::systick_irq()
     }
+
+    fn irq_handler() -> someboot::irq::IrqId {
+        gic::irq_handler()
+    }
 }

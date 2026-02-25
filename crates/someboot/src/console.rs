@@ -31,6 +31,10 @@ pub fn _write_bytes(bytes: &[u8]) -> usize {
     con().write_bytes(bytes)
 }
 
+pub fn _write_str(s: &str) {
+    con().write_str(s);
+}
+
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ($crate::console::_print(core::format_args!($($arg)*)));

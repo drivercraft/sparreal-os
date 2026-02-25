@@ -3,6 +3,7 @@ use alloc::format;
 use arm_gic_driver::v3::*;
 use kernutil::StaticCell;
 use rdrive::{PlatformDevice, module_driver, probe::OnProbeError, register::FdtInfo};
+use someboot::irq::IrqId;
 
 use crate::common::ioremap;
 
@@ -58,7 +59,7 @@ pub fn is_support_icc() -> bool {
     val >> 24 & 0xf > 0
 }
 
-pub fn handle_irq() {
+pub fn handle_irq() -> someboot::irq::IrqId {
     let ack = ack1();
 
     super::_handle_irq(someboot::irq::IrqId::new(ack.to_u32() as _));
@@ -69,6 +70,8 @@ pub fn handle_irq() {
             dir(ack);
         }
     }
+    let id: u32 = ack.into();
+    (id as usize).into()
 }
 
 pub fn irq_set_enable(raw: usize, enable: bool) {

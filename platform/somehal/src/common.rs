@@ -6,6 +6,8 @@ use crate::setup::Mmio;
 pub trait PlatOp {
     fn irq_set_enable(irq: IrqId, enable: bool);
 
+    fn irq_handler() -> someboot::irq::IrqId;
+
     fn systick_irq() -> IrqId;
 }
 

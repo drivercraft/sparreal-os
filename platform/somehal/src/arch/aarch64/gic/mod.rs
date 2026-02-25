@@ -25,10 +25,14 @@ pub fn irq_set_enable(irq: rdrive::IrqId, enable: bool) {
 
 #[unsafe(no_mangle)]
 fn __aarch64_irq_handler() {
+    irq_handler();
+}
+
+pub(crate) fn irq_handler() -> someboot::irq::IrqId {
     if v3::is_support_icc() {
-        v3::handle_irq();
+        v3::handle_irq()
     } else {
-        v2::handle_irq();
+        v2::handle_irq()
     }
 }
 

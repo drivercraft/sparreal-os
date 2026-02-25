@@ -67,14 +67,16 @@ fn probe_gic(info: FdtInfo<'_>, dev: PlatformDevice) -> Result<(), OnProbeError>
     Ok(())
 }
 
-pub fn handle_irq() {
+pub fn handle_irq() -> someboot::irq::IrqId {
     let ack = TRAP.ack();
 
     let irq_num = match ack {
         Ack::Other(intid) => intid,
         Ack::SGI { intid, cpu_id: _ } => intid,
     };
-    super::_handle_irq(someboot::irq::IrqId::new(irq_num.to_u32() as _));
+
+    let irq_num: u32 = irq_num.into();
+    super::_handle_irq(someboot::irq::IrqId::new(irq_num as _));
 
     if !ack.is_special() {
         TRAP.eoi(ack);
@@ -82,6 +84,7 @@ pub fn handle_irq() {
             TRAP.dir(ack);
         }
     }
+    irq_num.into()
 }
 
 pub fn init_cpu() {
