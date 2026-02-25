@@ -48,7 +48,7 @@ SECTIONS
         *(.sdata .sdata.*)
 
         __percpu_start = .;
-        *(.percpu_data .percpu_data.*)
+        *(.percpu_data .percpu_data.* .percpu .percpu.*)
         __percpu_end = .;
     }
     .rela.dyn : ALIGN(8) {

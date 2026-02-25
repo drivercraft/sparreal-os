@@ -3,7 +3,6 @@ use alloc::format;
 use arm_gic_driver::v3::*;
 use kernutil::StaticCell;
 use rdrive::{PlatformDevice, module_driver, probe::OnProbeError, register::FdtInfo};
-use someboot::irq::IrqId;
 
 use crate::common::ioremap;
 

@@ -6,7 +6,7 @@ args = [
   ".cargo/config-app.toml",
 ]
 features = [
-  "sparreal-rt/uspace",
+  
 ]
 package = "test-suit-timer"
 post_build_cmds = []

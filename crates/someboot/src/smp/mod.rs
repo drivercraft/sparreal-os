@@ -112,6 +112,14 @@ pub fn cpu_meta(idx: usize) -> Option<PerCpuMeta> {
     Some(unsafe { *(phys_to_virt(meta_start) as *const PerCpuMeta) })
 }
 
+pub fn percpu_data_ptr(idx: usize) -> Option<*mut u8> {
+    let base = percpu_data_range().start + idx * percpu_data_size();
+    if base >= percpu_data_range().end {
+        return None;
+    }
+    Some(phys_to_virt(base) as *mut u8)
+}
+
 struct CpuMetaIter {
     next: usize,
 }

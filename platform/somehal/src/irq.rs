@@ -1,3 +1,4 @@
+pub use rdif_intc;
 pub use someboot::irq::*;
 
 use crate::{arch::Plat, common::PlatOp};
