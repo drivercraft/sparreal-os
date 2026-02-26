@@ -49,6 +49,7 @@ pub use somehal_macros::{entry, irq_handler, secondary_entry};
 use crate::{
     irq::IrqId,
     mem::{__percpu, PageTableInfo},
+    power::CpuOnError,
 };
 
 #[allow(unused)]
@@ -84,6 +85,7 @@ pub trait ArchTrait {
     fn set_user_page_table(val: PageTableInfo);
 
     fn shutdown() -> !;
+    fn cpu_on(hartid: usize, entry: usize, arg: usize) -> Result<(), CpuOnError>;
 
     fn systimer_enable();
     fn systimer_irq_enable();
@@ -103,6 +105,15 @@ pub trait ArchTrait {
 
     fn irq_is_enabled(irq: IrqId) -> bool;
     fn irq_set_enable(irq: IrqId, enable: bool);
+
+    fn dcache_range(op: DCacheOp, addr: usize, size: usize);
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum DCacheOp {
+    Clean,
+    Invalidate,
+    CleanInvalidate,
 }
 
 pub fn post_allocator() {

@@ -66,7 +66,11 @@ pub fn shutdown() -> ! {
     }
 }
 
-fn _cpu_on(cpu_id: u64, entry: u64, stack_top: u64) -> Result<(), smccc::psci::error::Error> {
+pub(crate) fn cpu_on(
+    cpu_id: u64,
+    entry: u64,
+    stack_top: u64,
+) -> Result<(), smccc::psci::error::Error> {
     let method = *METHOD;
     debug!("[{method}]Power on CPU {cpu_id:#x} at entry {entry:#x}, stack top {stack_top:#x}",);
     match method {

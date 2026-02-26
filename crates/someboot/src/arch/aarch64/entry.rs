@@ -65,3 +65,8 @@ pub(crate) fn mmu_entry() -> ! {
     crate::arch::relocate::reset();
     crate::prime_entry()
 }
+
+#[unsafe(naked)]
+pub(crate) unsafe extern "C" fn _secondary_entry(_arg: usize) -> ! {
+    naked_asm!("nop",)
+}

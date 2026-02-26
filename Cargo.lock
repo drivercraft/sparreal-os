@@ -1171,6 +1171,7 @@ dependencies = [
  "somehal-macros",
  "spin 0.10.0",
  "syn",
+ "thiserror",
  "tock-registers 0.10.1",
  "uefi",
  "uguid",

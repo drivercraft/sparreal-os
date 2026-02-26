@@ -10,7 +10,7 @@ pub mod mmu;
 pub(crate) mod ram;
 pub(crate) mod region;
 
-use crate::{ArchTrait, arch::Arch, smp::percpu_range};
+use crate::{ArchTrait, DCacheOp, arch::Arch, smp::percpu_range};
 
 pub use page_table_generic::*;
 
@@ -78,6 +78,10 @@ pub(crate) fn __kimage_va_to_pa(vaddr: *const u8) -> usize {
 
 pub fn memory_map() -> &'static [MemoryDescriptor] {
     MEMORY_MAP.as_slice()
+}
+
+pub fn dcache_range(op: DCacheOp, addr: *const u8, size: usize) {
+    Arch::dcache_range(op, addr as _, size);
 }
 
 /// 物理RAM实际转换为的内核虚拟地址

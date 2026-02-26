@@ -21,6 +21,7 @@ mod trap;
 
 use aarch64_cpu::registers::*;
 use elx::*;
+pub(crate) use entry::_secondary_entry;
 pub use paging::Entry;
 
 use crate::{
@@ -178,5 +179,30 @@ impl ArchTrait for Arch {
 
     fn kernal_space() -> core::ops::Range<usize> {
         PAGE_OFFSET..usize::MAX
+    }
+
+    fn cpu_on(hartid: usize, entry: usize, arg: usize) -> Result<(), crate::power::CpuOnError> {
+        power::cpu_on(hartid as _, entry as _, arg as _).map_err(|e| match e {
+            smccc::psci::error::Error::NotSupported => crate::power::CpuOnError::NotSupported,
+            smccc::psci::error::Error::InvalidParameters => {
+                crate::power::CpuOnError::InvalidParameters
+            }
+            smccc::psci::error::Error::AlreadyOn => crate::power::CpuOnError::AlreadyOn,
+            e => crate::power::CpuOnError::Other(anyhow::anyhow!("cpu_on failed: {e:?}")),
+        })
+    }
+
+    fn dcache_range(op: crate::DCacheOp, addr: usize, size: usize) {
+        aarch64_cpu_ext::cache::dcache_range(op.into(), addr, size);
+    }
+}
+
+impl From<crate::DCacheOp> for aarch64_cpu_ext::cache::CacheOp {
+    fn from(value: crate::DCacheOp) -> Self {
+        match value {
+            crate::DCacheOp::Clean => Self::Clean,
+            crate::DCacheOp::Invalidate => Self::Invalidate,
+            crate::DCacheOp::CleanInvalidate => Self::CleanAndInvalidate,
+        }
     }
 }

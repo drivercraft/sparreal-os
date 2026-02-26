@@ -3,9 +3,9 @@ use core::alloc::Layout;
 use kernutil::memory::MemoryType;
 
 use crate::{
+    ArchTrait, DCacheOp,
     arch::Arch,
-    mem::{__percpu, page_size, phys_to_virt, stack_size},
-    ArchTrait,
+    mem::{__percpu, dcache_range, page_size, phys_to_virt, stack_size},
 };
 
 mod cpu_iter;
@@ -23,7 +23,7 @@ fn align_up_pow2(value: usize, align: usize) -> usize {
 }
 
 fn meta_align() -> usize {
-    core::mem::align_of::<PerCpuMeta>().max(core::mem::align_of::<usize>())
+    core::mem::align_of::<PerCpuMeta>().max(64)
 }
 
 fn percpu_region_align() -> usize {
@@ -40,7 +40,7 @@ fn meta_offset() -> usize {
 /// Per-CPU data layout:
 ///
 ///
-/// | Linker percpu data | PerCpuMeta | align padding to page size | Stack |
+/// | Linker percpu data | align to 0x8 | PerCpuMeta | align padding to page size | Stack |
 pub fn init_percpu() {
     println!("Initializing per-CPU data");
     let cpu_num = __cpu_id_list().count();
@@ -103,6 +103,9 @@ pub fn init_percpu() {
             meta.cpu_id, meta.cpu_id, meta.stack_top
         );
     }
+    let start = __percpu(unsafe { PERCPU_START });
+    let size = unsafe { PERCPU_END - PERCPU_START };
+    dcache_range(DCacheOp::CleanInvalidate, start, size);
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -143,15 +146,19 @@ pub fn cpu_meta_list() -> impl Iterator<Item = PerCpuMeta> {
 }
 
 pub fn cpu_meta(idx: usize) -> Option<PerCpuMeta> {
+    let meta_start = cpu_meta_addr(idx)?;
+    let meta_va = phys_to_virt(meta_start);
+    debug_assert_eq!((meta_va as usize) % meta_align(), 0);
+    Some(unsafe { *(meta_va as *const PerCpuMeta) })
+}
+
+/// Physical address of cpu meta
+pub(crate) fn cpu_meta_addr(idx: usize) -> Option<usize> {
     let base = percpu_data_range().start + idx * percpu_data_size();
     if base >= percpu_data_range().end {
         return None;
     }
-
-    let meta_start = base + meta_offset();
-    let meta_va = phys_to_virt(meta_start);
-    debug_assert_eq!((meta_va as usize) % meta_align(), 0);
-    Some(unsafe { *(meta_va as *const PerCpuMeta) })
+    Some(base + meta_offset())
 }
 
 pub fn percpu_data_ptr(idx: usize) -> Option<*mut u8> {
@@ -174,6 +181,15 @@ pub fn cpu_idx() -> usize {
         }
     }
     panic!("Current CPU hart id {hart_id:#x} not found in CPU list");
+}
+
+pub fn cpu_id_to_idx(hart_id: usize) -> Option<usize> {
+    for (idx, id) in __cpu_id_list().enumerate() {
+        if id == hart_id {
+            return Some(idx);
+        }
+    }
+    None
 }
 
 struct CpuMetaIter {
