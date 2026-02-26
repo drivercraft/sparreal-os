@@ -1,12 +1,11 @@
 use core::alloc::Layout;
 
 use kernutil::memory::MemoryType;
-use num_align::NumAlign;
 
 use crate::{
-    ArchTrait,
     arch::Arch,
     mem::{__percpu, page_size, phys_to_virt, stack_size},
+    ArchTrait,
 };
 
 mod cpu_iter;
@@ -18,10 +17,24 @@ fn __cpu_id_list() -> impl Iterator<Item = usize> {
     cpu_iter::cpu_id_list()
 }
 
+fn align_up_pow2(value: usize, align: usize) -> usize {
+    assert!(align.is_power_of_two());
+    (value + align - 1) & !(align - 1)
+}
+
+fn meta_align() -> usize {
+    core::mem::align_of::<PerCpuMeta>().max(core::mem::align_of::<usize>())
+}
+
+fn percpu_region_align() -> usize {
+    page_size().max(meta_align())
+}
+
 fn meta_offset() -> usize {
     let link_size = percpu_link_range().len();
-    let meta_align = core::mem::align_of::<PerCpuMeta>();
-    link_size.align_up(meta_align)
+    let offset = align_up_pow2(link_size, meta_align());
+    debug_assert_eq!(offset % meta_align(), 0);
+    offset
 }
 
 /// Per-CPU data layout:
@@ -45,7 +58,7 @@ pub fn init_percpu() {
 
     let percpu_data = unsafe {
         crate::mem::ram::alloc_and_flush_to_memory_map(
-            Layout::from_size_align(percpu_all_secondary_size, page_size()).unwrap(),
+            Layout::from_size_align(percpu_all_secondary_size, percpu_region_align()).unwrap(),
             MemoryType::PerCpuData,
         )
         .unwrap()
@@ -71,11 +84,17 @@ pub fn init_percpu() {
         );
         let meta_start = cpu_percpu_start + meta_offset();
         let meta_va = phys_to_virt(meta_start);
+        debug_assert_eq!(meta_start % meta_align(), 0);
+        debug_assert_eq!((meta_va as usize) % meta_align(), 0);
 
-        let meta = unsafe { &mut *meta_va.cast::<PerCpuMeta>() };
-        meta.cpu_id = hard_id;
-        meta.cpu_idx = idx;
-        meta.stack_top = cpu_percpu_start + stack_offset() + stack_size();
+        let meta = PerCpuMeta {
+            stack_top: cpu_percpu_start + stack_offset() + stack_size(),
+            cpu_id: hard_id,
+            cpu_idx: idx,
+        };
+        unsafe {
+            *meta_va.cast::<PerCpuMeta>() = meta;
+        }
     }
 
     for meta in cpu_meta_list() {
@@ -99,11 +118,11 @@ pub struct PerCpuMeta {
 fn stack_offset() -> usize {
     let meta_offset = meta_offset();
     let meta_size = core::mem::size_of::<PerCpuMeta>();
-    (meta_offset + meta_size).align_up(page_size())
+    align_up_pow2(meta_offset + meta_size, page_size())
 }
 
 fn percpu_data_size() -> usize {
-    stack_offset() + stack_size()
+    align_up_pow2(stack_offset() + stack_size(), percpu_region_align())
 }
 
 #[allow(dead_code)]
@@ -130,7 +149,9 @@ pub fn cpu_meta(idx: usize) -> Option<PerCpuMeta> {
     }
 
     let meta_start = base + meta_offset();
-    Some(unsafe { *(phys_to_virt(meta_start) as *const PerCpuMeta) })
+    let meta_va = phys_to_virt(meta_start);
+    debug_assert_eq!((meta_va as usize) % meta_align(), 0);
+    Some(unsafe { *(meta_va as *const PerCpuMeta) })
 }
 
 pub fn percpu_data_ptr(idx: usize) -> Option<*mut u8> {
