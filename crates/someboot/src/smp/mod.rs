@@ -100,7 +100,7 @@ pub fn init_percpu() {
     for meta in cpu_meta_list() {
         println!(
             "CPU{} - hard id {:#x} stack top @ {:#x}",
-            meta.cpu_id, meta.cpu_id, meta.stack_top
+            meta.cpu_idx, meta.cpu_id, meta.stack_top
         );
     }
     let start = __percpu(unsafe { PERCPU_START });

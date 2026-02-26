@@ -54,6 +54,51 @@ pub fn enable_mmu() -> ! {
     }
 }
 
+pub fn enable_mmu_secondary(cpu_meta_paddr: usize) -> ! {
+    let boot_table_addr = crate::mem::mmu::boot_table_addr();
+    if boot_table_addr == 0 {
+        panic!("Boot page table address is not initialized");
+    }
+
+    let stack_top = unsafe { (cpu_meta_paddr as *const usize).read_volatile() };
+    let mmu_entry_phys = super::entry::secondary_mmu_entry as *const () as usize;
+    let v_sp = __percpu(stack_top) as usize;
+    let v_entry = __kimage_va(mmu_entry_phys) as usize;
+
+    setup_table_regs();
+    let tb = PageTableInfo {
+        asid: 0,
+        addr: boot_table_addr.into(),
+    };
+    set_kernal_table(tb);
+    #[cfg(not(feature = "hv"))]
+    set_user_table(tb);
+    flush_tlb(None);
+
+    setup_sctlr();
+    crate::mem::mmu::set_mmu_enabled();
+
+    super::relocate::reset();
+    dsb(barrier::SY);
+    isb(barrier::SY);
+
+    unsafe {
+        asm!(
+            "
+            mov x0, {0}
+            mov x8, {1}
+            mov x9, {2}
+            mov sp, x9
+            br x8
+        ",
+            in(reg) cpu_meta_paddr,
+            in(reg) v_entry,
+            in(reg) v_sp,
+            options(noreturn, nostack)
+        )
+    }
+}
+
 fn setup_page_table() -> anyhow::Result<()> {
     println!("Mapping early memory regions...");
 

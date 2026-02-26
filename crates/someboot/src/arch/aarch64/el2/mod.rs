@@ -45,6 +45,34 @@ pub fn switch_to_elx() {
     el_entry();
 }
 
+pub fn switch_to_elx_secondary(cpu_meta_paddr: usize) -> ! {
+    SPSel.write(SPSel::SP::ELx);
+    SP_EL0.set(0);
+
+    let current_el = CurrentEL.read(CurrentEL::EL);
+    let secondary_entry = sym_addr!(crate::arch::entry::secondary_el_entry);
+    let stack_top = unsafe { (cpu_meta_paddr as *const usize).read_volatile() };
+
+    if current_el >= 3 {
+        SCR_EL3.write(
+            SCR_EL3::NS::NonSecure + SCR_EL3::HCE::HvcEnabled + SCR_EL3::RW::NextELIsAarch64,
+        );
+        SPSR_EL3.write(
+            SPSR_EL3::M::EL2h
+                + SPSR_EL3::D::Masked
+                + SPSR_EL3::A::Masked
+                + SPSR_EL3::I::Masked
+                + SPSR_EL3::F::Masked,
+        );
+        ELR_EL3.set(secondary_entry as _);
+        SP_EL2.set(stack_top as _);
+        barrier::isb(barrier::SY);
+        eret();
+    }
+
+    crate::arch::entry::secondary_el_entry(cpu_meta_paddr)
+}
+
 #[inline(always)]
 pub fn flush_tlb(vaddr: Option<VirtAddr>) {
     match vaddr {

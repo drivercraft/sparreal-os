@@ -1,0 +1,19 @@
+args = [
+    "-nographic",
+    "-cpu",
+    "cortex-a53",
+    "-machine",
+    "virt,gic-version=3,virtualization=on",
+    "-d",
+    "int,mmu,guest_errors",
+    "-smp",
+    "4",
+    "-D",
+    "qemu.log",
+]
+fail_regex = [
+    # "FAILED",
+]
+success_regex = ["All tests passed!"]
+to_bin = true
+uefi = false

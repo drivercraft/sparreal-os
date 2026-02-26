@@ -10,7 +10,9 @@ pub fn shutdown() -> ! {
 
 pub fn cpu_on(cpu_idx: usize) -> Result<(), CpuOnError> {
     let entry = secondary_entry_addr();
+    debug!("Secondary entry address: {entry:#x}");
     let arg = crate::smp::cpu_meta_addr(cpu_idx).ok_or(CpuOnError::InvalidParameters)?;
+    debug!("Secondary entry argument (cpu meta address): {arg:#x}");
     let cpu_id = crate::smp::cpu_idx_to_id(cpu_idx).ok_or(CpuOnError::InvalidParameters)?;
     debug!("Power on CPU {cpu_idx:#x} (hard {cpu_id:#x}) at entry {entry:#x}, arg {arg:#x}");
     let kimg = crate::mem::kimage_range();

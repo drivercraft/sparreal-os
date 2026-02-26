@@ -1334,6 +1334,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "test-suit-smp"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "sparreal-rt",
+]
+
+[[package]]
 name = "test-suit-timer"
 version = "0.1.0"
 dependencies = [

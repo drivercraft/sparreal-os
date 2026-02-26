@@ -1,0 +1,9 @@
+[package]
+edition.workspace = true
+name = "test-suit-smp"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+log = { workspace = true }
+sparreal-rt = { workspace = true, features = [] }

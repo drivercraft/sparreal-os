@@ -1,0 +1,10 @@
+[system.Cargo]
+args = ["-Z", "build-std=core,alloc", "--config", ".cargo/config-app.toml"]
+features = []
+package = "test-suit-smp"
+post_build_cmds = []
+pre_build_cmds = []
+target = "aarch64-unknown-none-softfloat"
+to_bin = true
+
+[system.Cargo.env]

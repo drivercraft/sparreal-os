@@ -45,6 +45,16 @@ pub trait Platform {
 
 #[trait_ffi::def_extern_trait(not_def_impl, mod_path = "hal::al")]
 pub trait Cpu {
+    fn cpu_count() -> usize;
+    /// Power on logical CPU index.
+    ///
+    /// Return values:
+    /// - 0: success
+    /// - 1: not supported
+    /// - 2: already on
+    /// - 3: invalid parameters
+    /// - 4: other error
+    fn cpu_on(cpu_idx: usize) -> usize;
     fn current_cpu_id() -> usize;
     fn irq_local_is_enabled() -> bool;
     fn irq_local_set_enable(enabled: bool);

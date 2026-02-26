@@ -138,8 +138,22 @@ struct CpuImpl;
 
 impl_trait! {
 impl Cpu for CpuImpl {
+    fn cpu_count() -> usize {
+        somehal::smp::cpu_count()
+    }
+
+    fn cpu_on(cpu_idx: usize) -> usize {
+        match somehal::power::cpu_on(cpu_idx) {
+            Ok(()) => 0,
+            Err(somehal::power::CpuOnError::NotSupported) => 1,
+            Err(somehal::power::CpuOnError::AlreadyOn) => 2,
+            Err(somehal::power::CpuOnError::InvalidParameters) => 3,
+            Err(somehal::power::CpuOnError::Other(_)) => 4,
+        }
+    }
+
     fn current_cpu_id() -> usize {
-        0 // TODO: implement
+        somehal::smp::cpu_idx()
     }
 
     fn irq_local_is_enabled() -> bool {
