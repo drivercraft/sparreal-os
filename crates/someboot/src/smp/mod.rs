@@ -192,6 +192,14 @@ pub fn cpu_id_to_idx(hart_id: usize) -> Option<usize> {
     None
 }
 
+pub fn cpu_idx_to_id(idx: usize) -> Option<usize> {
+    __cpu_id_list().nth(idx)
+}
+
+pub fn cpu_count() -> usize {
+    __cpu_id_list().count()
+}
+
 struct CpuMetaIter {
     next: usize,
 }
