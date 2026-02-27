@@ -44,6 +44,8 @@ fn meta_offset() -> usize {
 pub fn alloc_percpu() {
     println!("Initializing per-CPU data");
     let cpu_num = __cpu_id_list().count();
+    let link_range = percpu_link_range();
+    let link_size = link_range.len();
 
     let percpu_size = percpu_data_size();
     println!("Per-CPU data one cpu size: {:#x} bytes", percpu_size);
@@ -84,6 +86,13 @@ pub fn alloc_percpu() {
         println!(
             "Initializing per-CPU RAM for CPU{idx} - hard id {hard_id:#x} @ {cpu_percpu_start:#x}"
         );
+        unsafe {
+            core::ptr::copy_nonoverlapping(
+                phys_to_virt(link_range.start) as *const u8,
+                phys_to_virt(cpu_percpu_start),
+                link_size,
+            );
+        }
         let meta_start = cpu_percpu_start + meta_offset();
         let meta_va = phys_to_virt(meta_start);
         debug_assert_eq!(meta_start % meta_align(), 0);
