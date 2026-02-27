@@ -87,7 +87,7 @@ pub fn entry(args: TokenStream, input: TokenStream, name: &str) -> TokenStream {
     .into()
 }
 
-pub fn entry_secondary(args: TokenStream, input: TokenStream, name: &str) -> TokenStream {
+pub fn entry_secondary(_args: TokenStream, input: TokenStream, name: &str) -> TokenStream {
     let f = parse_macro_input!(input as ItemFn);
 
     // check the function signature

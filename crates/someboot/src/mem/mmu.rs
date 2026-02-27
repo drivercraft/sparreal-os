@@ -1,5 +1,3 @@
-use core::sync::atomic::AtomicBool;
-
 use kernutil::StaticCell;
 use page_table_generic::PageTable;
 pub use page_table_generic::{PagingError, PagingResult};
@@ -11,7 +9,7 @@ pub type ArchPageTable<A> = PageTable<<crate::arch::Arch as crate::ArchTrait>::P
 pub type ArchPte = <<crate::arch::Arch as crate::ArchTrait>::P as page_table_generic::TableMeta>::P;
 
 static BOOT_TABLE: StaticCell<ArchPageTable<Ram>> = StaticCell::uninit();
-pub static mut BOOT_TAGBLE_ADDR: usize = 0;
+pub static mut BOOT_TABLE_ADDR: usize = 0;
 static mut MMU_ENABLED: bool = false;
 
 pub(crate) fn new_boot_table() -> ArchPageTable<Ram> {
@@ -28,13 +26,13 @@ pub(crate) fn set_boot_table(table: ArchPageTable<Ram>) {
     let root_addr: usize = table.root_paddr().into();
     // aarch64 `LDXR` `LDAXR` not work here before MMU is enabled
     unsafe {
-        BOOT_TAGBLE_ADDR = root_addr;
+        BOOT_TABLE_ADDR = root_addr;
         BOOT_TABLE.init_single_core(table)
     };
 }
 
 pub(crate) fn boot_table_addr() -> usize {
-    unsafe { BOOT_TAGBLE_ADDR }
+    unsafe { BOOT_TABLE_ADDR }
 }
 
 pub(crate) fn is_mmu_enabled() -> bool {

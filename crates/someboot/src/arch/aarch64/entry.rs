@@ -1,4 +1,4 @@
-use core::{arch::naked_asm, hint::spin_loop, mem::offset_of};
+use core::{arch::naked_asm, mem::offset_of};
 
 use aarch64_cpu::registers::{CurrentEL, Readable};
 
@@ -10,8 +10,6 @@ use crate::{
 };
 
 use super::{switch_to_elx, switch_to_elx_secondary};
-
-const PERCPU_META_STACK_TOP_OFFSET: usize = offset_of!(crate::smp::PerCpuMeta, stack_top);
 
 #[unsafe(naked)]
 #[unsafe(no_mangle)]
@@ -71,23 +69,6 @@ pub(crate) fn mmu_entry() -> ! {
     // crate::mem::reset_memory_map();
     crate::arch::relocate::reset();
     crate::prime_entry()
-}
-
-pub(crate) fn secondary_mmu_entry(_cpu_meta_paddr: usize) -> ! {
-    println!("Disable user page table");
-    #[cfg(uspace)]
-    elx::set_user_table(kernutil::memory::PageTableInfo::zero());
-    elx::flush_tlb(None);
-    super::trap::setup();
-
-    crate::arch::relocate::reset();
-    println!("Secondary CPU {} is online", crate::smp::cpu_idx());
-
-    loop {
-        spin_loop();
-        #[cfg(target_arch = "aarch64")]
-        aarch64_cpu::asm::wfe();
-    }
 }
 
 #[unsafe(naked)]

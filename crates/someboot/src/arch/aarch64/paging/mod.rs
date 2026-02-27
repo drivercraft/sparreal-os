@@ -1,7 +1,6 @@
 use core::arch::asm;
 
 use aarch64_cpu::asm::barrier::{self, dsb, isb};
-use aarch64_cpu_ext::cache::icache_flush_all;
 use num_align::NumAlign;
 use page_table_generic::{MapConfig, MemAttributes, PteConfig};
 

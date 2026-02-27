@@ -30,7 +30,7 @@ pub fn primary_init_early(params: PrimaryCpuInitInfo) {
     crate::mem::early_init();
 }
 
-pub(crate) fn secondary_entry(cpu_meta: &PerCpuMeta) {
+pub(crate) fn secondary_entry(_cpu_meta: &PerCpuMeta) {
     unsafe extern "Rust" {
         fn __someboot_secondary();
     }
