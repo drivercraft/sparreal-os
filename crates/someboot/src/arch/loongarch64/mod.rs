@@ -15,6 +15,7 @@ mod trap;
 
 use core::hint::spin_loop;
 
+pub(crate) use entry::_secondary_entry;
 use loongArch64::{
     register::*,
     time::{Time, get_timer_freq},
@@ -22,7 +23,7 @@ use loongArch64::{
 pub use paging::Entry as Pte;
 pub use relocate::relocate;
 
-use crate::{ArchTrait, efi_stub, irq::IrqId};
+use crate::{ArchTrait, DCacheOp, efi_stub, irq::IrqId, power::CpuOnError};
 
 const MIN_TICKS: usize = 4;
 
@@ -225,5 +226,15 @@ impl ArchTrait for Arch {
 
     fn kernal_space() -> core::ops::Range<usize> {
         0xFFFF_0000_0000_0000..usize::MAX
+    }
+
+    fn cpu_on(_hartid: usize, _entry: usize, _arg: usize) -> Result<(), CpuOnError> {
+        Err(CpuOnError::NotSupported)
+    }
+
+    fn dcache_range(_op: DCacheOp, _addr: usize, _size: usize) {
+        unsafe {
+            core::arch::asm!("dbar 0", options(nomem, nostack));
+        }
     }
 }

@@ -122,3 +122,9 @@ pub(crate) fn mmu_entry() -> ! {
 fn is_boot_from_uefi() -> bool {
     unsafe { FW_ARG0 == 1 }
 }
+
+pub(crate) unsafe extern "C" fn _secondary_entry(_arg: usize) -> ! {
+    loop {
+        core::hint::spin_loop();
+    }
+}

@@ -9,3 +9,4 @@ cd "$PROJECT_ROOT" || exit 1
 # 执行测试脚本
 "$SCRIPT_DIR/test_aarch64_el1.sh"
 "$SCRIPT_DIR/test_aarch64_el2.sh"
+"$SCRIPT_DIR/test_aarch64_smp.sh"
