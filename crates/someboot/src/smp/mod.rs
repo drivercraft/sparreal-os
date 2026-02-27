@@ -187,7 +187,7 @@ pub fn percpu_data_ptr(idx: usize) -> Option<*mut u8> {
     if base >= percpu_data_range().end {
         return None;
     }
-    Some(phys_to_virt(base) as *mut u8)
+    Some(phys_to_virt(base))
 }
 
 pub fn cpu_hart_id() -> usize {

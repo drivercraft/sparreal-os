@@ -61,7 +61,7 @@ pub fn init_mmu_secondary(cpu_meta_paddr: usize) -> usize {
     setup_table_regs();
     let tb = PageTableInfo {
         asid: 0,
-        addr: meta.boot_table_paddr.into(),
+        addr: meta.boot_table_paddr,
     };
     set_kernal_table(tb);
     #[cfg(not(feature = "hv"))]
