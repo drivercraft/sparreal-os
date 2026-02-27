@@ -45,47 +45,45 @@ fn tests_impl(_args: TokenStream, input: TokenStream) -> Result<TokenStream, par
 
     for item in items {
         match item {
-            Item::Fn(f)
-                if f.attrs.iter().any(|attr| attr.path().is_ident("test")) => {
-                    let f_name = &f.sig.ident;
-                    let _f_name = format_ident!("__{}", f.sig.ident);
-                    let block = &f.block;
-                    let static_name = format_ident!("__TEST_{}", f_name.to_string().to_uppercase());
-                    let f_name_str = f_name.to_string();
-                    let f_atters = &f.attrs;
+            Item::Fn(f) if f.attrs.iter().any(|attr| attr.path().is_ident("test")) => {
+                let f_name = &f.sig.ident;
+                let _f_name = format_ident!("__{}", f.sig.ident);
+                let block = &f.block;
+                let static_name = format_ident!("__TEST_{}", f_name.to_string().to_uppercase());
+                let f_name_str = f_name.to_string();
+                let f_atters = &f.attrs;
 
-                    let mut timeout = 0u64;
-                    if let Some(attr) = f_atters.iter().find(|attr| attr.path().is_ident("timeout"))
+                let mut timeout = 0u64;
+                if let Some(attr) = f_atters.iter().find(|attr| attr.path().is_ident("timeout")) {
+                    if let syn::Meta::NameValue(nv) = &attr.meta
+                        && let syn::Expr::Lit(lit_int) = &nv.value
+                        && let syn::Lit::Int(int_lit) = &lit_int.lit
                     {
-                        if let syn::Meta::NameValue(nv) = &attr.meta
-                            && let syn::Expr::Lit(lit_int) = &nv.value
-                            && let syn::Lit::Int(int_lit) = &lit_int.lit
-                        {
-                            timeout = int_lit.base10_parse::<u64>()?;
-                        } else {
-                            return Err(syn::Error::new(attr.span(), "invalid timeout attribute"));
-                        }
+                        timeout = int_lit.base10_parse::<u64>()?;
+                    } else {
+                        return Err(syn::Error::new(attr.span(), "invalid timeout attribute"));
+                    }
+                }
+
+                test_functions.push(quote! {
+                    #(#f_atters)*
+                    fn #f_name() {
+                        #_f_name()
                     }
 
-                    test_functions.push(quote! {
-                        #(#f_atters)*
-                        fn #f_name() {
-                            #_f_name()
-                        }
+                    fn #_f_name() {
+                        #block
+                    }
 
-                        fn #_f_name() {
-                            #block
-                        }
-
-                        #[used(linker)]
-                        #[unsafe(link_section = ".test_case")]
-                        static #static_name: #krate::TestCase = #krate::TestCase {
-                            name: #f_name_str,
-                            timeout_ms: #timeout,
-                            test_fn: #_f_name,
-                        };
-                    });
-                }
+                    #[used(linker)]
+                    #[unsafe(link_section = ".test_case")]
+                    static #static_name: #krate::TestCase = #krate::TestCase {
+                        name: #f_name_str,
+                        timeout_ms: #timeout,
+                        test_fn: #_f_name,
+                    };
+                });
+            }
             _ => {
                 untouched_tokens.push(item);
             }
