@@ -12,4 +12,3 @@ repository.workspace = true
 [dependencies]
 derive_more.workspace=true
 thiserror.workspace=true
-anyhow.workspace=true

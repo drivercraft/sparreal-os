@@ -22,13 +22,13 @@ pub struct Kernel;
 impl KernelOp for Kernel {}
 
 impl MmioOp for Kernel {
-    fn ioremap(&self, addr: MmioAddr, size: usize) -> Result<Mmio, Error> {
-        let res = sparreal_kernel::os::mem::ioremap(addr.as_usize().into(), size)?;
+    fn ioremap(&self, addr: MmioAddr, size: usize) -> Result<MmioRaw, MapError> {
+        let res = sparreal_kernel::os::mem::ioremap(addr.as_usize().into(), size).unwrap();
         let ptr = res.raw() as *mut u8;
-        Ok(unsafe { Mmio::new(addr, NonNull::new_unchecked(ptr), size) })
+        Ok(unsafe { MmioRaw::new(addr, NonNull::new_unchecked(ptr), size) })
     }
 
-    fn iounmap(&self, _mmio: &Mmio) {
+    fn iounmap(&self, _mmio: &MmioRaw) {
         // sparreal_kernel::os::mem::iounmap(mmio)
     }
 }

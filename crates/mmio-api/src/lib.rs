@@ -2,11 +2,19 @@
 
 use core::{fmt::Display, ops::Deref, ptr::NonNull, sync::atomic::Ordering};
 
-pub use anyhow::Error;
+#[derive(thiserror::Error, Debug)]
+pub enum MapError {
+    #[error("Invalid MMIO address or size")]
+    Invalid,
+    #[error("Failed to allocate memory for MMIO mapping")]
+    NoMemory,
+    #[error("MMIO address is already in use")]
+    Busy,
+}
 
 pub trait MmioOp: Sync + Send + 'static {
-    fn ioremap(&self, addr: MmioAddr, size: usize) -> Result<Mmio, Error>;
-    fn iounmap(&self, mmio: &Mmio);
+    fn ioremap(&self, addr: MmioAddr, size: usize) -> Result<MmioRaw, MapError>;
+    fn iounmap(&self, mmio: &MmioRaw);
 }
 
 static mut MMIO_OP: Option<&'static dyn MmioOp> = None;
@@ -28,7 +36,7 @@ pub fn init(mmio_op: &'static dyn MmioOp) {
 /// # Safety
 ///
 /// Caller should manually unmap the returned `Mmio` by calling `iounmap` when it is no longer needed.
-pub unsafe fn ioremap(addr: MmioAddr, size: usize) -> Result<Mmio, Error> {
+pub unsafe fn ioremap_raw(addr: MmioAddr, size: usize) -> Result<MmioRaw, MapError> {
     let mmio_op = unsafe { MMIO_OP.expect("MmioOp is not initialized") };
     mmio_op.ioremap(addr, size)
 }
@@ -36,14 +44,14 @@ pub unsafe fn ioremap(addr: MmioAddr, size: usize) -> Result<Mmio, Error> {
 /// # Safety
 ///
 /// Caller must ensure that `mmio` was previously mapped by `ioremap`.
-pub unsafe fn iounmap(mmio: &Mmio) {
+pub unsafe fn iounmap(mmio: &MmioRaw) {
     let mmio_op = unsafe { MMIO_OP.expect("MmioOp is not initialized") };
     mmio_op.iounmap(mmio);
 }
 
-pub fn ioremap_guard(addr: MmioAddr, size: usize) -> Result<MmioGuard, Error> {
-    let mmio = unsafe { ioremap(addr, size)? };
-    Ok(MmioGuard(mmio))
+pub fn ioremap(addr: MmioAddr, size: usize) -> Result<Mmio, MapError> {
+    let mmio = unsafe { ioremap_raw(addr, size)? };
+    Ok(Mmio(mmio))
 }
 
 /// Physical MMIO Address
@@ -79,18 +87,18 @@ impl From<u64> for MmioAddr {
 }
 
 #[derive(Debug, Clone)]
-pub struct Mmio {
+pub struct MmioRaw {
     phys: MmioAddr,
     virt: NonNull<u8>,
     size: usize,
 }
 
-impl Mmio {
+impl MmioRaw {
     /// # Safety
     ///
     /// Caller must ensure that `virt` is a valid mapping for the given `phys` and `size`.
     pub unsafe fn new(phys: MmioAddr, virt: NonNull<u8>, size: usize) -> Self {
-        Mmio { phys, virt, size }
+        MmioRaw { phys, virt, size }
     }
 
     pub fn phys_addr(&self) -> MmioAddr {
@@ -120,27 +128,27 @@ impl Mmio {
     }
 }
 
-pub struct MmioGuard(Mmio);
+pub struct Mmio(MmioRaw);
 
-impl Deref for MmioGuard {
-    type Target = Mmio;
+impl Deref for Mmio {
+    type Target = MmioRaw;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl Drop for MmioGuard {
+impl Drop for Mmio {
     fn drop(&mut self) {
         let mmio_op = unsafe { MMIO_OP.expect("MmioOp is not initialized") };
         mmio_op.iounmap(self);
     }
 }
 
-unsafe impl Send for Mmio {}
-unsafe impl Sync for Mmio {}
+unsafe impl Send for MmioRaw {}
+unsafe impl Sync for MmioRaw {}
 
-impl Display for Mmio {
+impl Display for MmioRaw {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
@@ -154,26 +162,26 @@ impl Display for Mmio {
 
 #[cfg(all(test, not(target_os = "none")))]
 mod tests {
-    use super::Mmio;
+    use super::MmioRaw;
 
     struct DummyMmioOp;
     impl super::MmioOp for DummyMmioOp {
-        fn ioremap(&self, addr: super::MmioAddr, size: usize) -> Result<Mmio, super::Error> {
-            Ok(Mmio {
+        fn ioremap(&self, addr: super::MmioAddr, size: usize) -> Result<MmioRaw, super::Error> {
+            Ok(MmioRaw {
                 phys: addr,
                 virt: core::ptr::NonNull::dangling(),
                 size,
             })
         }
 
-        fn iounmap(&self, _mmio: &Mmio) {}
+        fn iounmap(&self, _mmio: &MmioRaw) {}
     }
 
     #[test]
     fn test_mmio_new() {
         super::init(&DummyMmioOp);
 
-        let addr = Mmio {
+        let addr = MmioRaw {
             phys: super::MmioAddr(0x1000),
             virt: core::ptr::NonNull::dangling(),
             size: 0x100,
