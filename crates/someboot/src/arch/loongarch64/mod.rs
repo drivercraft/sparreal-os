@@ -65,7 +65,6 @@ impl ArchTrait for Arch {
         let ticks = ticks.max(MIN_TICKS);
         // Ensure the value is aligned to a multiple of 4 as required by TCFG
         let ticks = (ticks + 3) & !3;
-        let ticks = ticks.min(usize::MAX);
 
         // 先禁用定时器
         tcfg::set_en(false);
