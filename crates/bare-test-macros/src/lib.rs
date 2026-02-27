@@ -45,8 +45,8 @@ fn tests_impl(_args: TokenStream, input: TokenStream) -> Result<TokenStream, par
 
     for item in items {
         match item {
-            Item::Fn(f) => {
-                if f.attrs.iter().any(|attr| attr.path().is_ident("test")) {
+            Item::Fn(f)
+                if f.attrs.iter().any(|attr| attr.path().is_ident("test")) => {
                     let f_name = &f.sig.ident;
                     let _f_name = format_ident!("__{}", f.sig.ident);
                     let block = &f.block;
@@ -85,10 +85,7 @@ fn tests_impl(_args: TokenStream, input: TokenStream) -> Result<TokenStream, par
                             test_fn: #_f_name,
                         };
                     });
-                } else {
-                    untouched_tokens.push(item);
                 }
-            }
             _ => {
                 untouched_tokens.push(item);
             }
