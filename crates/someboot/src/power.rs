@@ -1,7 +1,8 @@
 use crate::{
     ArchTrait, DCacheOp,
     arch::_secondary_entry,
-    mem::{__kimage_va, dcache_range, virt_to_phys},
+    mem::{__kimage_va, __percpu, dcache_range, virt_to_phys},
+    smp::PerCpuMeta,
 };
 
 pub fn shutdown() -> ! {
@@ -13,14 +14,16 @@ pub fn cpu_on(cpu_idx: usize) -> Result<(), CpuOnError> {
     debug!("Secondary entry address: {entry:#x}");
     let arg = crate::smp::cpu_meta_addr(cpu_idx).ok_or(CpuOnError::InvalidParameters)?;
     debug!("Secondary entry argument (cpu meta address): {arg:#x}");
-    let cpu_id = crate::smp::cpu_idx_to_id(cpu_idx).ok_or(CpuOnError::InvalidParameters)?;
-    debug!("Power on CPU {cpu_idx:#x} (hard {cpu_id:#x}) at entry {entry:#x}, arg {arg:#x}");
+
+    let meta = unsafe { &*(__percpu(arg) as *const PerCpuMeta) };
+
+    debug!("Power on CPU {meta:#x?}");
     let kimg = crate::mem::kimage_range();
     let kimg_start = __kimage_va(kimg.start);
     let size = kimg.end - kimg.start;
     dcache_range(DCacheOp::Clean, kimg_start, size);
 
-    crate::arch::Arch::cpu_on(cpu_id, entry, arg)?;
+    crate::arch::Arch::cpu_on(meta.cpu_id, entry, arg)?;
     Ok(())
 }
 

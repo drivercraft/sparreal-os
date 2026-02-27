@@ -1,6 +1,7 @@
 use core::arch::asm;
 
 use aarch64_cpu::asm::barrier::{self, dsb, isb};
+use aarch64_cpu_ext::cache::icache_flush_all;
 use num_align::NumAlign;
 use page_table_generic::{MapConfig, MemAttributes, PteConfig};
 
@@ -10,6 +11,7 @@ use crate::{
     arch::elx::{flush_tlb, set_kernal_table, setup_sctlr, setup_table_regs},
     console::print_mapping,
     mem::{__kimage_va, __percpu, __va, MB, PageTableInfo, page_size},
+    smp::PerCpuMeta,
 };
 
 mod pte;
@@ -54,49 +56,22 @@ pub fn enable_mmu() -> ! {
     }
 }
 
-pub fn enable_mmu_secondary(cpu_meta_paddr: usize) -> ! {
-    let boot_table_addr = crate::mem::mmu::boot_table_addr();
-    if boot_table_addr == 0 {
-        panic!("Boot page table address is not initialized");
-    }
-
-    let stack_top = unsafe { (cpu_meta_paddr as *const usize).read_volatile() };
-    let mmu_entry_phys = super::entry::secondary_mmu_entry as *const () as usize;
-    let v_sp = __percpu(stack_top) as usize;
-    let v_entry = __kimage_va(mmu_entry_phys) as usize;
+pub fn init_mmu_secondary(cpu_meta_paddr: usize) -> usize {
+    let meta = unsafe { &*(cpu_meta_paddr as *const PerCpuMeta) };
 
     setup_table_regs();
     let tb = PageTableInfo {
         asid: 0,
-        addr: boot_table_addr.into(),
+        addr: meta.boot_table_paddr.into(),
     };
     set_kernal_table(tb);
     #[cfg(not(feature = "hv"))]
     set_user_table(tb);
-    flush_tlb(None);
-
     setup_sctlr();
-    crate::mem::mmu::set_mmu_enabled();
-
-    super::relocate::reset();
+    flush_tlb(None);
     dsb(barrier::SY);
     isb(barrier::SY);
-
-    unsafe {
-        asm!(
-            "
-            mov x0, {0}
-            mov x8, {1}
-            mov x9, {2}
-            mov sp, x9
-            br x8
-        ",
-            in(reg) cpu_meta_paddr,
-            in(reg) v_entry,
-            in(reg) v_sp,
-            options(noreturn, nostack)
-        )
-    }
+    cpu_meta_paddr
 }
 
 fn setup_page_table() -> anyhow::Result<()> {

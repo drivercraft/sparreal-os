@@ -1,5 +1,7 @@
 use page_table_generic::{PhysAddr, VirtAddr};
 
+use crate::smp::PerCpuMeta;
+
 pub struct PrimaryCpuInitInfo {
     pub kernel_start: PhysAddr,
     pub kernel_end: PhysAddr,
@@ -26,4 +28,11 @@ pub fn primary_init_early(params: PrimaryCpuInitInfo) {
     println!("VM Load Offset: {:#x}", crate::mem::vm_load_offset());
 
     crate::mem::early_init();
+}
+
+
+pub(crate) fn secondary_entry(cpu_meta: &PerCpuMeta){
+    println!("Secondary CPU {} (ID {}) is starting up", cpu_meta.cpu_idx, cpu_meta.cpu_id);
+    println!("Stack top: {:#x}", cpu_meta.stack_top);
+    println!("MMU entry: {:#x}", cpu_meta.entry_virt);
 }

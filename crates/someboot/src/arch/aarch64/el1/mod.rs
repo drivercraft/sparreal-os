@@ -106,7 +106,7 @@ pub fn switch_to_elx_secondary(cpu_meta_paddr: usize) -> ! {
         eret();
     }
 
-    crate::arch::entry::secondary_el_entry(cpu_meta_paddr)
+    unsafe { crate::arch::entry::secondary_el_entry(cpu_meta_paddr) }
 }
 
 #[inline(always)]

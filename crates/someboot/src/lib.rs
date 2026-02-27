@@ -155,6 +155,7 @@ fn prime_entry() -> ! {
     // mem::init_after_mmu();
     mem::memory_map_setup();
     mem::print_memory_map();
+    smp::init_percpu();
 
     unsafe extern "C" {
         fn __someboot_main() -> !;

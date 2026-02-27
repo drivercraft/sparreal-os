@@ -5,7 +5,7 @@ use kernutil::memory::MemoryType;
 use crate::{
     ArchTrait, DCacheOp,
     arch::Arch,
-    mem::{__percpu, dcache_range, page_size, phys_to_virt, stack_size},
+    mem::{__kimage_va, __percpu, dcache_range, page_size, phys_to_virt, stack_size},
 };
 
 mod cpu_iter;
@@ -41,7 +41,7 @@ fn meta_offset() -> usize {
 ///
 ///
 /// | Linker percpu data | align to 0x8 | PerCpuMeta | align padding to page size | Stack |
-pub fn init_percpu() {
+pub fn alloc_percpu() {
     println!("Initializing per-CPU data");
     let cpu_num = __cpu_id_list().count();
 
@@ -77,6 +77,8 @@ pub fn init_percpu() {
         unsafe { PERCPU_END }
     );
 
+    let entry_virt = __kimage_va(super::entry::secondary_entry as *const () as usize);
+
     for (idx, hard_id) in __cpu_id_list().enumerate() {
         let cpu_percpu_start = percpu_data_range().start + idx * percpu_size;
         println!(
@@ -87,10 +89,16 @@ pub fn init_percpu() {
         debug_assert_eq!(meta_start % meta_align(), 0);
         debug_assert_eq!((meta_va as usize) % meta_align(), 0);
 
+        let stack_top = cpu_percpu_start + stack_offset() + stack_size();
+        let stack_top_virt = __percpu(stack_top);
+
         let meta = PerCpuMeta {
-            stack_top: cpu_percpu_start + stack_offset() + stack_size(),
+            stack_top,
             cpu_id: hard_id,
             cpu_idx: idx,
+            stack_top_virt: stack_top_virt as _,
+            entry_virt: entry_virt as _,
+            boot_table_paddr: 0,
         };
         unsafe {
             *meta_va.cast::<PerCpuMeta>() = meta;
@@ -99,10 +107,18 @@ pub fn init_percpu() {
 
     for meta in cpu_meta_list() {
         println!(
-            "CPU{} - hard id {:#x} stack top @ {:#x}",
-            meta.cpu_idx, meta.cpu_id, meta.stack_top
+            "CPU{} - hard id {:#x}, stack top @{:#x}, stack top virt @{:#x}, entry virt @{:#x}",
+            meta.cpu_idx, meta.cpu_id, meta.stack_top, meta.stack_top_virt, meta.entry_virt
         );
     }
+}
+
+pub(crate) fn init_percpu() {
+    let boot_table = crate::mem::mmu::boot_table_addr();
+    for meta in cpu_meta_list_mut() {
+        meta.boot_table_paddr = boot_table;
+    }
+
     let start = __percpu(unsafe { PERCPU_START });
     let size = unsafe { PERCPU_END - PERCPU_START };
     dcache_range(DCacheOp::CleanInvalidate, start, size);
@@ -116,6 +132,11 @@ pub struct PerCpuMeta {
     pub cpu_id: usize,
     /// The logical index of the CPU, assigned by the bootloader or determined by the OS
     pub cpu_idx: usize,
+
+    pub stack_top_virt: usize,
+    pub entry_virt: usize,
+
+    pub boot_table_paddr: usize,
 }
 
 fn stack_offset() -> usize {
@@ -209,6 +230,27 @@ impl Iterator for CpuMetaIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         let meta = cpu_meta(self.next)?;
+        self.next += 1;
+        Some(meta)
+    }
+}
+
+fn cpu_meta_list_mut() -> impl Iterator<Item = &'static mut PerCpuMeta> {
+    CpuMetaIterMutable { next: 0 }
+}
+
+struct CpuMetaIterMutable {
+    next: usize,
+}
+
+impl Iterator for CpuMetaIterMutable {
+    type Item = &'static mut PerCpuMeta;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let meta_start = cpu_meta_addr(self.next)?;
+        let meta_va = phys_to_virt(meta_start);
+        debug_assert_eq!((meta_va as usize) % meta_align(), 0);
+        let meta = unsafe { &mut *(meta_va as *mut PerCpuMeta) };
         self.next += 1;
         Some(meta)
     }

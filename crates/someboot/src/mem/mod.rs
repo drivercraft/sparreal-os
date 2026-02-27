@@ -138,7 +138,7 @@ pub(crate) fn early_init() {
     ram::init(free_range.expect("No free memory"));
 
     crate::fdt::save_fdt();
-    crate::smp::init_percpu();
+    crate::smp::alloc_percpu();
 }
 
 /// Get the physical range of the kernel image

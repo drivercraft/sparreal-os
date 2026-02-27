@@ -2,7 +2,12 @@ use core::{arch::naked_asm, hint::spin_loop, mem::offset_of};
 
 use aarch64_cpu::registers::{CurrentEL, Readable};
 
-use crate::{arch::elx, consts::VM_LOAD_ADDRESS, entry::PrimaryCpuInitInfo};
+use crate::{
+    arch::{elx, paging::init_mmu_secondary},
+    consts::VM_LOAD_ADDRESS,
+    entry::PrimaryCpuInitInfo,
+    smp::PerCpuMeta,
+};
 
 use super::{switch_to_elx, switch_to_elx_secondary};
 
@@ -68,10 +73,6 @@ pub(crate) fn mmu_entry() -> ! {
     crate::prime_entry()
 }
 
-pub(crate) fn secondary_el_entry(cpu_meta_paddr: usize) -> ! {
-    crate::arch::paging::enable_mmu_secondary(cpu_meta_paddr)
-}
-
 pub(crate) fn secondary_mmu_entry(_cpu_meta_paddr: usize) -> ! {
     println!("Disable user page table");
     #[cfg(uspace)]
@@ -99,5 +100,20 @@ pub(crate) unsafe extern "C" fn _secondary_entry(_arg: usize) -> ! {
         "bl {switch_to_elx_secondary}",
         switch_to_elx_secondary = sym switch_to_elx_secondary,
         stack_top_offset = const offset_of!(crate::smp::PerCpuMeta, stack_top),
+    )
+}
+
+#[unsafe(naked)]
+pub(crate) unsafe extern "C" fn secondary_el_entry(_cpu_meta_paddr: usize) -> ! {
+    naked_asm!(
+        "bl {init_mmu}",
+        "ldr x8, [x20, {stack_top_virt_offset}]",
+        "mov sp, x8",
+        "ldr x8, [x20, {entry_offset}]",
+        "blr x8",
+        "b .",
+        init_mmu = sym init_mmu_secondary,
+        stack_top_virt_offset = const offset_of!(PerCpuMeta, stack_top_virt),
+        entry_offset = const offset_of!(PerCpuMeta, entry_virt),
     )
 }
