@@ -92,6 +92,9 @@ fn setup_page_table() -> anyhow::Result<()> {
     for memory in crate::fdt::memories() {
         let start = memory.start;
         let size = memory.len();
+        if size == 0 {
+            continue;
+        }
 
         print_mapping("Ram", __va(start) as _, start, size);
 
