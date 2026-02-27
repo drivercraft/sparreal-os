@@ -1,0 +1,46 @@
+name: Test for BOARD
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  test-board:
+    name: "Test board: ${{ matrix.board }} - ${{ matrix.suit_name }}"
+    strategy:
+      matrix:
+        include:
+          - board: phytiumpi
+            suit_name: el1
+            config: "./test-suit/timer/aarch64.toml"
+          - board: roc-rk3568-pc
+            suit_name: el1
+            config: "./test-suit/timer/aarch64.toml"
+          - board: roc-rk3568-pc
+            suit_name: smp
+            config: "./test-suit/smp/aarch64.toml"
+
+      fail-fast: false
+    runs-on:
+      - self-hosted
+      - linux
+      - ${{ matrix.board }}
+
+    steps:
+      - name: Clean up workspace
+        run: |
+          [ -d .git ] && git submodule deinit -f . || true
+          [ -d .git/modules ] && rm -rf .git/modules || true
+          [ -d .git ] && git clean -ffdx || true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: true
+
+      - name: Install dependencies
+        run: cargo +stable install ostool --version ^0.8
+
+      - name: Run tests
+        run: |
+          echo $BOARD_POWER_RESET
+          export RUST_LOG=debug
+          ostool run -c ${{ matrix.config }} uboot -u .github/workflows/uboot.toml
