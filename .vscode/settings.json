@@ -7,7 +7,7 @@
     //     "--bins"
     // ],
     "rust-analyzer.cargo.features": [
-        "uspace"
+        // "uspace"
     ],
     "lldb.displayFormat": "auto",
     "lldb.dereferencePointers": true,

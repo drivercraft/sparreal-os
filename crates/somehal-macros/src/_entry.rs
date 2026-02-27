@@ -116,15 +116,16 @@ pub fn entry_secondary(_args: TokenStream, input: TokenStream, name: &str) -> To
     // XXX should we blacklist other attributes?
     let attrs = f.attrs;
     let unsafety = f.sig.unsafety;
-    let args = f.sig.inputs;
+    // let args = f.sig.inputs;
     let stmts = f.block.stmts;
     let name = format_ident!("{}", name);
 
     quote!(
         #[allow(non_snake_case)]
+        #[allow(unused_variables)]
         #[unsafe(no_mangle)]
         #(#attrs)*
-        pub #unsafety extern "C" fn #name(#args) {
+        pub #unsafety extern "C" fn #name(meta: &somehal::smp::PerCpuMeta) {
             #(#stmts)*
         }
     )
