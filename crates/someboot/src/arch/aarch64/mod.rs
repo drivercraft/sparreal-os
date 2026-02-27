@@ -177,7 +177,7 @@ impl ArchTrait for Arch {
         MPIDR_EL1.get() as usize & MASK
     }
 
-    fn kernal_space() -> core::ops::Range<usize> {
+    fn kernel_space() -> core::ops::Range<usize> {
         PAGE_OFFSET..usize::MAX
     }
 

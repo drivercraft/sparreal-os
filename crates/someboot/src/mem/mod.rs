@@ -198,5 +198,5 @@ pub(crate) fn add_memory_descriptor(
 }
 
 pub fn kernel_space() -> Range<usize> {
-    Arch::kernal_space()
+    Arch::kernel_space()
 }
