@@ -40,11 +40,30 @@ pub fn _print(args: core::fmt::Arguments) {
 }
 
 pub fn _write_bytes(bytes: &[u8]) -> usize {
-    con().write_bytes(bytes)
+    if is_mmu_enabled() {
+        let lock = PRINT_MUTEX.lock();
+        let n = con().write_bytes(bytes);
+        drop(lock);
+        n
+    } else {
+        // MMU not enabled, write directly without locking
+        con().write_bytes(bytes)
+    }
+
+    // con().write_bytes(bytes)
 }
 
 pub fn _write_str(s: &str) {
-    con().write_str(s);
+    if is_mmu_enabled() {
+        let lock = PRINT_MUTEX.lock();
+        con().write_str(s);
+        drop(lock);
+    } else {
+        // MMU not enabled, write directly without locking
+        con().write_str(s);
+    }
+
+    // con().write_str(s);
 }
 
 #[macro_export]

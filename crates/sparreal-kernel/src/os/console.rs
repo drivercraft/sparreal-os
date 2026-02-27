@@ -37,5 +37,7 @@ impl Write for EarlyConsole {
 }
 
 pub fn _write_fmt(args: fmt::Arguments<'_>) {
+    static MUTEX: spin::Mutex<()> = spin::Mutex::new(());
+    let _lock = MUTEX.lock();
     con().write_fmt(args);
 }
