@@ -35,3 +35,11 @@ pub fn post_paging() {
     // note: irq controller should be initialized when probe.
     driver::rdrive_setup();
 }
+
+#[unsafe(no_mangle)]
+pub fn __somehal_secondary_default() -> ! {
+    println!("Secondary CPU entry called, but no secondary entry point defined!");
+    loop {
+        core::hint::spin_loop();
+    }
+}

@@ -14,7 +14,6 @@
                 "./test-suit/timer/qemu-aarch64.toml",
                 "--debug",
             ],
-            
             "options": {
                 "cwd": "${workspaceFolder}",
             },
@@ -31,6 +30,36 @@
                 "isDefault": true
             },
             "detail": "断点调试 test 测试用例",
+            "isBackground": true,
+        },
+        {
+            "type": "shell",
+            "label": "qemu debug smp",
+            "command": "ostool",
+            "args": [
+                "run",
+                "-c",
+                "./test-suit/smp/aarch64.toml",
+                "qemu",
+                "-q",
+                "./test-suit/smp/qemu-aarch64.toml",
+                "--debug",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+            },
+            "problemMatcher": {
+                "base": "$rustc",
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^.*",
+                    "endsPattern": "^qemu-system.*"
+                }
+            },
+            "group": {
+                "kind": "test"
+            },
+            "detail": "断点调试 test-suit-smp 测试用例",
             "isBackground": true,
         }
     ]

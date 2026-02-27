@@ -71,7 +71,7 @@ pub fn entry(args: TokenStream, input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn secondary_entry(args: TokenStream, input: TokenStream) -> TokenStream {
-    _entry::entry(args, input, "__someboot_secondary")
+    _entry::entry_secondary(args, input, "__someboot_secondary")
 }
 
 /// 中断处理器属性宏

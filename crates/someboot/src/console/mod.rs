@@ -5,6 +5,7 @@ use kernutil::memory::{MemoryDescriptor, MemoryType};
 use some_serial::*;
 
 use crate::cmdline::EarlyconConfig;
+use crate::mem::mmu::is_mmu_enabled;
 use crate::mem::{_fixmap_io, page_size};
 
 pub(crate) static mut DEBUG_BASE: usize = 0;
@@ -23,8 +24,19 @@ pub(crate) fn debug_to_memory_desc() -> Option<MemoryDescriptor> {
     ))
 }
 
+static PRINT_MUTEX: spin::Mutex<()> = spin::Mutex::new(());
+
 pub fn _print(args: core::fmt::Arguments) {
-    let _ = ConFmt {}.write_fmt(args);
+    if is_mmu_enabled() {
+        let lock = PRINT_MUTEX.lock();
+        let _ = ConFmt {}.write_fmt(args);
+        drop(lock);
+    } else {
+        // MMU not enabled, print directly without locking
+        let _ = ConFmt {}.write_fmt(args);
+    }
+
+    // let _ = ConFmt {}.write_fmt(args);
 }
 
 pub fn _write_bytes(bytes: &[u8]) -> usize {

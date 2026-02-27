@@ -59,3 +59,14 @@ fn __sparreal_main() {
 
     info!("All tests passed!");
 }
+
+
+#[somehal::secondary_entry]
+fn secondary()->! {
+    let cpu_id = sparreal_rt::os::cpu::current_cpu_id();
+    info!("CPU {} started secondary entry", cpu_id);
+    STARTED_COUNT.fetch_add(1, Ordering::SeqCst);
+    loop {
+        spin_loop();
+    }
+}

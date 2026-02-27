@@ -5,6 +5,8 @@
 
 INCLUDE "someboot.x"
 
+PROVIDE(__someboot_secondary = __somehal_secondary_default);
+
 SECTIONS
 {
    .driver : ALIGN(4K) {

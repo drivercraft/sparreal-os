@@ -1338,6 +1338,7 @@ name = "test-suit-smp"
 version = "0.1.0"
 dependencies = [
  "log",
+ "somehal",
  "sparreal-rt",
 ]
 

@@ -12,7 +12,7 @@ pub type ArchPte = <<crate::arch::Arch as crate::ArchTrait>::P as page_table_gen
 
 static BOOT_TABLE: StaticCell<ArchPageTable<Ram>> = StaticCell::uninit();
 pub static mut BOOT_TAGBLE_ADDR: usize = 0;
-static MMU_ENABLED: AtomicBool = AtomicBool::new(false);
+static mut MMU_ENABLED: bool = false;
 
 pub(crate) fn new_boot_table() -> ArchPageTable<Ram> {
     ArchPageTable::<Ram>::new(Ram).unwrap()
@@ -38,11 +38,11 @@ pub(crate) fn boot_table_addr() -> usize {
 }
 
 pub(crate) fn is_mmu_enabled() -> bool {
-    MMU_ENABLED.load(core::sync::atomic::Ordering::Relaxed)
+    unsafe { MMU_ENABLED }
 }
 
 pub(crate) fn set_mmu_enabled() {
-    MMU_ENABLED.store(true, core::sync::atomic::Ordering::Relaxed);
+    unsafe { MMU_ENABLED = true };
 }
 
 pub trait PageTableOp {

@@ -29,8 +29,6 @@ byteorder = {version = "1", default-features = false}
 fdt-edit = "0.1"
 fdt-raw = "0.2"
 thiserror.workspace = true
-# fdt-raw = {path = "/home/zhourui/opensource/fdt-parser-dev/fdt-raw"}
-
 heapless = "0.9"
 kernutil = {workspace = true}
 log = "0.4"

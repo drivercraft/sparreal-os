@@ -4,7 +4,6 @@
     // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        // 暂时停用，linkscript 中添加自定义 section 后，断点无法命中
         {
             "name": "KDebug lldb",
             "type": "lldb",
@@ -25,14 +24,33 @@
             ]
         },
         {
-            "type": "cppdbg",
-            "name": "KDebug cppdbg",
+            "name": "KDebug lldb smp",
+            "type": "lldb",
             "request": "launch",
-            "miDebuggerServerAddress": "localhost:1234",
-            "program": "${workspaceFolder}/target/kernel.elf",
-            "miDebuggerPath": "C:\\msys64\\ucrt64\\bin\\gdb-multiarch.exe",
-            "cwd": "${workspaceRoot}",
-            "preLaunchTask": "qemu debug"
+            "program": "${workspaceFolder}/target/aarch64-unknown-none-softfloat/debug/test-suit-smp",
+            "initCommands": [
+                "platform select remote-gdb-server"
+            ],
+            "targetCreateCommands": [
+                "target create ${workspaceFolder}/target/aarch64-unknown-none-softfloat/debug/test-suit-smp"
+            ],
+            "processCreateCommands": [
+                "gdb-remote localhost:1234" // Connect to the GDB Server
+            ],
+            "preLaunchTask": "qemu debug smp",
+            "preRunCommands": [
+                "target modules load --file ${workspaceFolder}/target/aarch64-unknown-none-softfloat/debug/test-suit-smp .head.text 0xffffffff80000000",
+            ]
         },
+        // {
+        //     "type": "cppdbg",
+        //     "name": "KDebug cppdbg",
+        //     "request": "launch",
+        //     "miDebuggerServerAddress": "localhost:1234",
+        //     "program": "${workspaceFolder}/target/kernel.elf",
+        //     "miDebuggerPath": "C:\\msys64\\ucrt64\\bin\\gdb-multiarch.exe",
+        //     "cwd": "${workspaceRoot}",
+        //     "preLaunchTask": "qemu debug"
+        // },
     ]
 }
