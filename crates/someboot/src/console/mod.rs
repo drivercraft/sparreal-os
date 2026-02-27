@@ -5,7 +5,6 @@ use kernutil::memory::{MemoryDescriptor, MemoryType};
 use some_serial::*;
 
 use crate::cmdline::EarlyconConfig;
-use crate::mem::mmu::is_mmu_enabled;
 use crate::mem::{_fixmap_io, page_size};
 
 pub(crate) static mut DEBUG_BASE: usize = 0;
@@ -24,46 +23,16 @@ pub(crate) fn debug_to_memory_desc() -> Option<MemoryDescriptor> {
     ))
 }
 
-static PRINT_MUTEX: spin::Mutex<()> = spin::Mutex::new(());
-
 pub fn _print(args: core::fmt::Arguments) {
-    if is_mmu_enabled() {
-        let lock = PRINT_MUTEX.lock();
-        let _ = ConFmt {}.write_fmt(args);
-        drop(lock);
-    } else {
-        // MMU not enabled, print directly without locking
-        let _ = ConFmt {}.write_fmt(args);
-    }
-
-    // let _ = ConFmt {}.write_fmt(args);
+    let _ = ConFmt {}.write_fmt(args);
 }
 
 pub fn _write_bytes(bytes: &[u8]) -> usize {
-    if is_mmu_enabled() {
-        let lock = PRINT_MUTEX.lock();
-        let n = con().write_bytes(bytes);
-        drop(lock);
-        n
-    } else {
-        // MMU not enabled, write directly without locking
-        con().write_bytes(bytes)
-    }
-
-    // con().write_bytes(bytes)
+    con().write_bytes(bytes)
 }
 
 pub fn _write_str(s: &str) {
-    if is_mmu_enabled() {
-        let lock = PRINT_MUTEX.lock();
-        con().write_str(s);
-        drop(lock);
-    } else {
-        // MMU not enabled, write directly without locking
-        con().write_str(s);
-    }
-
-    // con().write_str(s);
+    con().write_str(s);
 }
 
 #[macro_export]
@@ -165,35 +134,6 @@ impl Con for NoCon {
 }
 
 static mut CON: &dyn Con = &NoCon;
-// static mut CON2: &dyn Con = &NoCon;
-
-#[inline(never)]
-#[unsafe(no_mangle)]
-pub(crate) fn print_con_info() {
-    // // Print current PC
-    // let pc: usize;
-    // unsafe {
-    //     core::arch::asm!("adr {}, .", out(reg) pc);
-    // }
-    // println!("Current PC: 0x{:x}", pc);
-
-    let ptr = &raw const CON;
-    println!("Console at {:p}", ptr);
-    // let ptr = &raw const EARLYCON_SENDER;
-    // println!("Console at {:p}", ptr);
-    // println!("Console ptr as usize: 0x{:x}", ptr as usize);
-    // let ptr = &raw const CON2;
-    // println!("Console at {:p}", ptr);
-
-    // The &raw const generates adr instruction which cannot be relocated
-    // So we demonstrate the issue first
-    let ptr1 = core::ptr::addr_of!(DEBUG_BASE);
-
-    println!(
-        "DEBUG_BASE 1: {:p} (WRONG! adr instruction, not relocated)",
-        ptr1
-    );
-}
 
 pub(crate) unsafe fn set_out(v: &'static dyn Con) {
     unsafe {
