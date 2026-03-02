@@ -96,6 +96,10 @@ impl ArchTrait for Arch {
         power::shutdown()
     }
 
+    fn secondary_entry_fn_address() -> *const () {
+        _secondary_entry as *const ()
+    }
+
     fn irq_all_is_enabled() -> bool {
         !DAIF.is_set(DAIF::I)
     }

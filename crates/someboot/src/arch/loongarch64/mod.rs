@@ -103,6 +103,10 @@ impl ArchTrait for Arch {
         }
     }
 
+    fn secondary_entry_fn_address() -> *const () {
+        _secondary_entry as *const ()
+    }
+
     fn irq_all_is_enabled() -> bool {
         crmd::read().ie()
     }

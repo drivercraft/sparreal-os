@@ -85,6 +85,7 @@ pub trait ArchTrait {
     fn set_user_page_table(val: PageTableInfo);
 
     fn shutdown() -> !;
+    fn secondary_entry_fn_address() -> *const ();
     fn cpu_on(hartid: usize, entry: usize, arg: usize) -> Result<(), CpuOnError>;
 
     fn systimer_enable();

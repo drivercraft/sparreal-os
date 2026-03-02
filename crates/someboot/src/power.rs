@@ -1,6 +1,5 @@
 use crate::{
     ArchTrait, DCacheOp,
-    arch::_secondary_entry,
     mem::{__kimage_va, __percpu, dcache_range, virt_to_phys},
     smp::PerCpuMeta,
 };
@@ -30,7 +29,7 @@ pub fn cpu_on(cpu_idx: usize) -> Result<(), CpuOnError> {
 /// secondary entry address
 /// arg0 is stack top
 fn secondary_entry_addr() -> usize {
-    let ptr = _secondary_entry as *const u8;
+    let ptr = crate::arch::Arch::secondary_entry_fn_address() as *const u8;
     virt_to_phys(ptr)
 }
 
