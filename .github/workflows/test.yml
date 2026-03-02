@@ -66,3 +66,6 @@ jobs:
 
       - name: Build test
         run: ./scripts/test_${{ matrix.arch }}.sh
+
+      - name: Test rdrive
+        run: cargo test -p rdrive
