@@ -263,9 +263,10 @@ impl Constraint {
         }
 
         if let AllocPolicy::ExactMatch(start_address) = policy
-            && start_address % align != 0 {
-                return Err(Error::UnalignedAddress);
-            }
+            && start_address % align != 0
+        {
+            return Err(Error::UnalignedAddress);
+        }
 
         Ok(Constraint {
             size,

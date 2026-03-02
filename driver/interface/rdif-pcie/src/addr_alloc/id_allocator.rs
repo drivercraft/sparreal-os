@@ -83,9 +83,10 @@ impl IdAllocator {
             return Err(Error::OutOfRange(id));
         }
         if let Some(next_id) = self.next_id
-            && next_id < id {
-                return Err(Error::NeverAllocated(id));
-            }
+            && next_id < id
+        {
+            return Err(Error::NeverAllocated(id));
+        }
 
         // Insert the released id in the set of released id to avoid releasing
         // it in next iterations.

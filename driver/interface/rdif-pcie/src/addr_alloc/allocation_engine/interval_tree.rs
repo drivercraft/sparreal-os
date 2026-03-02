@@ -613,9 +613,10 @@ impl IntervalTree {
                 range.start().checked_sub(2).ok_or(Error::Underflow)?,
                 range.start().checked_sub(1).ok_or(Error::Underflow)?,
             )?)
-                && node.node_state == NodeState::Free {
-                    range = RangeInclusive::new(node.key.start(), range.end())?;
-                }
+            && node.node_state == NodeState::Free
+        {
+            range = RangeInclusive::new(node.key.start(), range.end())?;
+        }
         // If the deleted range did not end at u64::MAX we try to find ranges
         // that are placed to its left so we can merge them together.
         if range.end() < u64::MAX
@@ -623,9 +624,10 @@ impl IntervalTree {
                 range.end().checked_add(1).ok_or(Error::Overflow)?,
                 range.end().checked_add(2).ok_or(Error::Overflow)?,
             )?)
-                && node.node_state == NodeState::Free {
-                    range = RangeInclusive::new(range.start(), node.key.end())?;
-                }
+            && node.node_state == NodeState::Free
+        {
+            range = RangeInclusive::new(range.start(), node.key.end())?;
+        }
 
         // If we merged the freed node to the one on its left we should delete
         // the left node as it now belongs to a bigger RangeInclusive that will be
