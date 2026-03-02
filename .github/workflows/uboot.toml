@@ -10,6 +10,6 @@ success_regex = [
     "All tests passed!",
 ]
 
-[net]
-interface = "${env:BOARD_COMM_NET_IFACE}"
-tftp_dir = "${env:TFTP_DIR}"
+# [net]
+# interface = "${env:BOARD_COMM_NET_IFACE}"
+# tftp_dir = "${env:TFTP_DIR}"
