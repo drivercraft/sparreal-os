@@ -30,7 +30,7 @@ macro_rules! __readable {
                     #[cfg(target_arch = "aarch64")]
                     () => {
                         let reg: u64;
-                        unsafe { asm!(concat!("mrs {0}, ", stringify!($register)), out(reg) reg) }
+                        unsafe { core::arch::asm!(concat!("mrs {0}, ", stringify!($register)), out(reg) reg) }
                         reg
                     }
 
@@ -49,11 +49,12 @@ macro_rules! __writeable {
             type R = $register::Register;
 
             #[inline(always)]
+            #[allow(unused_variables)]
             fn set(&self, value: Self::T) {
                 match () {
                     #[cfg(target_arch = "aarch64")]
                     () => {
-                        unsafe { asm!(concat!("msr ", stringify!($register), ", {0}"), in(reg) value) }
+                        unsafe { core::arch::asm!(concat!("msr ", stringify!($register), ", {0}"), in(reg) value) }
                     }
 
                     #[cfg(not(target_arch = "aarch64"))]
@@ -76,7 +77,6 @@ macro_rules! define_readonly_register {
         $(#[$attr])*
         pub mod [<$register:lower>] {
             use tock_registers::{interfaces::*, register_bitfields};
-            use core::arch::asm;
 
             register_bitfields! {u64,
                 pub $register [
@@ -107,7 +107,6 @@ macro_rules! define_readwrite_register {
         $(#[$attr])*
         pub mod [<$register:lower>] {
             use tock_registers::{interfaces::*, register_bitfields};
-            use core::arch::asm;
 
             register_bitfields! {u64,
                 pub $register [
@@ -139,7 +138,6 @@ macro_rules! define_writeonly_register {
         $(#[$attr])*
         pub mod [<$register:lower>] {
             use tock_registers::{interfaces::*, register_bitfields};
-            use core::arch::asm;
 
             register_bitfields! {u64,
                 pub $register [

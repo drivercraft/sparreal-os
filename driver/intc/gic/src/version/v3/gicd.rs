@@ -89,6 +89,7 @@ register_structs! {
     }
 }
 
+#[allow(dead_code)]
 impl DistributorReg {
     pub fn get_security_state(&self) -> SecurityState {
         if self.is_single_security_state() || !self.has_security_extensions() {
