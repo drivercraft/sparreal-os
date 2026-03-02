@@ -18,7 +18,7 @@ uspace = ["mmu", "someboot/uspace"]
 [dependencies]
 anyhow = {workspace = true}
 page-table-generic = {workspace = true}
-rdif-intc = "0.13"
+rdif-intc.workspace = true
 rdrive = {workspace = true}
 someboot = {workspace = true}
 somehal-macros = {workspace = true}
@@ -31,4 +31,4 @@ mmio-api = {workspace = true}
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 aarch64-cpu = "11"
-arm-gic-driver = {version = "0.16", features = ["rdif"]}
+arm-gic-driver = {workspace = true, features = ["rdif"]}

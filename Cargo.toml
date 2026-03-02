@@ -32,7 +32,7 @@ thiserror = { version = "2", default-features = false }
 tock-registers = "0.10"
 uefi = "0.36"
 
-rdrive = "0.18"
+rdrive = { version = "0.18", path = "driver/rdrive" }
 
 dma-api = { version = "0.7", path = "crates/dma-api" }
 mmio-api = { path = "crates/mmio-api", version = "0.1" }
@@ -49,5 +49,8 @@ sparreal-kernel = { path = "crates/sparreal-kernel", version = "0.14" }
 sparreal-macros = { path = "crates/sparreal-macros", version = "0.10" }
 sparreal-rt = { path = "platform/sparreal-rt", version = "0.13" }
 
+rdif-intc = { path = "driver/interface/rdif-intc", version = "0.13" }
 rdif-base = { path = "driver/interface/rdif-base", version = "0.7" }
 rdif-pcie = { path = "driver/interface/rdif-pcie", version = "0.1" }
+
+arm-gic-driver = { version = "0.16", path = "driver/intc/gic" }

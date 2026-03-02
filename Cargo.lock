@@ -178,16 +178,14 @@ dependencies = [
 
 [[package]]
 name = "arm-gic-driver"
-version = "0.16.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d09177e7ffff6c78aee3db4816fb478255c5d579f916d72f914c243b797e68e"
+version = "0.16.4"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "bitflags 2.11.0",
  "enum_dispatch",
  "log",
  "paste",
- "rdif-intc 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-intc 0.13.0",
  "tock-registers 0.10.1",
 ]
 
@@ -2115,16 +2113,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rdif-intc"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12b79eba6783fb02dfb2a499a7f9da60b6c16b56c666b546d026e8fffc82c517"
-dependencies = [
- "cfg-if",
- "rdif-base 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "rdif-pcie"
 version = "0.1.4"
 dependencies = [
@@ -2819,13 +2807,13 @@ version = "0.5.2"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "anyhow",
- "arm-gic-driver 0.16.3",
+ "arm-gic-driver 0.16.4",
  "kernutil",
  "log",
  "mmio-api",
  "page-table-generic 0.7.0",
- "rdif-intc 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rdrive 0.18.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-intc 0.13.0",
+ "rdrive 0.18.12",
  "someboot",
  "somehal-macros",
  "thiserror 2.0.18",
@@ -2891,7 +2879,7 @@ dependencies = [
  "log",
  "num-align",
  "page-table-generic 0.7.0",
- "rdrive 0.18.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdrive 0.18.12",
  "rgb",
  "sparreal-macros 0.10.1",
  "spin 0.10.0",

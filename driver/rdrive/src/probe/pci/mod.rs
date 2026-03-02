@@ -35,11 +35,6 @@ fn pcie() -> &'static Mutex<Vec<PcieEnumterator>> {
         let ctrl_ls = get_list::<PcieController>();
         let mut vec = Vec::new();
         for ctrl in ctrl_ls.into_iter() {
-            {
-                let mut g = ctrl.lock().unwrap();
-                g.open().unwrap();
-            }
-
             vec.push(PcieEnumterator {
                 ctrl,
                 probed: BTreeSet::new(),

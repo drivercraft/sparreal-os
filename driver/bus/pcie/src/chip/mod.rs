@@ -29,12 +29,8 @@ impl PcieGeneric {
 }
 
 impl DriverGeneric for PcieGeneric {
-    fn open(&mut self) -> Result<(), rdif_pcie::KError> {
-        Ok(())
-    }
-
-    fn close(&mut self) -> Result<(), rdif_pcie::KError> {
-        Ok(())
+    fn name(&self) -> &str {
+        "PciE Generic"
     }
 }
 

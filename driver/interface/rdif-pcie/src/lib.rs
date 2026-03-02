@@ -27,12 +27,10 @@ pub struct PciMem64 {
 }
 
 impl rdif_base::DriverGeneric for PcieController {
-    fn open(&mut self) -> Result<(), rdif_base::KError> {
-        self.as_mut().open()
+    fn name(&self) -> &str {
+        self.as_ref().name()
     }
-    fn close(&mut self) -> Result<(), rdif_base::KError> {
-        self.as_mut().close()
-    }
+
     // fn raw_any(&self) -> Option<&dyn core::any::Any> {
     //     Some(self.chip.as_mut() as &dyn core::any::Any)
     // }
@@ -76,8 +74,8 @@ impl PcieController {
         self.raw_any_mut()?.downcast_mut()
     }
 
-    fn as_mut(&mut self) -> &mut dyn Interface {
-        unsafe { &mut *self.chip.0.get() }.as_mut()
+    fn as_ref(&self) -> &dyn Interface {
+        unsafe { &*self.chip.0.get() }.as_ref()
     }
 
     pub fn config_access(&mut self, address: PciAddress) -> ConfigAccess {

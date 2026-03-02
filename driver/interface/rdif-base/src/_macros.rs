@@ -26,12 +26,8 @@ macro_rules! def_driver {
                 }
 
                 impl $crate::DriverGeneric for $name {
-                    fn open(&mut self) -> Result<(), rdif_base::KError> {
-                        self.0.open()
-                    }
-
-                    fn close(&mut self) -> Result<(), rdif_base::KError> {
-                        self.0.close()
+                    fn name(&self) -> &str {
+                        self.0.name()
                     }
 
                     fn raw_any(&self) -> Option<&dyn core::any::Any> {
@@ -61,17 +57,3 @@ macro_rules! def_driver {
         }
     };
 }
-
-// / Defines a driver type that wraps a boxed trait object.
-// /
-// / $name: driver name
-// /
-// / $t: driver trait path
-// #[macro_export(local_inner_macros)]
-// macro_rules! def_driver_rdif {
-//     ($name:ident) => {
-//         paste::paste! {
-//             def_driver!($name, [<rdif_ $name:lower>]::Interface, [<rdif_ $name:lower>]);
-//         }
-//     };
-// }

@@ -6,12 +6,8 @@ use crate::Descriptor;
 pub struct Empty;
 
 impl DriverGeneric for Empty {
-    fn open(&mut self) -> Result<(), rdif_base::KError> {
-        Ok(())
-    }
-
-    fn close(&mut self) -> Result<(), rdif_base::KError> {
-        Ok(())
+    fn name(&self) -> &str {
+        "Empty Driver"
     }
 }
 

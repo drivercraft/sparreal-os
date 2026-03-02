@@ -15,8 +15,7 @@ pub mod _rdif_prelude {
 }
 
 pub trait DriverGeneric: Send + Any {
-    fn open(&mut self) -> Result<(), KError>;
-    fn close(&mut self) -> Result<(), KError>;
+    fn name(&self) -> &str;
 
     /// Subtype casting support, returns subtype as `&dyn Any`
     fn raw_any(&self) -> Option<&dyn Any> {
