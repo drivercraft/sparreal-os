@@ -1,5 +1,13 @@
 [workspace]
-members = ["apps/*", "crates/*", "platform/*", "test-suit/*", "xtask"]
+members = [
+    "apps/*",
+    "crates/*",
+    "platform/*",
+    "test-suit/*",
+    "driver/rdrive-macros",
+    "driver/rdrive",
+    "xtask",
+]
 resolver = "3"
 
 [workspace.package]
@@ -13,30 +21,33 @@ repository = "https://github.com/drivercraft/sparreal-os"
 
 [workspace.dependencies]
 
-anyhow = {version = "1.0", default-features = false}
-byte-unit = {version = "5", default-features = false, features = ["byte"]}
-derive_more = {version = "2.1", default-features = false, features = ["full"]}
+anyhow = { version = "1.0", default-features = false }
+byte-unit = { version = "5", default-features = false, features = ["byte"] }
+derive_more = { version = "2.1", default-features = false, features = ["full"] }
 fdt-parser = "0.5"
-heapless = {version = "0.9"}
+heapless = { version = "0.9" }
 log = "0.4"
-ranges-ext = {version = "0.6", path = "crates/ranges-ext"}
-thiserror = {version = "2", default-features = false}
+ranges-ext = { version = "0.6", path = "crates/ranges-ext" }
+thiserror = { version = "2", default-features = false }
 tock-registers = "0.10"
 uefi = "0.36"
 
 rdrive = "0.18"
 
-dma-api = {version = "0.7", path = "crates/dma-api"}
-mmio-api = {path = "crates/mmio-api", version = "0.1"}
+dma-api = { version = "0.7", path = "crates/dma-api" }
+mmio-api = { path = "crates/mmio-api", version = "0.1" }
 
-bare-test = {path = "crates/bare-test", version = "0.8"}
-bare-test-macros = {path = "crates/bare-test-macros", version = "0.3"}
-kasm-aarch64 = {path = "crates/kasm-aarch64", version = "0.2"}
-kernutil = {path = "crates/kernutil", version = "0.2" }
-page-table-generic = {path = "crates/page-table-generic", version = "0.7"}
-someboot = {path = "crates/someboot", version = "0.1"}
-somehal = {path = "platform/somehal", version = "0.5"}
-somehal-macros = {path = "crates/somehal-macros", version = "0.1"}
-sparreal-kernel = {path = "crates/sparreal-kernel", version = "0.14" }
-sparreal-macros = {path = "crates/sparreal-macros", version = "0.10"}
-sparreal-rt = {path = "platform/sparreal-rt", version = "0.13"}
+bare-test = { path = "crates/bare-test", version = "0.8" }
+bare-test-macros = { path = "crates/bare-test-macros", version = "0.3" }
+kasm-aarch64 = { path = "crates/kasm-aarch64", version = "0.2" }
+kernutil = { path = "crates/kernutil", version = "0.2" }
+page-table-generic = { path = "crates/page-table-generic", version = "0.7" }
+someboot = { path = "crates/someboot", version = "0.1" }
+somehal = { path = "platform/somehal", version = "0.5" }
+somehal-macros = { path = "crates/somehal-macros", version = "0.1" }
+sparreal-kernel = { path = "crates/sparreal-kernel", version = "0.14" }
+sparreal-macros = { path = "crates/sparreal-macros", version = "0.10" }
+sparreal-rt = { path = "platform/sparreal-rt", version = "0.13" }
+
+rdif-base = { path = "driver/interface/rdif-base", version = "0.7" }
+rdif-pcie = { path = "driver/interface/rdif-pcie", version = "0.1" }

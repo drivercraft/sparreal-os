@@ -1,0 +1,31 @@
+[package]
+name = "pcie"
+version = "0.4.5"
+edition = "2021"
+authors = ["周睿 <zrufo747@outlook.com>"]
+repository.workspace = true
+license = "MIT"
+description = "A simple PCIE driver for enumerating devices."
+keywords = ["os", "pci", "pcie", "driver"]
+categories = ["embedded", "no-std"]
+
+
+[dependencies]
+log = "0.4"
+bit_field = "0.10"
+bitflags = "2"
+pci_types = "0.10"
+thiserror = {version="2", default-features = false}
+
+rdif-pcie = {workspace = true}
+
+[dev-dependencies]
+bare-test = "0.7"
+
+[build-dependencies]
+bare-test-macros = "0.2"
+
+
+[[test]]
+name = "test"
+harness = false
