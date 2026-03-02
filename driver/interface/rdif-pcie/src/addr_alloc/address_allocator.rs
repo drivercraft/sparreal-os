@@ -68,16 +68,19 @@ impl AddressAllocator {
 
     /// Deletes the specified memory slot or returns `ResourceNotAvailable` if
     /// the node was not allocated before.
+    #[allow(dead_code)]
     pub fn free(&mut self, key: &RangeInclusive) -> Result<()> {
         self.interval_tree.free(key)
     }
 
     /// First address of the allocator.
+    #[allow(dead_code)]
     pub fn base(&self) -> u64 {
         self.address_space.start()
     }
 
     /// Last address of the allocator.
+    #[allow(dead_code)]
     pub fn end(&self) -> u64 {
         self.address_space.end()
     }

@@ -90,6 +90,7 @@ pub use address_allocator::AddressAllocator;
 use allocation_engine::NodeState;
 
 /// Default alignment that can be used for creating a `Constraint`.
+#[allow(dead_code)]
 pub const DEFAULT_CONSTRAINT_ALIGN: u64 = 4;
 
 /// Error type for IdAllocator usage.
@@ -276,6 +277,7 @@ impl Constraint {
     }
 
     /// Returns the alignment constraint.
+    #[allow(dead_code)]
     pub fn align(self) -> u64 {
         self.align
     }
@@ -288,6 +290,7 @@ impl Constraint {
 
 /// Policy for resource allocation.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+#[allow(dead_code, clippy::enum_variant_names)]
 pub enum AllocPolicy {
     /// Allocate the first matched entry.
     #[default]

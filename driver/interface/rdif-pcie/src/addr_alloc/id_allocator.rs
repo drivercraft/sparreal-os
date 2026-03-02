@@ -18,6 +18,7 @@ use alloc::collections::BTreeSet;
 // O(logN) compared to Vec for example, another benefit is that the entries
 // are sorted so we will always use the first available ID.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct IdAllocator {
     // Beginning of the range of IDs that we want to manage.
     range_base: u32,
@@ -29,6 +30,7 @@ pub struct IdAllocator {
     freed_ids: BTreeSet<u32>,
 }
 
+#[allow(dead_code)]
 impl IdAllocator {
     /// Creates a new instance of IdAllocator that will be used to manage the
     /// allocation and release of ids from the interval specified by

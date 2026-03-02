@@ -2130,6 +2130,7 @@ version = "0.1.4"
 dependencies = [
  "pci_types",
  "rdif-base 0.7.0",
+ "serde",
  "thiserror 2.0.18",
 ]
 

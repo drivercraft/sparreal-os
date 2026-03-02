@@ -499,6 +499,7 @@ pub struct IntervalTree {
     root: Option<Box<InnerNode>>,
 }
 
+#[allow(dead_code)]
 impl IntervalTree {
     /// Creates a new IntervalTree object that is going to be used by the
     /// AddressAllocator.
