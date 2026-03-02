@@ -175,7 +175,7 @@ pub fn fdt_phandle_to_device_id(phandle: Phandle) -> Option<DeviceId> {
 ///
 /// ```rust
 /// #![feature(used_with_arg)]
-/// 
+///
 /// use rdrive::{
 ///     module_driver,
 ///     driver::*,
