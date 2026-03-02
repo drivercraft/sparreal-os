@@ -26,6 +26,14 @@ pub mod arch;
 #[path = "arch/aarch64/mod.rs"]
 pub mod arch;
 
+#[cfg(target_arch = "x86_64")]
+#[path = "arch/x86_64/mod.rs"]
+pub mod arch;
+
+#[cfg(target_arch = "riscv64")]
+#[path = "arch/riscv64/mod.rs"]
+pub mod arch;
+
 pub fn init(kernel: &'static dyn KernelOp) {
     setup::set_kernel_op(kernel);
 }

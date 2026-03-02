@@ -53,6 +53,8 @@ enum Arch {
     #[default]
     Loongarch64,
     Arch64,
+    X86_64,
+    Riscv64,
 }
 
 impl From<&str> for Arch {
@@ -60,7 +62,9 @@ impl From<&str> for Arch {
         match s {
             "loongarch64" => Arch::Loongarch64,
             "aarch64" => Arch::Arch64,
-            _ => todo!(),
+            "x86_64" => Arch::X86_64,
+            "riscv64" => Arch::Riscv64,
+            _ => panic!("unsupported target arch: {s}"),
         }
     }
 }
@@ -82,6 +86,8 @@ impl Build {
         match self.arch {
             Arch::Loongarch64 => self.prepare_loongarch64(),
             Arch::Arch64 => self.prepare_aarch64(),
+            Arch::X86_64 => self.prepare_x86_64(),
+            Arch::Riscv64 => self.prepare_riscv64(),
         }
 
         self.gen_defines();
@@ -130,6 +136,18 @@ impl Build {
         let ld_dst = self.out_dir.join(Self::LD_NAME);
 
         fs::write(ld_dst, ld).unwrap();
+    }
+
+    fn prepare_x86_64(&mut self) {
+        self.kernel_vaddr = 0;
+        let ld_dst = self.out_dir.join(Self::LD_NAME);
+        fs::write(ld_dst, "SECTIONS {}\n").unwrap();
+    }
+
+    fn prepare_riscv64(&mut self) {
+        self.kernel_vaddr = 0;
+        let ld_dst = self.out_dir.join(Self::LD_NAME);
+        fs::write(ld_dst, "SECTIONS {}\n").unwrap();
     }
 
     fn gen_defines(&self) {
