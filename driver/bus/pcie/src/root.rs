@@ -12,7 +12,7 @@ pub fn enumerate_by_controller<'a>(
     controller: &'a mut PcieController,
     range: Option<core::ops::Range<usize>>,
 ) -> impl Iterator<Item = Endpoint> + 'a {
-    let range = range.unwrap_or_else(|| 0..0x100);
+    let range = range.unwrap_or(0..0x100);
 
     PciIterator {
         root: controller,
