@@ -14,6 +14,7 @@ members = [
 exclude = [
     "driver/interface/rdif-block",
     "driver/interface/rdif-net",
+    "driver/interface/rdif-power",
 ]
 resolver = "3"
 
