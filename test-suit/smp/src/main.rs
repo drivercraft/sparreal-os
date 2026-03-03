@@ -9,10 +9,13 @@ use core::{
 };
 
 use log::{error, info};
-use sparreal_rt::{hal::al::cpu::current_cpu_id, os::{
-    cpu::{CpuOnStatus, cpu_count, cpu_on},
-    time::since_boot,
-}};
+use sparreal_rt::{
+    hal::al::cpu::current_cpu_id,
+    os::{
+        cpu::{CpuOnStatus, cpu_count, cpu_on},
+        time::since_boot,
+    },
+};
 
 extern crate alloc;
 extern crate sparreal_rt;
