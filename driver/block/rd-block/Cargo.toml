@@ -5,11 +5,12 @@ description = "Driver Interface block definition."
 edition.workspace = true
 keywords = ["os", "driver"]
 license = "MIT"
-name = "rdif-block"
+name = "rd-block"
 repository.workspace = true
-version = "0.6.2"
+version = "0.1.0"
 
 [dependencies]
 dma-api = {workspace = true}
-rdif-base = {workspace = true}
-thiserror = {version = "2", default-features = false}
+futures = {version = "0.3", features = ["alloc"], default-features = false}
+rdif-block = {workspace = true}
+spin_on = "0.1"

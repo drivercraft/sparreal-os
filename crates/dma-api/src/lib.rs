@@ -12,12 +12,14 @@ mod common;
 mod dbox;
 mod def;
 mod map_single;
+mod pool;
 
 pub use array::*;
 pub use dbox::*;
 pub use def::*;
 pub use map_single::*;
 pub use osal::DmaOp;
+pub use pool::*;
 
 impl Deref for DmaHandle {
     type Target = core::alloc::Layout;
@@ -394,5 +396,19 @@ impl DeviceDma {
         direction: DmaDirection,
     ) -> Result<SArrayPtr<T>, DmaError> {
         SArrayPtr::map_single(self, buff, align, direction)
+    }
+
+    pub fn new_pool(
+        &self,
+        layout: core::alloc::Layout,
+        direction: DmaDirection,
+        cap: usize,
+    ) -> DArrayPool {
+        let config = DArrayConfig {
+            size: layout.size(),
+            align: layout.align(),
+            direction,
+        };
+        DArrayPool::new_pool(self.clone(), config, cap)
     }
 }

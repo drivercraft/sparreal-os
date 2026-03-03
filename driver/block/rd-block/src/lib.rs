@@ -1,4 +1,9 @@
+#![no_std]
+
+extern crate alloc;
+
 use core::{
+    alloc::Layout,
     any::Any,
     cell::UnsafeCell,
     fmt::Debug,
@@ -12,19 +17,20 @@ use alloc::{
     sync::Arc,
     vec::Vec,
 };
-use dma_api::{DBuff, DVecConfig, DVecPool, Direction};
-use futures::task::AtomicWaker;
-use rdif_base::DriverGeneric;
 
-use crate::{BlkError, Buffer, IQueue, Interface, Request, RequestId, RequestKind};
+use dma_api::{DArrayPool, DBuff, DeviceDma, DmaDirection, DmaOp};
+use futures::task::AtomicWaker;
+use rdif_block::{
+    BlkError, Buffer, DriverGeneric, IQueue, Interface, Request, RequestId, RequestKind,
+};
 
 pub struct Block {
     inner: Arc<BlockInner>,
 }
 
-struct QueueWeakerMap(UnsafeCell<BTreeMap<usize, Arc<AtomicWaker>>>);
+struct QueueWakerMap(UnsafeCell<BTreeMap<usize, Arc<AtomicWaker>>>);
 
-impl QueueWeakerMap {
+impl QueueWakerMap {
     fn new() -> Self {
         Self(UnsafeCell::new(BTreeMap::new()))
     }
@@ -44,7 +50,8 @@ impl QueueWeakerMap {
 
 struct BlockInner {
     interface: UnsafeCell<Box<dyn Interface>>,
-    queue_waker_map: QueueWeakerMap,
+    dma_op: &'static dyn DmaOp,
+    queue_waker_map: QueueWakerMap,
 }
 
 unsafe impl Send for BlockInner {}
@@ -64,35 +71,41 @@ impl<'a> Drop for IrqGuard<'a> {
 }
 
 impl DriverGeneric for Block {
-    fn open(&mut self) -> Result<(), rdif_base::KError> {
-        self.interface().open()
+    fn name(&self) -> &str {
+        self.interface().name()
     }
 
-    fn close(&mut self) -> Result<(), rdif_base::KError> {
-        self.interface().close()
+    fn raw_any(&self) -> Option<&dyn Any> {
+        Some(self)
+    }
+
+    fn raw_any_mut(&mut self) -> Option<&mut dyn Any> {
+        Some(self)
     }
 }
 
 impl Block {
-    pub fn new(iterface: impl Interface) -> Self {
+    pub fn new(interface: impl Interface, dma_op: &'static dyn DmaOp) -> Self {
         Self {
             inner: Arc::new(BlockInner {
-                interface: UnsafeCell::new(Box::new(iterface)),
-                queue_waker_map: QueueWeakerMap::new(),
+                interface: UnsafeCell::new(Box::new(interface)),
+                dma_op,
+                queue_waker_map: QueueWakerMap::new(),
             }),
         }
     }
 
-    pub fn typed_ref<T: Interface>(&self) -> Option<&T> {
-        (self.inner.as_ref() as &dyn Any).downcast_ref()
+    pub fn typed_ref<T: Interface + 'static>(&self) -> Option<&T> {
+        self.interface().raw_any()?.downcast_ref::<T>()
     }
-    pub fn typed_mut<T: Interface>(&mut self) -> Option<&mut T> {
-        (self.interface() as &mut dyn Any).downcast_mut()
+
+    pub fn typed_mut<T: Interface + 'static>(&mut self) -> Option<&mut T> {
+        self.interface().raw_any_mut()?.downcast_mut::<T>()
     }
 
     #[allow(clippy::mut_from_ref)]
-    fn interface(&self) -> &mut Box<dyn Interface> {
-        unsafe { &mut *self.inner.interface.get() }
+    fn interface(&self) -> &mut dyn Interface {
+        unsafe { &mut **self.inner.interface.get() }
     }
 
     fn irq_guard(&self) -> IrqGuard<'_> {
@@ -106,34 +119,24 @@ impl Block {
         }
     }
 
-    /// Create a new read queue with specified buffer pool capacity.
     pub fn create_queue_with_capacity(&mut self, capacity: usize) -> Option<CmdQueue> {
         let irq_guard = self.irq_guard();
         let queue = self.interface().create_queue()?;
         let queue_id = queue.id();
         let config = queue.buff_config();
+        let layout = Layout::from_size_align(config.size, config.align).ok()?;
+        let dma = DeviceDma::new(config.dma_mask, self.inner.dma_op);
+        let pool = dma.new_pool(layout, DmaDirection::FromDevice, capacity);
         let waker = self.inner.queue_waker_map.register(queue_id);
         drop(irq_guard);
 
-        Some(CmdQueue::new(
-            queue,
-            waker,
-            DVecConfig {
-                dma_mask: config.dma_mask,
-                align: config.align,
-                size: config.size,
-                direction: Direction::FromDevice,
-            },
-            capacity,
-        ))
+        Some(CmdQueue::new(queue, waker, pool))
     }
 
-    /// Create a new read queue with default capacity.
     pub fn create_queue(&mut self) -> Option<CmdQueue> {
         self.create_queue_with_capacity(32)
     }
 
-    /// Get an IRQ handler for this block device.
     pub fn irq_handler(&self) -> IrqHandler {
         IrqHandler {
             inner: self.inner.clone(),
@@ -149,7 +152,7 @@ unsafe impl Sync for IrqHandler {}
 
 impl IrqHandler {
     pub fn handle(&self) {
-        let iface = unsafe { &mut *self.inner.interface.get() };
+        let iface = unsafe { &mut **self.inner.interface.get() };
         let event = iface.handle_irq();
         for id in event.queue.iter() {
             self.inner.queue_waker_map.wake(id);
@@ -160,20 +163,15 @@ impl IrqHandler {
 pub struct CmdQueue {
     interface: Box<dyn IQueue>,
     waker: Arc<AtomicWaker>,
-    pool: DVecPool,
+    pool: DArrayPool,
 }
 
 impl CmdQueue {
-    fn new(
-        interface: Box<dyn IQueue>,
-        waker: Arc<AtomicWaker>,
-        config: DVecConfig,
-        cap: usize,
-    ) -> Self {
+    fn new(interface: Box<dyn IQueue>, waker: Arc<AtomicWaker>, pool: DArrayPool) -> Self {
         Self {
             interface,
             waker,
-            pool: DVecPool::new_pool(config, cap),
+            pool,
         }
     }
 
@@ -189,7 +187,6 @@ impl CmdQueue {
         self.interface.block_size()
     }
 
-    /// Read multiple blocks. Returns a future that resolves to a vector of results.
     pub fn read_blocks(
         &mut self,
         blk_id: usize,
@@ -207,7 +204,6 @@ impl CmdQueue {
         spin_on::spin_on(self.read_blocks(blk_id, blk_count))
     }
 
-    /// Write multiple blocks. Caller provides owned Vec<u8> buffers for each block.
     pub async fn write_blocks(
         &mut self,
         start_blk_id: usize,
@@ -280,8 +276,8 @@ impl<'a> core::future::Future for ReadFuture<'a> {
             match this.queue.pool.alloc() {
                 Ok(buff) => {
                     let kind = RequestKind::Read(Buffer {
-                        virt: buff.as_ptr(),
-                        bus: buff.bus_addr(),
+                        virt: buff.as_ptr().as_ptr(),
+                        bus: buff.dma_addr().as_u64(),
                         size: buff.len(),
                     });
 
@@ -321,7 +317,9 @@ impl<'a> core::future::Future for ReadFuture<'a> {
                         *blk_id,
                         Ok(BlockData {
                             block_id: *blk_id,
-                            data: buff.take().unwrap(),
+                            data: buff
+                                .take()
+                                .expect("DMA read buffer should exist until completion"),
                         }),
                     );
                 }
@@ -337,7 +335,10 @@ impl<'a> core::future::Future for ReadFuture<'a> {
 
         let mut out = Vec::with_capacity(this.blk_ls.len());
         for blk_id in &this.blk_ls {
-            let result = this.results.remove(blk_id).unwrap();
+            let result = this
+                .results
+                .remove(blk_id)
+                .expect("all blocks should have completion results");
             out.push(result);
         }
         Poll::Ready(out)
@@ -399,7 +400,7 @@ impl<'a, 'b> core::future::Future for WriteFuture<'a, 'b> {
             }
         }
 
-        for blk_id in this.requested.iter() {
+        for blk_id in &this.requested {
             if this.results.contains_key(blk_id) {
                 continue;
             }
@@ -422,7 +423,10 @@ impl<'a, 'b> core::future::Future for WriteFuture<'a, 'b> {
 
         let mut out = Vec::with_capacity(this.req_ls.len());
         for (blk_id, _) in &this.req_ls {
-            let result = this.results.remove(blk_id).unwrap();
+            let result = this
+                .results
+                .remove(blk_id)
+                .expect("all blocks should have completion results");
             out.push(result);
         }
         Poll::Ready(out)
@@ -433,7 +437,7 @@ impl Debug for BlockData {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("BlockData")
             .field("block_id", &self.block_id)
-            .field("data", &self.data.as_ref())
+            .field("data", &self.deref())
             .finish()
     }
 }
@@ -448,12 +452,12 @@ impl Deref for BlockData {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
-        self.data.as_ref()
+        unsafe { core::slice::from_raw_parts(self.data.as_ptr().as_ptr(), self.data.len()) }
     }
 }
 
 impl DerefMut for BlockData {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe { core::slice::from_raw_parts_mut(self.data.as_ptr(), self.data.len()) }
+        unsafe { core::slice::from_raw_parts_mut(self.data.as_ptr().as_ptr(), self.data.len()) }
     }
 }

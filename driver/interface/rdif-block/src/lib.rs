@@ -5,13 +5,8 @@ extern crate alloc;
 use core::ops::{Deref, DerefMut};
 
 use alloc::boxed::Box;
-pub use rdif_base::{DriverGeneric, KError, io};
-
-mod blk;
-
-pub use blk::*;
-
 pub use dma_api;
+pub use rdif_base::{DriverGeneric, KError, io};
 
 /// Configuration for DMA buffer allocation.
 ///
@@ -115,10 +110,10 @@ impl From<BlkError> for io::ErrorKind {
     }
 }
 
-impl From<dma_api::DError> for BlkError {
-    fn from(value: dma_api::DError) -> Self {
+impl From<dma_api::DmaError> for BlkError {
+    fn from(value: dma_api::DmaError) -> Self {
         match value {
-            dma_api::DError::NoMemory => BlkError::NoMemory,
+            dma_api::DmaError::NoMemory => BlkError::NoMemory,
             e => BlkError::Other(Box::new(e)),
         }
     }
