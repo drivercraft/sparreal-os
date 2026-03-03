@@ -9,10 +9,10 @@ use core::{
 };
 
 use log::{error, info};
-use sparreal_rt::os::{
+use sparreal_rt::{hal::al::cpu::current_cpu_id, os::{
     cpu::{CpuOnStatus, cpu_count, cpu_on},
     time::since_boot,
-};
+}};
 
 extern crate alloc;
 extern crate sparreal_rt;
@@ -37,7 +37,10 @@ fn __sparreal_main() {
 
     let start_ts = since_boot();
 
-    for cpu_id in 1..total {
+    for cpu_id in 0..total {
+        if current_cpu_id() == cpu_id {
+            continue;
+        }
         info!("Powering on CPU {}", cpu_id);
         let status = cpu_on(cpu_id);
         if status == CpuOnStatus::Ok {
