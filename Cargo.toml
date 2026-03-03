@@ -7,7 +7,6 @@ members = [
     "driver/rdrive-macros",
     "driver/rdrive",
     "driver/interface/*",
-    "driver/interface/rdif-def",
     "driver/block/*",
     "xtask",
 ]
