@@ -27,7 +27,8 @@ pub fn enable_mmu() -> ! {
     let mmu_entry_phys = super::entry::mmu_entry as *const () as usize;
     println!("MMU Entry point at physical address: {:#x}", mmu_entry_phys);
 
-    let v_sp = __kimage_va(ext_sym_addr!(__cpu0_stack_top)) as usize;
+    let meta = crate::smp::cpu_meta(crate::smp::cpu_idx()).unwrap();
+    let v_sp = meta.stack_top_virt;
     let v_entry = __kimage_va(mmu_entry_phys) as usize;
 
     println!("Enabling MMU...");
