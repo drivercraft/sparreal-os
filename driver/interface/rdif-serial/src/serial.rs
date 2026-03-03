@@ -179,7 +179,7 @@ pub struct Reciever {
 
 impl Reciever {
     fn inner(&self) -> &SRecv {
-        &*self.inner.as_ref().unwrap()
+        self.inner.as_ref().unwrap()
     }
 }
 
@@ -248,7 +248,7 @@ impl super::TIrqHandler for IrqHandler {
         let status = h.clean_interrupt_status();
         if status.contains(InterruptMask::RX_AVAILABLE) {
             while let Some(b) = self.rcv.read_byte() {
-                let _ = self.rcv.fifo_push(b);
+                self.rcv.fifo_push(b);
             }
         }
 

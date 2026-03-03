@@ -43,11 +43,11 @@ impl DerefMut for DBuff {
 
 impl Drop for DBuff {
     fn drop(&mut self) {
-        if let Some(data) = self.data.take() {
-            if let Some(pool) = self.pool.upgrade() {
-                let mut inner = pool.lock();
-                inner.dealloc(data);
-            }
+        if let Some(data) = self.data.take()
+            && let Some(pool) = self.pool.upgrade()
+        {
+            let mut inner = pool.lock();
+            inner.dealloc(data);
         }
     }
 }
