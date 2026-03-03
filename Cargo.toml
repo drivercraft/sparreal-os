@@ -7,6 +7,7 @@ members = [
     "driver/rdrive-macros",
     "driver/rdrive",
     "driver/interface/*",
+    "driver/interface/rdif-def",
     "driver/block/*",
     "xtask",
 ]
@@ -53,6 +54,7 @@ sparreal-rt = { path = "platform/sparreal-rt", version = "0.13" }
 
 rdif-intc = { path = "driver/interface/rdif-intc", version = "0.13" }
 rdif-base = { path = "driver/interface/rdif-base", version = "0.7" }
+rdif-def = { path = "driver/interface/rdif-def", version = "0.2" }
 rdif-pcie = { path = "driver/interface/rdif-pcie", version = "0.1" }
 rdif-block = { path = "driver/interface/rdif-block", version = "0.6" }
 
