@@ -10,6 +10,10 @@ members = [
     "driver/block/*",
     "xtask",
 ]
+
+exclude = [
+    "driver/interface/rdif-block",
+]
 resolver = "3"
 
 [workspace.package]
