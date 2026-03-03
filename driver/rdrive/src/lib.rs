@@ -187,8 +187,7 @@ pub fn fdt_phandle_to_device_id(phandle: Phandle) -> Option<DeviceId> {
 /// struct ClkDriver {}
 ///
 /// impl DriverGeneric for ClkDriver {
-///     fn open(&mut self) -> Result<(), rdrive::KError> { Ok(()) }
-///     fn close(&mut self) -> Result<(), rdrive::KError> { Ok(()) }
+///     fn name(&self) -> &str { "ClkDriver" }
 /// }
 ///
 /// impl rdif_clk::Interface for ClkDriver {

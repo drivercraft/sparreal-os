@@ -76,22 +76,11 @@ mod tests {
 
     use super::*;
 
-    struct DeviceTest {
-        opened: bool,
-    }
+    struct DeviceTest;
 
     impl DriverGeneric for DeviceTest {
-        fn open(&mut self) -> Result<(), rdif_base::KError> {
-            self.opened = true;
-            Ok(())
-        }
-
-        fn close(&mut self) -> Result<(), rdif_base::KError> {
-            if !self.opened {
-                panic!("Device not opened before closing");
-            }
-            self.opened = false;
-            Ok(())
+        fn name(&self) -> &str {
+            "DeviceTest"
         }
     }
 
@@ -104,30 +93,25 @@ mod tests {
         let weak = container.get_typed::<Empty>(id).unwrap();
 
         {
-            let mut device = weak.lock().unwrap();
-
-            assert!(device.open().is_ok());
-            assert!(device.close().is_ok());
+            let device = weak.lock().unwrap();
+            assert_eq!(device.name(), "Empty Driver");
         }
 
         {
-            let mut device = weak.lock().unwrap();
-
-            assert!(device.open().is_ok());
-            assert!(device.close().is_ok());
+            let device = weak.lock().unwrap();
+            assert_eq!(device.name(), "Empty Driver");
         }
     }
     #[test]
     fn test_get_one() {
         let mut container = DeviceContainer::default();
         container.insert(Descriptor::new(), Empty);
-        container.insert(Descriptor::new(), DeviceTest { opened: false });
+        container.insert(Descriptor::new(), DeviceTest);
 
         let weak = container.get_one::<Empty>().unwrap();
         {
-            let mut device = weak.lock().unwrap();
-            assert!(device.open().is_ok());
-            assert!(device.close().is_ok());
+            let device = weak.lock().unwrap();
+            assert_eq!(device.name(), "Empty Driver");
         }
     }
 
@@ -136,7 +120,7 @@ mod tests {
         let mut container = DeviceContainer::default();
         container.insert(Descriptor::new(), Empty);
         container.insert(Descriptor::new(), Empty);
-        container.insert(Descriptor::new(), DeviceTest { opened: false });
+        container.insert(Descriptor::new(), DeviceTest);
         let devices = container.devices::<Empty>();
         assert_eq!(devices.len(), 2);
     }
@@ -148,7 +132,7 @@ mod tests {
         assert!(dev.is_none(), "Expected no devices found");
     }
 
-    struct IrqTest {}
+    struct IrqTest;
 
     impl IrqTest {
         fn is_ok(&mut self) -> bool {
@@ -157,12 +141,8 @@ mod tests {
     }
 
     impl crate::DriverGeneric for IrqTest {
-        fn open(&mut self) -> Result<(), KError> {
-            Ok(())
-        }
-
-        fn close(&mut self) -> Result<(), KError> {
-            Ok(())
+        fn name(&self) -> &str {
+            "IrqTest"
         }
     }
 
@@ -172,7 +152,7 @@ mod tests {
     fn test_inner_type() {
         let mut container = DeviceContainer::default();
         let desc = Descriptor::new();
-        container.insert(desc, Intc::new(IrqTest {}));
+        container.insert(desc, Intc::new(IrqTest));
 
         let weak = container.get_one::<Intc>().unwrap();
         {
@@ -186,7 +166,7 @@ mod tests {
     fn test_device_downcast() {
         let mut container = DeviceContainer::default();
         let desc = Descriptor::new();
-        container.insert(desc, Intc::new(IrqTest {}));
+        container.insert(desc, Intc::new(IrqTest));
 
         let weak = container.get_one::<Intc>().unwrap();
         let intc_typed = weak.downcast::<IrqTest>().unwrap();
