@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2](https://github.com/drivercraft/sparreal-os/compare/bare-test-macros-v0.3.1...bare-test-macros-v0.3.2) - 2026-03-04
+
+### Other
+
+- ✨ feat: smp and precpu support ([#20](https://github.com/drivercraft/sparreal-os/pull/20))
+
 ## [0.3.1](https://github.com/drivercraft/sparreal-os/compare/bare-test-macros-v0.3.0...bare-test-macros-v0.3.1) - 2026-02-09
 
 ### Other

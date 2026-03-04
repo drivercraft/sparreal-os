@@ -47,7 +47,7 @@ page-table-generic = { path = "crates/page-table-generic", version = "0.7" }
 someboot = { path = "crates/someboot", version = "0.1" }
 somehal = { path = "platform/somehal", version = "0.5" }
 somehal-macros = { path = "crates/somehal-macros", version = "0.1" }
-sparreal-kernel = { path = "crates/sparreal-kernel", version = "0.14" }
+sparreal-kernel = { path = "crates/sparreal-kernel", version = "0.15" }
 sparreal-macros = { path = "crates/sparreal-macros", version = "0.10" }
 sparreal-rt = { path = "platform/sparreal-rt", version = "0.13" }
 

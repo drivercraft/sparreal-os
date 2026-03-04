@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3](https://github.com/drivercraft/sparreal-os/compare/somehal-v0.5.2...somehal-v0.5.3) - 2026-03-04
+
+### Other
+
+- ✨ feat: 重构设备驱动接口，移除 open/close 方法，添加 name 方法 ([#25](https://github.com/drivercraft/sparreal-os/pull/25))
+- ✨ feat: 添加对 x86_64 和 riscv64 架构的编译支持 ([#23](https://github.com/drivercraft/sparreal-os/pull/23))
+- ✨ feat: smp and precpu support ([#20](https://github.com/drivercraft/sparreal-os/pull/20))
+
 ## [0.5.2](https://github.com/drivercraft/sparreal-os/compare/somehal-v0.5.1...somehal-v0.5.2) - 2026-02-13
 
 ### Other

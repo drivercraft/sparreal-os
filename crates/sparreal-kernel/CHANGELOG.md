@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0](https://github.com/drivercraft/sparreal-os/compare/sparreal-kernel-v0.14.0...sparreal-kernel-v0.15.0) - 2026-03-04
+
+### Other
+
+- ✨ feat: smp and precpu support ([#20](https://github.com/drivercraft/sparreal-os/pull/20))
+
 ## [0.14.0](https://github.com/drivercraft/sparreal-os/compare/sparreal-kernel-v0.13.1...sparreal-kernel-v0.14.0) - 2026-02-13
 
 ### Other
