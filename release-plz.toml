@@ -53,11 +53,6 @@ publish = false
 release = false
 
 [[package]]
-name = "enumerate"
-publish = false
-release = false
-
-[[package]]
 name = "rdif-timer"
 publish = false
 release = false
