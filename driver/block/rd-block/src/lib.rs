@@ -20,9 +20,7 @@ use alloc::{
 
 use dma_api::{DArrayPool, DBuff, DeviceDma, DmaDirection, DmaOp};
 use futures::task::AtomicWaker;
-use rdif_block::{
-    BlkError, Buffer, DriverGeneric, IQueue, Interface, Request, RequestId, RequestKind,
-};
+pub use rdif_block::*;
 
 pub struct Block {
     inner: Arc<BlockInner>,
