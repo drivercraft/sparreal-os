@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0](https://github.com/drivercraft/sparreal-os/compare/rdrive-v0.18.11...rdrive-v0.19.0) - 2026-03-05
+
+### Other
+
+- Dev/drv ([#32](https://github.com/drivercraft/sparreal-os/pull/32))
+- ✨ feat: 重构设备驱动接口，移除 open/close 方法，添加 name 方法 ([#25](https://github.com/drivercraft/sparreal-os/pull/25))
+- ✨ feat: 增加 rdrive ([#24](https://github.com/drivercraft/sparreal-os/pull/24))
+
 ## [0.18.11](https://github.com/drivercraft/rdrive/compare/rdrive-v0.18.10...rdrive-v0.18.11) - 2025-10-16
 
 ### Other
