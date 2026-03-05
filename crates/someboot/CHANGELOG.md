@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5](https://github.com/drivercraft/sparreal-os/compare/someboot-v0.1.4...someboot-v0.1.5) - 2026-03-05
+
+### Other
+
+- ✨ feat: 添加 read_byte 函数以读取字节数据 ([#40](https://github.com/drivercraft/sparreal-os/pull/40))
+
 ## [0.1.4](https://github.com/drivercraft/sparreal-os/compare/someboot-v0.1.3...someboot-v0.1.4) - 2026-03-04
 
 ### Other
