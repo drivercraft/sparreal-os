@@ -39,11 +39,6 @@ publish = false
 release = false
 
 [[package]]
-name = "rdif-pcie"
-publish = false
-release = false
-
-[[package]]
 name = "ramdisk"
 publish = false
 release = false
