@@ -52,8 +52,3 @@ release = false
 name = "rd-block"
 publish = false
 release = false
-
-[[package]]
-name = "pcie"
-publish = false
-release = false

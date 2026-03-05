@@ -1802,20 +1802,6 @@ dependencies = [
 [[package]]
 name = "pcie"
 version = "0.4.5"
-dependencies = [
- "bare-test 0.7.0",
- "bare-test-macros 0.2.0",
- "bit_field",
- "bitflags 2.11.0",
- "log",
- "pci_types",
- "rdif-pcie 0.2.0",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "pcie"
-version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "225c81c0f672afbdd95e55abebe56541870e64e350eba9f7eabfb392112229ab"
 dependencies = [
@@ -1825,6 +1811,20 @@ dependencies = [
  "log",
  "pci_types",
  "rdif-pcie 0.1.4",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "pcie"
+version = "0.5.0"
+dependencies = [
+ "bare-test 0.7.0",
+ "bare-test-macros 0.2.0",
+ "bit_field",
+ "bitflags 2.11.0",
+ "log",
+ "pci_types",
+ "rdif-pcie 0.2.0",
  "thiserror 2.0.18",
 ]
 
@@ -2250,7 +2250,7 @@ dependencies = [
  "fdt-parser",
  "log",
  "paste",
- "pcie 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pcie 0.4.5",
  "rdif-base 0.7.0",
  "rdif-pcie 0.1.4",
  "rdrive-macros 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2265,7 +2265,7 @@ dependencies = [
  "fdt-parser",
  "log",
  "paste",
- "pcie 0.4.5",
+ "pcie 0.5.0",
  "rdif-base 0.8.0",
  "rdif-clk",
  "rdif-intc 0.14.0",
