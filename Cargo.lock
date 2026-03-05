@@ -2064,7 +2064,7 @@ dependencies = [
 
 [[package]]
 name = "rd-block"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dma-api 0.7.1",
  "futures",

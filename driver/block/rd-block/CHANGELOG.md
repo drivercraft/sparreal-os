@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1](https://github.com/drivercraft/sparreal-os/compare/rd-block-v0.1.0...rd-block-v0.1.1) - 2026-03-05
+
+### Other
+
+- ✨ feat: 简化 rdif_block 的导入方式 ([#38](https://github.com/drivercraft/sparreal-os/pull/38))
+
 ## [0.1.0](https://github.com/drivercraft/sparreal-os/releases/tag/rd-block-v0.1.0) - 2026-03-05
 
 ### Other
