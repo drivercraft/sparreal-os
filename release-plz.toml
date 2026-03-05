@@ -2,10 +2,6 @@
 # Reference: https://release-plz.dev/docs/config
 
 # Driver directory crates - do not publish or release
-[[package]]
-name = "rdif-intc"
-publish = false
-release = false
 
 [[package]]
 name = "rdif-systick"

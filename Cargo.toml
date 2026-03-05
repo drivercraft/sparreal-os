@@ -34,7 +34,7 @@ thiserror = { version = "2", default-features = false }
 tock-registers = "0.10"
 uefi = "0.36"
 
-rdrive = { version = "0.18", path = "driver/rdrive" }
+rdrive = { version = "0.19", path = "driver/rdrive" }
 
 dma-api = { version = "0.7", path = "crates/dma-api" }
 mmio-api = { path = "crates/mmio-api", version = "0.2" }
@@ -51,12 +51,12 @@ sparreal-kernel = { path = "crates/sparreal-kernel", version = "0.15" }
 sparreal-macros = { path = "crates/sparreal-macros", version = "0.10" }
 sparreal-rt = { path = "platform/sparreal-rt", version = "0.13" }
 
-rdif-intc = { path = "driver/interface/rdif-intc", version = "0.13" }
-rdif-base = { path = "driver/interface/rdif-base", version = "0.7" }
+rdif-intc = { path = "driver/interface/rdif-intc", version = "0.14" }
+rdif-base = { path = "driver/interface/rdif-base", version = "0.8" }
 rdif-def = { path = "driver/interface/rdif-def", version = "0.2" }
-rdif-pcie = { path = "driver/interface/rdif-pcie", version = "0.1" }
-rdif-block = { path = "driver/interface/rdif-block", version = "0.6" }
+rdif-pcie = { path = "driver/interface/rdif-pcie", version = "0.2" }
+rdif-block = { path = "driver/interface/rdif-block", version = "0.7" }
 
 rd-block = { path = "driver/block/rd-block", version = "0.1" }
 
-arm-gic-driver = { version = "0.16", path = "driver/intc/gic" }
+arm-gic-driver = { version = "0.17", path = "driver/intc/gic" }
