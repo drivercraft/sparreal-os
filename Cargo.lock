@@ -178,14 +178,14 @@ dependencies = [
 
 [[package]]
 name = "arm-gic-driver"
-version = "0.16.4"
+version = "0.17.0"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "bitflags 2.11.0",
  "enum_dispatch",
  "log",
  "paste",
- "rdif-intc 0.13.0",
+ "rdif-intc 0.14.0",
  "tock-registers 0.10.1",
 ]
 
@@ -1802,8 +1802,9 @@ dependencies = [
 [[package]]
 name = "pcie"
 version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "225c81c0f672afbdd95e55abebe56541870e64e350eba9f7eabfb392112229ab"
 dependencies = [
- "bare-test 0.7.0",
  "bare-test-macros 0.2.0",
  "bit_field",
  "bitflags 2.11.0",
@@ -1815,16 +1816,15 @@ dependencies = [
 
 [[package]]
 name = "pcie"
-version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "225c81c0f672afbdd95e55abebe56541870e64e350eba9f7eabfb392112229ab"
+version = "0.5.0"
 dependencies = [
+ "bare-test 0.7.0",
  "bare-test-macros 0.2.0",
  "bit_field",
  "bitflags 2.11.0",
  "log",
  "pci_types",
- "rdif-pcie 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-pcie 0.2.0",
  "thiserror 2.0.18",
 ]
 
@@ -2075,18 +2075,6 @@ dependencies = [
 [[package]]
 name = "rdif-base"
 version = "0.7.0"
-dependencies = [
- "as-any",
- "async-trait",
- "paste",
- "rdif-def 0.2.1",
- "thiserror 2.0.18",
- "tokio",
-]
-
-[[package]]
-name = "rdif-base"
-version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f8c32d8cbc18633a412130719b07d31135215d1715ac48fc3888ca835a811ba"
 dependencies = [
@@ -2098,19 +2086,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "rdif-base"
+version = "0.8.0"
+dependencies = [
+ "as-any",
+ "async-trait",
+ "paste",
+ "rdif-def 0.2.1",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
 name = "rdif-block"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "dma-api 0.7.1",
- "rdif-base 0.7.0",
+ "rdif-base 0.8.0",
  "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "rdif-clk"
-version = "0.4.2"
+version = "0.5.0"
 dependencies = [
- "rdif-base 0.7.0",
+ "rdif-base 0.8.0",
 ]
 
 [[package]]
@@ -2136,33 +2136,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "170ec813e6cf4d1e5fa53fa8fed0fadc7aaab96683d4f1d44c602a6109931eb4"
 dependencies = [
  "cfg-if",
- "rdif-base 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-base 0.7.0",
  "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "rdif-intc"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "cfg-if",
- "rdif-base 0.7.0",
+ "rdif-base 0.8.0",
 ]
 
 [[package]]
 name = "rdif-net"
 version = "0.1.0"
 dependencies = [
- "rdif-base 0.7.0",
-]
-
-[[package]]
-name = "rdif-pcie"
-version = "0.1.4"
-dependencies = [
- "pci_types",
- "rdif-base 0.7.0",
- "serde",
- "thiserror 2.0.18",
+ "rdif-base 0.8.0",
 ]
 
 [[package]]
@@ -2172,15 +2162,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60c6e8dea6d432b2c03bc3f4238dc59a276aacac6f688a937351e7a313918738"
 dependencies = [
  "pci_types",
- "rdif-base 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-base 0.7.0",
  "thiserror 2.0.18",
 ]
 
 [[package]]
-name = "rdif-power"
-version = "0.6.1"
+name = "rdif-pcie"
+version = "0.2.0"
 dependencies = [
- "rdif-base 0.7.0",
+ "pci_types",
+ "rdif-base 0.8.0",
+ "serde",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -2189,19 +2182,14 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7b6eefca0d1b44a5bef1e934d8ab2c8e00e19dd3d9e071855c0933637ee17a0"
 dependencies = [
- "rdif-base 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-base 0.7.0",
 ]
 
 [[package]]
-name = "rdif-serial"
-version = "0.6.0"
+name = "rdif-power"
+version = "0.7.0"
 dependencies = [
- "bitflags 2.11.0",
- "futures",
- "heapless 0.9.2",
- "rdif-base 0.7.0",
- "spin 0.10.0",
- "thiserror 2.0.18",
+ "rdif-base 0.8.0",
 ]
 
 [[package]]
@@ -2213,16 +2201,21 @@ dependencies = [
  "bitflags 2.11.0",
  "futures",
  "heapless 0.9.2",
- "rdif-base 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-base 0.7.0",
  "spin 0.10.0",
  "thiserror 2.0.18",
 ]
 
 [[package]]
-name = "rdif-systick"
-version = "0.5.1"
+name = "rdif-serial"
+version = "0.7.0"
 dependencies = [
- "rdif-base 0.7.0",
+ "bitflags 2.11.0",
+ "futures",
+ "heapless 0.9.2",
+ "rdif-base 0.8.0",
+ "spin 0.10.0",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -2231,31 +2224,21 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e11da4f362ab6cdcdee9d8e795faabd0f15e04167cb17939fd3aca19c2ef3421"
 dependencies = [
- "rdif-base 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-base 0.7.0",
+]
+
+[[package]]
+name = "rdif-systick"
+version = "0.6.0"
+dependencies = [
+ "rdif-base 0.8.0",
 ]
 
 [[package]]
 name = "rdif-timer"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
- "rdif-base 0.7.0",
-]
-
-[[package]]
-name = "rdrive"
-version = "0.18.12"
-dependencies = [
- "fdt-parser",
- "log",
- "paste",
- "pcie 0.4.5",
- "rdif-base 0.7.0",
- "rdif-clk",
- "rdif-intc 0.13.0",
- "rdif-pcie 0.1.4",
- "rdrive-macros 0.4.1",
- "spin 0.10.0",
- "thiserror 2.0.18",
+ "rdif-base 0.8.0",
 ]
 
 [[package]]
@@ -2267,10 +2250,27 @@ dependencies = [
  "fdt-parser",
  "log",
  "paste",
- "pcie 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "rdif-base 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rdif-pcie 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pcie 0.4.5",
+ "rdif-base 0.7.0",
+ "rdif-pcie 0.1.4",
  "rdrive-macros 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "spin 0.10.0",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "rdrive"
+version = "0.19.0"
+dependencies = [
+ "fdt-parser",
+ "log",
+ "paste",
+ "pcie 0.5.0",
+ "rdif-base 0.8.0",
+ "rdif-clk",
+ "rdif-intc 0.14.0",
+ "rdif-pcie 0.2.0",
+ "rdrive-macros 0.4.1",
  "spin 0.10.0",
  "thiserror 2.0.18",
 ]
@@ -2800,7 +2800,7 @@ dependencies = [
  "heapless 0.9.2",
  "log",
  "mbarrier",
- "rdif-serial 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-serial 0.6.0",
  "thiserror 2.0.18",
  "tock-registers 0.10.1",
  "x86",
@@ -2883,13 +2883,13 @@ version = "0.5.3"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "anyhow",
- "arm-gic-driver 0.16.4",
+ "arm-gic-driver 0.17.0",
  "kernutil",
  "log",
  "mmio-api",
  "page-table-generic 0.7.1",
- "rdif-intc 0.13.0",
- "rdrive 0.18.12",
+ "rdif-intc 0.14.0",
+ "rdrive 0.19.0",
  "someboot",
  "somehal-macros",
  "thiserror 2.0.18",
@@ -2929,9 +2929,9 @@ dependencies = [
  "pasts",
  "ranges-ext 0.4.0",
  "rdif-intc 0.12.1",
- "rdif-power 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rdif-systick 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rdrive 0.18.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-power 0.6.1",
+ "rdif-systick 0.5.1",
+ "rdrive 0.18.12",
  "rgb",
  "sparreal-macros 0.9.3",
  "spin 0.10.0",
@@ -2955,7 +2955,7 @@ dependencies = [
  "log",
  "num-align",
  "page-table-generic 0.7.1",
- "rdrive 0.18.12",
+ "rdrive 0.19.0",
  "rgb",
  "sparreal-macros 0.10.1",
  "spin 0.10.0",
@@ -3009,8 +3009,8 @@ dependencies = [
  "numeric-enum-macro",
  "ranges-ext 0.4.0",
  "rdif-intc 0.12.1",
- "rdif-power 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rdif-systick 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rdif-power 0.6.1",
+ "rdif-systick 0.5.1",
  "rgb",
  "smccc",
  "somehal 0.4.5",
