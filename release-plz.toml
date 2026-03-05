@@ -4,46 +4,6 @@
 # Driver directory crates - do not publish or release
 
 [[package]]
-name = "rdif-systick"
-publish = false
-release = false
-
-[[package]]
-name = "rdif-power"
-publish = false
-release = false
-
-[[package]]
-name = "rdif-block"
-publish = false
-release = false
-
-[[package]]
-name = "rdif-clk"
-publish = false
-release = false
-
-[[package]]
-name = "rdif-net"
-publish = false
-release = false
-
-[[package]]
-name = "rdif-timer"
-publish = false
-release = false
-
-[[package]]
-name = "rdif-serial"
-publish = false
-release = false
-
-[[package]]
 name = "ramdisk"
-publish = false
-release = false
-
-[[package]]
-name = "rd-block"
 publish = false
 release = false
