@@ -2879,7 +2879,7 @@ dependencies = [
 
 [[package]]
 name = "somehal"
-version = "0.5.3"
+version = "0.6.0"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "anyhow",
@@ -3024,7 +3024,7 @@ name = "sparreal-rt"
 version = "0.13.3"
 dependencies = [
  "log",
- "somehal 0.5.3",
+ "somehal 0.6.0",
  "sparreal-kernel 0.15.0",
 ]
 
@@ -3222,7 +3222,7 @@ name = "test-suit-smp"
 version = "0.1.0"
 dependencies = [
  "log",
- "somehal 0.5.3",
+ "somehal 0.6.0",
  "sparreal-rt 0.13.3",
 ]
 

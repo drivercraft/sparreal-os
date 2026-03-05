@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.5.3](https://github.com/drivercraft/sparreal-os/compare/somehal-v0.5.2...somehal-v0.5.3) - 2026-03-04
+## [0.6.0](https://github.com/drivercraft/sparreal-os/compare/somehal-v0.5.2...somehal-v0.6.0) - 2026-03-04
 
 ### Other
 
