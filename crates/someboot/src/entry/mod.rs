@@ -30,12 +30,9 @@ pub fn primary_init_early(params: PrimaryCpuInitInfo) {
     crate::mem::early_init();
 }
 
-pub(crate) fn secondary_entry(_cpu_meta: &PerCpuMeta) {
+pub(crate) fn secondary_entry(cpu_meta: &PerCpuMeta) {
     unsafe extern "Rust" {
-        fn __someboot_secondary();
+        fn __someboot_secondary(cpu_meta: &PerCpuMeta);
     }
-    unsafe { __someboot_secondary() };
-    // println!("Secondary CPU {} (ID {}) is starting up", cpu_meta.cpu_idx, cpu_meta.cpu_id);
-    // println!("Stack top: {:#x}", cpu_meta.stack_top);
-    // println!("MMU entry: {:#x}", cpu_meta.entry_virt);
+    unsafe { __someboot_secondary(cpu_meta) };
 }
