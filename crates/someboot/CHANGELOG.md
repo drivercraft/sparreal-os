@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6](https://github.com/drivercraft/sparreal-os/compare/someboot-v0.1.5...someboot-v0.1.6) - 2026-03-06
+
+### Other
+
+- 🛠️ fix: 更新 secondary_entry 函数以传递 cpu_meta 参数 ([#42](https://github.com/drivercraft/sparreal-os/pull/42))
+
 ## [0.1.5](https://github.com/drivercraft/sparreal-os/compare/someboot-v0.1.4...someboot-v0.1.5) - 2026-03-05
 
 ### Other

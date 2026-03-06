@@ -2260,7 +2260,7 @@ dependencies = [
 
 [[package]]
 name = "rdrive"
-version = "0.19.0"
+version = "0.19.1"
 dependencies = [
  "fdt-parser",
  "log",
@@ -2808,7 +2808,7 @@ dependencies = [
 
 [[package]]
 name = "someboot"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "aarch64-cpu-ext",
@@ -2879,7 +2879,7 @@ dependencies = [
 
 [[package]]
 name = "somehal"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "anyhow",
@@ -2889,7 +2889,7 @@ dependencies = [
  "mmio-api",
  "page-table-generic 0.7.1",
  "rdif-intc 0.14.0",
- "rdrive 0.19.0",
+ "rdrive 0.19.1",
  "someboot",
  "somehal-macros",
  "thiserror 2.0.18",
@@ -2955,7 +2955,7 @@ dependencies = [
  "log",
  "num-align",
  "page-table-generic 0.7.1",
- "rdrive 0.19.0",
+ "rdrive 0.19.1",
  "rgb",
  "sparreal-macros 0.10.1",
  "spin 0.10.0",
@@ -3024,7 +3024,7 @@ name = "sparreal-rt"
 version = "0.13.3"
 dependencies = [
  "log",
- "somehal 0.6.0",
+ "somehal 0.6.1",
  "sparreal-kernel 0.15.0",
 ]
 
@@ -3222,7 +3222,7 @@ name = "test-suit-smp"
 version = "0.1.0"
 dependencies = [
  "log",
- "somehal 0.6.0",
+ "somehal 0.6.1",
  "sparreal-rt 0.13.3",
 ]
 

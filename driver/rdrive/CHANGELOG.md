@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.1](https://github.com/drivercraft/sparreal-os/compare/rdrive-v0.19.0...rdrive-v0.19.1) - 2026-03-06
+
+### Other
+
+- 🛠️ fix: 更新 secondary_entry 函数以传递 cpu_meta 参数 ([#42](https://github.com/drivercraft/sparreal-os/pull/42))
+
 ## [0.19.0](https://github.com/drivercraft/sparreal-os/compare/rdrive-v0.18.11...rdrive-v0.19.0) - 2026-03-05
 
 ### Other
