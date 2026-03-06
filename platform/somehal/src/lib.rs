@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![allow(unused_features)]
 #![feature(used_with_arg)]
 #![cfg(not(any(windows, unix)))]
 
