@@ -11,7 +11,7 @@ version = "0.6.0"
 
 [features]
 efi = ["someboot/efi"]
-hv = ["someboot/hv"]
+hv = ["mmu", "someboot/hv"]
 mmu = ["someboot/mmu"]
 uspace = ["mmu", "someboot/uspace"]
 
