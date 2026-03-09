@@ -2,8 +2,8 @@ mod config;
 
 pub use config::*;
 pub use pci_types::{
-    capability::PciCapability, device_type::DeviceType, Bar, CommandRegister, PciAddress,
-    StatusRegister,
+    Bar, CommandRegister, PciAddress, StatusRegister, capability::PciCapability,
+    device_type::DeviceType,
 };
 
 #[derive(Debug, Clone, Copy)]

@@ -10,12 +10,11 @@ mod tests {
     use alloc::vec;
     use bare_test::{
         os::{
-            mem::{dma::kernel_dma_op, ioremap, mmio::kernel_mmio_op, page_size},
+            mem::{dma::kernel_dma_op, mmio::kernel_mmio_op, page_size},
             platform::{PlatformDescriptor, get_platform_descriptor},
         },
         *,
     };
-    use core::ptr::NonNull;
     use fdt_parser::{Fdt, Node, PciSpace};
     use nvme_driver::{Config, Nvme, NvmeBlockDriver};
     use pcie::{
@@ -105,18 +104,17 @@ mod tests {
 
         println!("pcie: {}", pcie.name());
 
-        let mut pcie_regs = vec![];
+        let reg = pcie
+            .reg()
+            .unwrap()
+            .into_iter()
+            .next()
+            .expect("pcie reg missing");
+        let reg_size = reg.size.expect("pcie reg size missing");
+        println!("pcie reg: {:#x}", reg.address);
 
-        for reg in pcie.reg().unwrap() {
-            println!("pcie reg: {:#x}", reg.address);
-            let reg_size = reg.size.expect("pcie reg size missing");
-            pcie_regs.push(ioremap((reg.address as usize).into(), reg_size).unwrap());
-        }
-
-        let base_vaddr = pcie_regs[0];
-        let base_vaddr = NonNull::new(base_vaddr.raw() as *mut u8).unwrap();
-
-        let mut controller = PcieController::new(PcieGeneric::new(base_vaddr));
+        let mut controller =
+            PcieController::new(PcieGeneric::new(reg.address, reg_size, kernel_mmio_op()).unwrap());
 
         for range in pcie.ranges().unwrap() {
             match range.space {

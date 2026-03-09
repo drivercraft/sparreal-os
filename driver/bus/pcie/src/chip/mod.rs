@@ -1,30 +1,29 @@
-use core::ptr::NonNull;
-
+use mmio_api::{MapError, Mmio, MmioAddr, MmioOp};
 pub use rdif_pcie::PcieController;
 use rdif_pcie::{DriverGeneric, Interface};
 
 use crate::PciAddress;
 
 pub struct PcieGeneric {
-    mmio_base: NonNull<u8>,
+    mmio: Mmio,
 }
 
-unsafe impl Send for PcieGeneric {}
-
 impl PcieGeneric {
-    pub fn new(mmio_base: NonNull<u8>) -> Self {
-        Self { mmio_base }
+    pub fn new(
+        mmio_base: impl Into<MmioAddr>,
+        mmio_size: usize,
+        mmio_op: &'static dyn MmioOp,
+    ) -> Result<Self, MapError> {
+        mmio_api::init(mmio_op);
+        let mmio = mmio_api::ioremap(mmio_base.into(), mmio_size)?;
+        Ok(Self { mmio })
     }
 
-    fn mmio_addr(&self, mmio_base: NonNull<u8>, address: PciAddress, offset: u16) -> NonNull<u32> {
-        let address = (address.bus() as u32) << 20
+    fn mmio_offset(address: PciAddress, offset: u16) -> usize {
+        ((address.bus() as u32) << 20
             | (address.device() as u32) << 15
             | (address.function() as u32) << 12
-            | offset as u32;
-        unsafe {
-            let ptr: NonNull<u32> = mmio_base.cast().add((address >> 2) as usize);
-            ptr
-        }
+            | offset as u32) as usize
     }
 }
 
@@ -36,12 +35,10 @@ impl DriverGeneric for PcieGeneric {
 
 impl Interface for PcieGeneric {
     fn read(&mut self, address: PciAddress, offset: u16) -> u32 {
-        let ptr = self.mmio_addr(self.mmio_base, address, offset);
-        unsafe { ptr.as_ptr().read_volatile() }
+        self.mmio.read(Self::mmio_offset(address, offset))
     }
 
     fn write(&mut self, address: PciAddress, offset: u16, value: u32) {
-        let ptr = self.mmio_addr(self.mmio_base, address, offset);
-        unsafe { ptr.as_ptr().write_volatile(value) }
+        self.mmio.write(Self::mmio_offset(address, offset), value)
     }
 }

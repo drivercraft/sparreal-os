@@ -1,7 +1,7 @@
 [package]
 name = "pcie"
 version = "0.5.0"
-edition = "2021"
+edition.workspace = true
 authors = ["周睿 <zrufo747@outlook.com>"]
 repository.workspace = true
 license = "MIT"
@@ -15,15 +15,17 @@ log = "0.4"
 bit_field = "0.10"
 bitflags = "2"
 pci_types = "0.10"
-thiserror = {version="2", default-features = false}
+mmio-api.workspace = true
+thiserror = { version = "2", default-features = false }
 
-rdif-pcie = {workspace = true}
+rdif-pcie = { workspace = true }
 
 [dev-dependencies]
-bare-test = "0.7"
+bare-test.workspace = true
+fdt-parser.workspace = true
 
-[build-dependencies]
-bare-test-macros = "0.2"
+[lib]
+test = false
 
 
 [[test]]

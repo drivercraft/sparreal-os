@@ -5,8 +5,8 @@ use core::{
 
 use alloc::vec::Vec;
 use pci_types::{
-    capability::PciCapability, device_type::DeviceType, Bar, BarWriteError, CommandRegister,
-    EndpointHeader,
+    Bar, BarWriteError, CommandRegister, EndpointHeader, capability::PciCapability,
+    device_type::DeviceType,
 };
 use rdif_pcie::{ConfigAccess, SimpleBarAllocator};
 

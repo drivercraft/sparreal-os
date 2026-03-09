@@ -1,10 +1,8 @@
-use core::{
-    ops::{Deref, DerefMut},
-    ptr::NonNull,
-};
+use core::ops::{Deref, DerefMut};
 
 use ::pcie::*;
 use alloc::{collections::btree_set::BTreeSet, vec::Vec};
+use mmio_api::{MapError, MmioOp};
 use spin::{Mutex, Once};
 
 pub use ::pcie::{Endpoint, PciCapability, PcieGeneric};
@@ -26,8 +24,14 @@ struct Id {
     device: u16,
 }
 
-pub fn new_driver_generic(mmio_base: NonNull<u8>) -> PcieController {
-    PcieController::new(PcieGeneric::new(mmio_base))
+pub fn new_driver_generic(
+    mmio_base: usize,
+    mmio_size: usize,
+    mmio_op: &'static dyn MmioOp,
+) -> Result<PcieController, MapError> {
+    Ok(PcieController::new(PcieGeneric::new(
+        mmio_base, mmio_size, mmio_op,
+    )?))
 }
 
 fn pcie() -> &'static Mutex<Vec<PcieEnumterator>> {

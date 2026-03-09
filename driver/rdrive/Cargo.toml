@@ -12,16 +12,17 @@ version = "0.19.1"
 [dependencies]
 fdt-parser = "0.4.16"
 log = "0.4"
+mmio-api.workspace = true
 paste = "1"
 spin = "0.10"
-thiserror = {version = "2", default-features = false}
+thiserror = { version = "2", default-features = false }
 
-pcie = { version = "0.5", path = "../bus/pcie"}
+pcie = { version = "0.5", path = "../bus/pcie" }
 
-rdif-base = {workspace = true}
-rdrive-macros = {version = "0.4", path = "../rdrive-macros"}
-rdif-pcie = {workspace = true}
+rdif-base = { workspace = true }
+rdrive-macros = { version = "0.4", path = "../rdrive-macros" }
+rdif-pcie = { workspace = true }
 
 [dev-dependencies]
 rdif-intc.workspace = true
-rdif-clk = { version = "0.5", path = "../interface/rdif-clk"}
+rdif-clk = { version = "0.5", path = "../interface/rdif-clk" }

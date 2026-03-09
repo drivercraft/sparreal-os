@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 
-use crate::chip::PcieController;
 use crate::PciAddress;
+use crate::chip::PcieController;
 use crate::{Endpoint, PciConfigSpace, PciHeaderBase, PciPciBridge};
 use core::hint::spin_loop;
 

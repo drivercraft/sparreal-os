@@ -2,50 +2,60 @@
 #![no_main]
 #![feature(used_with_arg)]
 
-extern crate alloc;
 extern crate bare_test;
 
 #[bare_test::tests]
 mod tests {
     use bare_test::{
-        fdt_parser::PciSpace,
-        globals::{global_val, PlatformInfoKind},
-        mem::iomap,
-        println,
+        os::{
+            mem::mmio::kernel_mmio_op,
+            platform::{PlatformDescriptor, get_platform_descriptor},
+        },
+        *,
     };
+    use fdt_parser::{Fdt, Node, PciSpace};
     use log::info;
     use pcie::{
-        enumerate_by_controller, CommandRegister, PciMem32, PciMem64, PcieController, PcieGeneric,
+        CommandRegister, PciMem32, PciMem64, PcieController, PcieGeneric, enumerate_by_controller,
     };
 
     #[test]
-    fn test_iter() {
-        let PlatformInfoKind::DeviceTree(fdt) = &global_val().platform_info;
-        let fdt = fdt.get();
+    fn test_framework_boot() {
+        println!("pcie bare-test bootstrap ok");
+    }
 
-        let pcie = fdt
+    #[test]
+    #[timeout = 10000]
+    fn test_iter() {
+        let PlatformDescriptor::DeviceTree(dtb) = get_platform_descriptor() else {
+            panic!("device tree not found");
+        };
+        let fdt = Fdt::from_bytes(dtb.as_slice()).unwrap();
+        let pcie = match fdt
             .find_compatible(&["pci-host-ecam-generic"])
+            .into_iter()
             .next()
             .unwrap()
-            .into_pci()
-            .unwrap();
+        {
+            Node::Pci(pci) => pci,
+            _ => panic!("pci host bridge not found"),
+        };
 
-        let mut pcie_regs = alloc::vec![];
+        println!("pcie discovery start");
 
-        println!("test nvme");
+        println!("pcie: {}", pcie.name());
 
-        println!("pcie: {}", pcie.node.name);
+        let reg = pcie
+            .reg()
+            .unwrap()
+            .into_iter()
+            .next()
+            .expect("pcie reg missing");
+        let reg_size = reg.size.expect("pcie reg size missing");
 
-        for reg in pcie.node.reg().unwrap() {
-            println!("pcie reg: {:#x}", reg.address);
-            pcie_regs.push(iomap((reg.address as usize).into(), reg.size.unwrap()));
-        }
+        info!("Init PCIE @phys={:#x}, size={:#x}", reg.address, reg_size);
 
-        let base_vaddr = pcie_regs[0];
-
-        info!("Init PCIE @{base_vaddr:?}");
-
-        let i = PcieGeneric::new(base_vaddr);
+        let i = PcieGeneric::new(reg.address, reg_size, kernel_mmio_op()).unwrap();
         let mut drv = PcieController::new(i);
 
         for range in pcie.ranges().unwrap() {

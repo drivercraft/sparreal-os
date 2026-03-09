@@ -8,5 +8,5 @@ run test:
 
 ```shell
 cargo install ostool
-cargo test --test test  -p pcie --  --show-output
+cargo t -p pcie --target aarch64-unknown-none-softfloat -- --show-output
 ```

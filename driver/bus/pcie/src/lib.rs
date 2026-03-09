@@ -18,4 +18,5 @@ pub use rdif_pcie::{PciMem32, PciMem64, PcieController};
 pub use bar_alloc::*;
 pub use types::*;
 
+pub use mmio_api::{MapError, Mmio, MmioAddr, MmioOp};
 pub use root::enumerate_by_controller;
