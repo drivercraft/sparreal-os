@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-QEMU_CONFIG="$PROJECT_ROOT/driver/block/nvme/qemu.toml"
+QEMU_CONFIG="$PROJECT_ROOT/driver/block/nvme/.qemu.toml"
 
 cd "$PROJECT_ROOT" || exit 1
 

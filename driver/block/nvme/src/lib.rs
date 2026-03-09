@@ -2,6 +2,7 @@
 
 extern crate alloc;
 
+mod block;
 mod command;
 pub mod err;
 mod nvme;
@@ -10,6 +11,7 @@ mod registers;
 
 use core::{alloc::Layout, ptr::NonNull};
 
+pub use block::NvmeBlockDriver;
 pub use nvme::{Config, Namespace, Nvme};
 
 #[derive(Clone, Copy)]

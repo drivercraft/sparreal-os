@@ -1,8 +1,11 @@
-#[derive(Debug, Clone)]
+use core::fmt::{Display, Formatter};
+
+#[derive(Debug)]
 pub enum Error {
     NoMemory,
     Layout,
     Dma(dma_api::DmaError),
+    Mmio(mmio_api::MapError),
     Unknown(&'static str),
 }
 
@@ -17,3 +20,23 @@ impl From<dma_api::DmaError> for Error {
         }
     }
 }
+
+impl From<mmio_api::MapError> for Error {
+    fn from(value: mmio_api::MapError) -> Self {
+        Self::Mmio(value)
+    }
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::NoMemory => f.write_str("no memory available"),
+            Self::Layout => f.write_str("invalid memory layout"),
+            Self::Dma(err) => write!(f, "dma error: {err}"),
+            Self::Mmio(err) => write!(f, "mmio map error: {err}"),
+            Self::Unknown(message) => f.write_str(message),
+        }
+    }
+}
+
+impl core::error::Error for Error {}

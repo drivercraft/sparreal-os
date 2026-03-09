@@ -7,78 +7,21 @@ extern crate bare_test;
 
 #[bare_test::tests]
 mod tests {
-    use alloc::{
-        alloc::{alloc_zeroed, dealloc},
-        vec,
-    };
+    use alloc::vec;
     use bare_test::{
-        hal::al::{PhysAddr, VirtAddr},
         os::{
-            mem::{ioremap, page_size},
+            mem::{dma::kernel_dma_op, ioremap, mmio::kernel_mmio_op, page_size},
             platform::{get_platform_descriptor, PlatformDescriptor},
         },
         *,
     };
-    use core::{alloc::Layout, num::NonZeroUsize, ptr::NonNull};
-    use dma_api::{DeviceDma, DmaDirection, DmaHandle, DmaMapHandle, DmaOp};
+    use core::ptr::NonNull;
     use fdt_parser::{Fdt, Node, PciSpace};
-    use nvme_driver::{Config, Nvme};
+    use nvme_driver::{Config, Nvme, NvmeBlockDriver};
     use pcie::{
         enumerate_by_controller, CommandRegister, DeviceType, PciMem32, PciMem64, PcieController,
         PcieGeneric,
     };
-
-    static DMA_OP: BareTestDma = BareTestDma;
-
-    struct BareTestDma;
-
-    impl DmaOp for BareTestDma {
-        fn page_size(&self) -> usize {
-            page_size()
-        }
-
-        unsafe fn map_single(
-            &self,
-            dma_mask: u64,
-            addr: NonNull<u8>,
-            size: NonZeroUsize,
-            align: usize,
-            _direction: DmaDirection,
-        ) -> core::result::Result<DmaMapHandle, dma_api::DmaError> {
-            let layout = Layout::from_size_align(size.get(), align.max(1))?;
-            let phys: PhysAddr = VirtAddr::from(addr).into();
-            let dma_addr = phys.raw() as u64;
-
-            if dma_addr > dma_mask || !dma_addr.is_multiple_of(align.max(1) as u64) {
-                return Err(dma_api::DmaError::AlignMismatch {
-                    required: align.max(1),
-                    address: dma_addr.into(),
-                });
-            }
-
-            Ok(unsafe { DmaMapHandle::new(addr, dma_addr.into(), layout, None) })
-        }
-
-        unsafe fn unmap_single(&self, _handle: DmaMapHandle) {}
-
-        unsafe fn alloc_coherent(&self, dma_mask: u64, layout: Layout) -> Option<DmaHandle> {
-            let ptr = unsafe { alloc_zeroed(layout) };
-            let ptr = NonNull::new(ptr)?;
-            let phys: PhysAddr = VirtAddr::from(ptr).into();
-            let dma_addr = phys.raw() as u64;
-
-            if dma_addr > dma_mask || !dma_addr.is_multiple_of(layout.align() as u64) {
-                unsafe { dealloc(ptr.as_ptr(), layout) };
-                return None;
-            }
-
-            Some(unsafe { DmaHandle::new(ptr, dma_addr.into(), layout) })
-        }
-
-        unsafe fn dealloc_coherent(&self, handle: DmaHandle) {
-            unsafe { dealloc(handle.as_ptr().as_ptr(), handle.layout()) };
-        }
-    }
 
     #[test]
     fn test_framework_boot() {
@@ -115,6 +58,12 @@ mod tests {
         println!("namespace query ok");
 
         let ns = namespace_list[0];
+        let mut block =
+            NvmeBlockDriver::with_namespace("nvme", nvme, ns).into_block(kernel_dma_op());
+        let mut queue = block.create_queue().unwrap();
+
+        assert_eq!(queue.block_size(), ns.lba_size);
+        assert_eq!(queue.num_blocks(), ns.lba_count);
 
         for block in 0..128 {
             let mut write_buf = vec![0u8; ns.lba_size];
@@ -123,10 +72,11 @@ mod tests {
 
             write_buf[..message_bytes.len()].copy_from_slice(message_bytes);
 
-            nvme.block_write_sync(&ns, block, &write_buf).unwrap();
+            let write_result = queue.write_blocks_blocking(block, &write_buf);
+            assert!(write_result.into_iter().all(|entry| entry.is_ok()));
 
-            let mut read_buf = vec![0u8; ns.lba_size];
-            nvme.block_read_sync(&ns, block, &mut read_buf).unwrap();
+            let mut read_result = queue.read_blocks_blocking(block, 1).into_iter();
+            let read_buf = read_result.next().unwrap().unwrap();
 
             assert_eq!(&read_buf[..message_bytes.len()], message_bytes);
 
@@ -201,17 +151,17 @@ mod tests {
                 println!("bar0: [{:#x}, {:#x})", bar.start, bar.end);
                 println!("nvme discovery ok");
 
-                let addr = ioremap(bar.start.into(), bar.count()).unwrap();
-                let addr = NonNull::new(addr.raw() as *mut u8).unwrap();
-
                 ep.update_command(|mut cmd| {
                     cmd.insert(CommandRegister::BUS_MASTER_ENABLE | CommandRegister::MEMORY_ENABLE);
                     cmd
                 });
 
                 return Nvme::new(
-                    addr,
-                    DeviceDma::new(u64::MAX, &DMA_OP),
+                    bar.start as u64,
+                    bar.count(),
+                    u64::MAX,
+                    kernel_dma_op(),
+                    kernel_mmio_op(),
                     Config {
                         page_size,
                         io_queue_pair_count: 1,

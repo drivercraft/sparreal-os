@@ -1,8 +1,8 @@
-use core::ptr::NonNull;
-
 use alloc::vec::Vec;
-use dma_api::{DeviceDma, DmaDirection};
+use core::ptr::NonNull;
+use dma_api::{DeviceDma, DmaDirection, DmaOp};
 use log::{debug, info};
+use mmio_api::{Mmio, MmioAddr, MmioOp};
 
 use crate::{
     command::{
@@ -16,6 +16,7 @@ use crate::{
 
 pub struct Nvme {
     bar: NonNull<NvmeReg>,
+    _mmio: Option<Mmio>,
     dma: DeviceDma,
     admin_queue: NvmeQueue,
     io_queues: Vec<NvmeQueue>,
@@ -31,13 +32,38 @@ pub struct Config {
 }
 
 impl Nvme {
-    pub fn new(bar: NonNull<u8>, dma: DeviceDma, config: Config) -> Result<Self> {
-        let admin_queue = NvmeQueue::new(0, bar.cast(), &dma, config.page_size, 64, 64)?;
+    pub fn new(
+        bar_addr: impl Into<MmioAddr>,
+        bar_size: usize,
+        dma_mask: u64,
+        dma_op: &'static dyn DmaOp,
+        mmio_op: &'static dyn MmioOp,
+        config: Config,
+    ) -> Result<Self> {
+        mmio_api::init(mmio_op);
+        let mmio = mmio_api::ioremap(bar_addr.into(), bar_size)?;
+        let dma = DeviceDma::new(dma_mask, dma_op);
+        Self::new_mmio(mmio, dma, config)
+    }
+
+    fn new_mmio(mmio: Mmio, dma: DeviceDma, config: Config) -> Result<Self> {
+        let bar = NonNull::new(mmio.as_ptr()).expect("mmio mapping must not be null");
+        Self::new_with_bar(bar.cast(), Some(mmio), dma, config)
+    }
+
+    fn new_with_bar(
+        bar: NonNull<NvmeReg>,
+        mmio: Option<Mmio>,
+        dma: DeviceDma,
+        config: Config,
+    ) -> Result<Self> {
+        let admin_queue = NvmeQueue::new(0, bar, &dma, config.page_size, 64, 64)?;
 
         assert!(config.io_queue_pair_count > 0);
 
         let mut s = Self {
-            bar: bar.cast(),
+            bar,
+            _mmio: mmio,
             dma,
             admin_queue,
             io_queues: Vec::new(),
@@ -56,6 +82,10 @@ impl Nvme {
         s.init(config)?;
 
         Ok(s)
+    }
+
+    pub fn dma_mask(&self) -> u64 {
+        self.dma.dma_mask()
     }
 
     fn reset(&mut self) {
@@ -283,6 +313,8 @@ impl Nvme {
         unsafe { self.bar.as_ref() }
     }
 }
+
+unsafe impl Send for Nvme {}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Namespace {

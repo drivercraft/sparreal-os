@@ -1684,7 +1684,10 @@ dependencies = [
  "dma-api 0.7.1",
  "fdt-parser 0.5.1",
  "log",
+ "mmio-api",
  "pcie 0.5.0",
+ "rd-block",
+ "spin 0.10.0",
  "tock-registers 0.10.1",
 ]
 
@@ -2977,6 +2980,7 @@ dependencies = [
  "heapless 0.9.2",
  "kernutil",
  "log",
+ "mmio-api",
  "num-align",
  "page-table-generic 0.7.1",
  "rdrive 0.19.1",
