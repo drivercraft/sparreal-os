@@ -11,7 +11,7 @@ mod tests {
     use bare_test::{
         os::{
             mem::{dma::kernel_dma_op, ioremap, mmio::kernel_mmio_op, page_size},
-            platform::{get_platform_descriptor, PlatformDescriptor},
+            platform::{PlatformDescriptor, get_platform_descriptor},
         },
         *,
     };
@@ -19,8 +19,8 @@ mod tests {
     use fdt_parser::{Fdt, Node, PciSpace};
     use nvme_driver::{Config, Nvme, NvmeBlockDriver};
     use pcie::{
-        enumerate_by_controller, CommandRegister, DeviceType, PciMem32, PciMem64, PcieController,
-        PcieGeneric,
+        CommandRegister, DeviceType, PciMem32, PciMem64, PcieController, PcieGeneric,
+        enumerate_by_controller,
     };
 
     #[test]

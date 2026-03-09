@@ -278,7 +278,7 @@ impl Nvme {
         buff: &mut [u8],
     ) -> Result<()> {
         assert!(
-            buff.len() % ns.lba_size == 0,
+            buff.len().is_multiple_of(ns.lba_size),
             "buffer size must be multiple of lba size"
         );
 

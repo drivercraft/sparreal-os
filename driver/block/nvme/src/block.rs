@@ -7,7 +7,7 @@ use rd_block::{
 };
 use spin::Mutex;
 
-use crate::{err::Result, Namespace, Nvme};
+use crate::{Namespace, Nvme, err::Result};
 
 struct NvmeBlockInner {
     nvme: Nvme,

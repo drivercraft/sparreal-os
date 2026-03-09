@@ -322,11 +322,7 @@ impl CompleteQueue {
 
         let complete = cqe.status.phase() != self.phase;
 
-        if complete {
-            Some(cqe)
-        } else {
-            None
-        }
+        if complete { Some(cqe) } else { None }
     }
 
     fn spin_for_complete(&mut self) -> NvmeCompletion {
