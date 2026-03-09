@@ -23,7 +23,7 @@ trait-ffi = "0.2"
 bitflags = "2"
 page-table-generic = { workspace = true }
 num-align = "0.1"
-fdt-raw = "0.1"
+fdt-raw.workspace = true
 anstyle = { version = "1.0.13", default-features = false }
 
 dma-api = { workspace = true }

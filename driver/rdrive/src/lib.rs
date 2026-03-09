@@ -7,7 +7,7 @@ extern crate log;
 
 use core::ptr::NonNull;
 
-pub use fdt_parser::Phandle;
+pub use fdt_edit::Phandle;
 use register::{DriverRegister, ProbeLevel};
 use spin::{Mutex, Once};
 

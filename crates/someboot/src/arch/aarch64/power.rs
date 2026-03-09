@@ -12,7 +12,8 @@ pub(crate) fn init() {
     let nodes = fdt.find_compatible(&["arm,psci-1.0", "arm,psci-0.2", "arm,psci"]);
 
     let method: Method = nodes[0]
-        .find_property("method")
+        .as_node()
+        .get_property("method")
         .unwrap()
         .as_str()
         .unwrap()

@@ -3,7 +3,7 @@ use core::ops::Deref;
 
 pub use crate::probe::fdt::FdtInfo;
 use crate::probe::{fdt, pci};
-pub use fdt_parser::Node;
+pub use fdt::NodeType as Node;
 
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]

@@ -5,7 +5,7 @@ use rdif_intc::Intc;
 use rdrive::probe::OnProbeError;
 use rdrive::register::{DriverRegister, ProbeKind, ProbeLevel, ProbePriority};
 
-use rdrive::{PlatformDevice, register::FdtInfo};
+use rdrive::{register::FdtInfo, PlatformDevice};
 
 pub fn register() -> DriverRegister {
     DriverRegister {
@@ -20,7 +20,8 @@ pub fn register() -> DriverRegister {
 }
 
 fn probe(info: FdtInfo<'_>, _dev: PlatformDevice) -> Result<(), OnProbeError> {
-    let mut reg = info.node.reg().ok_or(OnProbeError::other(format!(
+    let mut reg = info.node.regs().into_iter();
+    let base_reg = reg.next().ok_or(OnProbeError::other(format!(
         "[{}] has no reg",
         info.node.name()
     )))?;
@@ -28,22 +29,18 @@ fn probe(info: FdtInfo<'_>, _dev: PlatformDevice) -> Result<(), OnProbeError> {
     if let Some(irq) = _dev.descriptor.irq_parent {
         let intc = rdrive::get::<Intc>(irq).unwrap();
 
-        if let Some(irqs) = info.node.interrupts() {
-            for irq_prop in irqs {
-                let irq_prop: Vec<u32> = irq_prop.collect();
-                let irq_id = intc.lock().unwrap().setup_irq_by_fdt(&irq_prop);
-                debug!(
-                    "virtio mmio device [{}] setup irq: {:?}",
-                    info.node.name(),
-                    irq_id
-                );
-            }
+        for interrupt in info.interrupts() {
+            let irq_id = intc.lock().unwrap().setup_irq_by_fdt(&interrupt.specifier);
+            debug!(
+                "virtio mmio device [{}] setup irq: {:?}",
+                info.node.name(),
+                irq_id
+            );
         }
 
         println!("parent intc: {:?}", intc.descriptor().name);
     }
 
-    let base_reg = reg.next().unwrap();
     let mmio_size = base_reg.size.unwrap_or(0x1000);
 
     debug!(

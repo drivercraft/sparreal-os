@@ -15,7 +15,7 @@ mod tests {
         },
         *,
     };
-    use fdt_parser::{Fdt, Node, PciSpace};
+    use fdt_edit::{Fdt, NodeType, PciSpace};
     use nvme_driver::{Config, Nvme, NvmeBlockDriver};
     use pcie::{
         CommandRegister, DeviceType, PciMem32, PciMem64, PcieController, PcieGeneric,
@@ -92,29 +92,31 @@ mod tests {
             panic!("device tree not found");
         };
         let fdt = Fdt::from_bytes(dtb.as_slice()).unwrap();
-        let pcie = match fdt
+        let (pcie_name, pcie) = match fdt
             .find_compatible(&["pci-host-ecam-generic"])
             .into_iter()
             .next()
             .unwrap()
         {
-            Node::Pci(pci) => pci,
+            node @ NodeType::Pci(_) => {
+                let name = node.name();
+                match node {
+                    NodeType::Pci(pci) => (name, pci),
+                    _ => unreachable!(),
+                }
+            }
             _ => panic!("pci host bridge not found"),
         };
 
-        println!("pcie: {}", pcie.name());
+        println!("pcie: {}", pcie_name);
 
-        let reg = pcie
-            .reg()
-            .unwrap()
-            .into_iter()
-            .next()
-            .expect("pcie reg missing");
+        let reg = pcie.regs().into_iter().next().expect("pcie reg missing");
         let reg_size = reg.size.expect("pcie reg size missing");
         println!("pcie reg: {:#x}", reg.address);
 
-        let mut controller =
-            PcieController::new(PcieGeneric::new(reg.address, reg_size, kernel_mmio_op()).unwrap());
+        let mut controller = PcieController::new(
+            PcieGeneric::new(reg.address as usize, reg_size as usize, kernel_mmio_op()).unwrap(),
+        );
 
         for range in pcie.ranges().unwrap() {
             match range.space {

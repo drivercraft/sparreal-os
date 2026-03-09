@@ -26,7 +26,8 @@ repository = "https://github.com/drivercraft/sparreal-os"
 anyhow = { version = "1.0", default-features = false }
 byte-unit = { version = "5", default-features = false, features = ["byte"] }
 derive_more = { version = "2.1", default-features = false, features = ["full"] }
-fdt-parser = "0.5"
+fdt-edit = "0.2.3"
+fdt-raw = "0.3"
 heapless = { version = "0.9" }
 log = "0.4"
 ranges-ext = { version = "0.6", path = "crates/ranges-ext" }

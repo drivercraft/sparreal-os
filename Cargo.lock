@@ -484,48 +484,20 @@ dependencies = [
 
 [[package]]
 name = "fdt-edit"
-version = "0.1.5"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b0f564fda6b9389cec0b258a98483b974b6ed37cf4e771222fb49cabe1e260f"
+checksum = "bda8ff88f0dd8770b247b17d9e0faf293c52cb5733e2500294ffa93ac1f0b384"
 dependencies = [
  "enum_dispatch",
- "fdt-raw 0.1.5",
+ "fdt-raw",
  "log",
-]
-
-[[package]]
-name = "fdt-parser"
-version = "0.4.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f95f0bda5ff920492f6573294d8e3a99b75ee2e5ef93ab313fc6d517fa46785"
-
-[[package]]
-name = "fdt-parser"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac31c65bf27abc963061bd20741543f422e413f7cce0145fff1750bb73dadabe"
-dependencies = [
- "heapless",
- "log",
- "thiserror",
 ]
 
 [[package]]
 name = "fdt-raw"
-version = "0.1.5"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e7b19f67663e8368d5a07165a1c348b5a761afe5d130e982a0ed8859aca37c2"
-dependencies = [
- "heapless",
- "log",
- "thiserror",
-]
-
-[[package]]
-name = "fdt-raw"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cce2d6b3100c219add1cf704f0996cd45003fee5f1a2567397625c62cb7688f4"
+checksum = "91e6747052012035c3473585be1d706207893d8db73101825d8a3f75effa9843"
 dependencies = [
  "heapless",
  "log",
@@ -806,7 +778,7 @@ dependencies = [
  "bare-test",
  "byte-unit",
  "dma-api 0.7.1",
- "fdt-parser 0.5.1",
+ "fdt-edit",
  "log",
  "mmio-api",
  "pcie",
@@ -886,7 +858,7 @@ dependencies = [
  "bare-test",
  "bit_field",
  "bitflags 2.11.0",
- "fdt-parser 0.5.1",
+ "fdt-edit",
  "log",
  "mmio-api",
  "pci_types",
@@ -1145,7 +1117,8 @@ dependencies = [
 name = "rdrive"
 version = "0.19.1"
 dependencies = [
- "fdt-parser 0.4.18",
+ "fdt-edit",
+ "fdt-raw",
  "log",
  "mmio-api",
  "paste",
@@ -1375,7 +1348,7 @@ dependencies = [
  "byteorder",
  "derive_more",
  "fdt-edit",
- "fdt-raw 0.2.0",
+ "fdt-raw",
  "heapless",
  "kasm-aarch64",
  "kernutil",
@@ -1438,7 +1411,7 @@ dependencies = [
  "buddy_system_allocator 0.11.0",
  "byte-unit",
  "dma-api 0.7.1",
- "fdt-raw 0.1.5",
+ "fdt-raw",
  "heapless",
  "kernutil",
  "log",

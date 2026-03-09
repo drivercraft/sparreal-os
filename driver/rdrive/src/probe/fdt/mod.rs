@@ -5,7 +5,8 @@ use alloc::{
 use core::ptr::NonNull;
 use spin::{Mutex, Once};
 
-pub use fdt_parser::*;
+pub use fdt_edit::InterruptRef;
+pub use fdt_edit::{ClockRef, Fdt, NodeType, Phandle, RegInfo, Status};
 
 use crate::{
     Descriptor, DeviceId, PlatformDevice,
@@ -35,9 +36,8 @@ pub(crate) fn system() -> &'static System {
     SYSTEM.get().expect("rdrive not init")
 }
 
-#[derive(Clone)]
 pub struct FdtInfo<'a> {
-    pub node: Node<'a>,
+    pub node: NodeType<'a>,
     phandle_2_device_id: BTreeMap<Phandle, DeviceId>,
 }
 
@@ -46,54 +46,45 @@ impl<'a> FdtInfo<'a> {
         self.phandle_2_device_id.get(&phandle).copied()
     }
 
-    pub fn find_clk_by_name(&'a self, name: &str) -> Option<ClockRef<'a>> {
-        self.node.clocks().find(|clock| clock.name == Some(name))
+    pub fn find_clk_by_name(&self, name: &str) -> Option<ClockRef> {
+        self.node
+            .clocks()
+            .into_iter()
+            .find(|clock| clock.name.as_deref() == Some(name))
     }
 
-    pub fn interrupts(&self) -> Vec<Vec<u32>> {
-        let mut out = Vec::new();
-        if let Some(raws) = self.node.interrupts() {
-            for raw in raws {
-                out.push(raw.collect());
-            }
-        }
-        out
+    pub fn interrupts(&self) -> Vec<InterruptRef> {
+        self.node.interrupts()
     }
 }
 
 pub type FnOnProbe = fn(fdt: FdtInfo<'_>, plat_dev: PlatformDevice) -> Result<(), OnProbeError>;
 
 pub struct System {
+    fdt: Fdt,
     phandle_2_device_id: BTreeMap<Phandle, DeviceId>,
-    fdt_addr: usize,
-    // keep unique by driver register name in FDT mode
     probed_names: Mutex<BTreeSet<&'static str>>,
 }
 
 unsafe impl Send for System {}
 
 impl System {
-    pub fn fdt_addr(&self) -> NonNull<u8> {
-        unsafe { NonNull::new_unchecked(self.fdt_addr as *mut u8) }
-    }
-
     pub fn phandle_to_device_id(&self, phandle: Phandle) -> Option<DeviceId> {
         self.phandle_2_device_id.get(&phandle).copied()
     }
-}
 
-impl System {
     pub fn new(fdt_addr: NonNull<u8>) -> Result<Self, DriverError> {
-        let fdt = Fdt::from_ptr(fdt_addr)?;
+        let fdt = unsafe { Fdt::from_ptr(fdt_addr.as_ptr()) }
+            .map_err(|error| DriverError::Fdt(format!("{error:?}")))?;
         let mut phandle_2_device_id = BTreeMap::new();
         for node in fdt.all_nodes() {
-            if let Some(phandle) = node.phandle() {
+            if let Some(phandle) = node.as_node().phandle() {
                 phandle_2_device_id.insert(phandle, DeviceId::new());
             }
         }
         Ok(Self {
+            fdt,
             phandle_2_device_id,
-            fdt_addr: fdt_addr.as_ptr() as usize,
             probed_names: Mutex::new(BTreeSet::new()),
         })
     }
@@ -106,18 +97,14 @@ impl System {
         }
     }
 
-    fn get_fdt_match_nodes(
-        &self,
-        register: &DriverRegister,
-        fdt: &Fdt<'static>,
-    ) -> Vec<ProbeFdtInfo> {
+    fn get_fdt_match_nodes<'a>(&'a self, register: &DriverRegister) -> Vec<ProbeFdtInfo<'a>> {
         let mut out = Vec::new();
-        for node in fdt.all_nodes() {
-            if matches!(node.status(), Some(Status::Disabled)) {
+        for node in self.fdt.all_nodes() {
+            if matches!(node.as_node().status(), Some(Status::Disabled)) {
                 continue;
             }
 
-            let node_compatibles = node.compatibles().collect::<Vec<_>>();
+            let node_compatibles = node.as_node().compatibles().collect::<Vec<_>>();
 
             for probe in register.probe_kinds {
                 let &ProbeKind::Fdt {
@@ -128,11 +115,11 @@ impl System {
                     continue;
                 };
 
-                for campatible in &node_compatibles {
-                    if compatibles.contains(campatible) {
+                for compatible in &node_compatibles {
+                    if compatibles.contains(compatible) {
                         out.push(ProbeFdtInfo {
                             name: register.name,
-                            node: node.clone(),
+                            node,
                             on_probe,
                         });
                     }
@@ -146,26 +133,24 @@ impl System {
         &self,
         register: &DriverRegister,
     ) -> Result<Vec<Result<(), OnProbeError>>, ProbeError> {
-        let fdt: Fdt<'static> = Fdt::from_ptr(self.fdt_addr())?;
-        let node_ls = self.get_fdt_match_nodes(register, &fdt);
+        let node_ls = self.get_fdt_match_nodes(register);
         let mut out = Vec::new();
         for node_info in node_ls {
             if self.probed_names.lock().contains(node_info.name) {
-                // skip duplicated register name in FDT system
                 continue;
             }
-            let id = self.new_device_id(node_info.node.phandle());
+            let node = node_info.node;
+            let node_phandle = node.as_node().phandle();
+            let id = self.new_device_id(node_phandle);
 
-            let irq_parent = node_info
-                .node
+            let irq_parent = node
                 .interrupt_parent()
-                .filter(|p| p.node.phandle() != node_info.node.phandle())
-                .and_then(|n| n.node.phandle())
+                .filter(|p| Some(*p) != node_phandle)
                 .and_then(|p| self.phandle_2_device_id.get(&p).copied());
 
             let phandle_map = self.phandle_2_device_id.clone();
 
-            debug!("Probe [{}]->[{}]", node_info.node.name, node_info.name);
+            debug!("Probe [{}]->[{}]", node.name(), node_info.name);
 
             let descriptor = Descriptor {
                 name: node_info.name,
@@ -175,7 +160,7 @@ impl System {
 
             let res = (node_info.on_probe)(
                 FdtInfo {
-                    node: node_info.node.clone(),
+                    node,
                     phandle_2_device_id: phandle_map,
                 },
                 PlatformDevice::new(descriptor),
@@ -192,8 +177,8 @@ impl System {
     }
 }
 
-struct ProbeFdtInfo {
+struct ProbeFdtInfo<'a> {
     name: &'static str,
-    node: Node<'static>,
+    node: NodeType<'a>,
     on_probe: FnOnProbe,
 }

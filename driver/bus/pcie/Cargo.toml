@@ -22,7 +22,7 @@ rdif-pcie = { workspace = true }
 
 [dev-dependencies]
 bare-test.workspace = true
-fdt-parser.workspace = true
+fdt-edit.workspace = true
 
 [lib]
 test = false

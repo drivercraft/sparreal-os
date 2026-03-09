@@ -28,16 +28,23 @@ module_driver!(
 );
 
 fn probe_gic(info: FdtInfo<'_>, dev: PlatformDevice) -> Result<(), OnProbeError> {
-    let mut reg = info.node.reg().ok_or(OnProbeError::other(format!(
+    let mut reg = info.node.regs().into_iter();
+    let gicd_reg = reg.next().ok_or(OnProbeError::other(format!(
         "[{}] has no reg",
         info.node.name()
     )))?;
-
-    let gicd_reg = reg.next().unwrap();
     let gicr_reg = reg.next().unwrap();
 
-    let gicd = ioremap(gicd_reg.address, gicd_reg.size.unwrap_or(0x1000)).unwrap();
-    let gicr = ioremap(gicr_reg.address, gicr_reg.size.unwrap_or(0x1000)).unwrap();
+    let gicd = ioremap(
+        gicd_reg.address,
+        gicd_reg.size.unwrap_or(0x1000).try_into().unwrap(),
+    )
+    .unwrap();
+    let gicr = ioremap(
+        gicr_reg.address,
+        gicr_reg.size.unwrap_or(0x1000).try_into().unwrap(),
+    )
+    .unwrap();
 
     let mut gic = unsafe { Gic::new(gicd.as_ptr().into(), gicr.as_ptr().into()) };
     gic.init();

@@ -28,24 +28,39 @@ module_driver!(
 );
 
 fn probe_gic(info: FdtInfo<'_>, dev: PlatformDevice) -> Result<(), OnProbeError> {
-    let mut reg = info.node.reg().ok_or(OnProbeError::other(format!(
+    let mut reg = info.node.regs().into_iter();
+    let gicd_reg = reg.next().ok_or(OnProbeError::other(format!(
         "[{}] has no reg",
         info.node.name()
     )))?;
-
-    let gicd_reg = reg.next().unwrap();
     let gicr_reg = reg.next().unwrap();
 
-    let gicd = ioremap(gicd_reg.address, gicd_reg.size.unwrap_or(0x1000)).unwrap();
-    let gicr = ioremap(gicr_reg.address, gicr_reg.size.unwrap_or(0x1000)).unwrap();
+    let gicd = ioremap(
+        gicd_reg.address,
+        gicd_reg.size.unwrap_or(0x1000).try_into().unwrap(),
+    )
+    .unwrap();
+    let gicr = ioremap(
+        gicr_reg.address,
+        gicr_reg.size.unwrap_or(0x1000).try_into().unwrap(),
+    )
+    .unwrap();
 
     let mut hyper = None;
 
     if let Some(gich_reg) = reg.next()
         && let Some(gicv_reg) = reg.next()
     {
-        let gich = ioremap(gich_reg.address, gich_reg.size.unwrap_or(0x1000)).unwrap();
-        let gicv = ioremap(gicv_reg.address, gicv_reg.size.unwrap_or(0x1000)).unwrap();
+        let gich = ioremap(
+            gich_reg.address,
+            gich_reg.size.unwrap_or(0x1000).try_into().unwrap(),
+        )
+        .unwrap();
+        let gicv = ioremap(
+            gicv_reg.address,
+            gicv_reg.size.unwrap_or(0x1000).try_into().unwrap(),
+        )
+        .unwrap();
 
         hyper = Some(HyperAddress::new(
             gich.as_ptr().into(),

@@ -22,13 +22,14 @@ module_driver!(
 fn probe(fdt: FdtInfo<'_>, dev: PlatformDevice) -> Result<(), OnProbeError> {
     let intc_id = dev.descriptor.irq_parent.unwrap();
     let mut intc = rdrive::get::<Intc>(intc_id).unwrap().lock().unwrap();
+    let interrupts = fdt.interrupts();
 
     let irq = {
         #[cfg(not(feature = "hv"))]
         let irq_idx = 1;
         #[cfg(feature = "hv")]
         let irq_idx = 3;
-        &fdt.interrupts()[irq_idx]
+        &interrupts[irq_idx].specifier
     };
     let irq = intc.setup_irq_by_fdt(irq);
     debug!("Armv8 timer irq: {:?}", irq);

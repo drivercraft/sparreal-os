@@ -1,4 +1,5 @@
 use alloc::{boxed::Box, format, string::String};
+use fdt_raw::FdtError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum DriverError {
@@ -8,8 +9,8 @@ pub enum DriverError {
     Unknown(String),
 }
 
-impl From<fdt_parser::FdtError<'_>> for DriverError {
-    fn from(value: fdt_parser::FdtError<'_>) -> Self {
+impl From<FdtError> for DriverError {
+    fn from(value: FdtError) -> Self {
         Self::Fdt(format!("{value:?}"))
     }
 }

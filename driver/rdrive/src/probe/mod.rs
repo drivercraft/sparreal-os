@@ -4,7 +4,7 @@ use alloc::{
 };
 use core::error::Error;
 
-use fdt_parser::FdtError;
+use fdt_raw::FdtError;
 
 pub mod fdt;
 pub mod pci;
@@ -21,7 +21,7 @@ pub enum ProbeError {
     OpenFail(#[from] rdif_base::KError),
 }
 
-impl From<FdtError<'_>> for ProbeError {
+impl From<FdtError> for ProbeError {
     fn from(value: FdtError) -> Self {
         Self::Fdt(format!("{value:?}"))
     }
@@ -39,7 +39,7 @@ pub enum OnProbeError {
     Fdt(String),
 }
 
-impl From<FdtError<'_>> for OnProbeError {
+impl From<FdtError> for OnProbeError {
     fn from(value: FdtError) -> Self {
         Self::Fdt(format!("{value:?}"))
     }

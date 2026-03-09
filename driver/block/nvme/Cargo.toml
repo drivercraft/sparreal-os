@@ -20,7 +20,7 @@ tock-registers = "0.10"
 [dev-dependencies]
 bare-test.workspace = true
 byte-unit = { version = "5.1.6", default-features = false, features = ["byte"] }
-fdt-parser.workspace = true
+fdt-edit.workspace = true
 pcie.workspace = true
 
 [lib]
