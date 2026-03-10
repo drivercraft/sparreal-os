@@ -26,5 +26,5 @@ pcie.workspace = true
 test = false
 
 [[test]]
-name = "test"
+name = "test_e1000"
 harness = false
