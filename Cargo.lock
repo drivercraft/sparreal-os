@@ -188,7 +188,7 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 name = "bare-test"
 version = "0.8.1"
 dependencies = [
- "bare-test-macros 0.3.2",
+ "bare-test-macros 0.3.3",
  "log",
  "sparreal-rt",
 ]
@@ -206,7 +206,7 @@ dependencies = [
 
 [[package]]
 name = "bare-test-macros"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -773,7 +773,7 @@ checksum = "300e4bdb6b46b592948e700ea1ef24a4296491f6a0ee722b258040abd15a3714"
 
 [[package]]
 name = "nvme-driver"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "bare-test",
  "byte-unit",
@@ -853,7 +853,7 @@ dependencies = [
 
 [[package]]
 name = "pcie"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bare-test",
  "bit_field",
@@ -1115,7 +1115,7 @@ dependencies = [
 
 [[package]]
 name = "rdrive"
-version = "0.19.1"
+version = "0.20.0"
 dependencies = [
  "fdt-edit",
  "fdt-raw",
@@ -1275,7 +1275,7 @@ name = "simple_bare_test"
 version = "0.1.0"
 dependencies = [
  "bare-test",
- "bare-test-macros 0.3.2",
+ "bare-test-macros 0.3.3",
  "dma-api 0.7.1",
  "log",
 ]
@@ -1332,7 +1332,7 @@ dependencies = [
 
 [[package]]
 name = "someboot"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "aarch64-cpu-ext",
@@ -1374,7 +1374,7 @@ dependencies = [
 
 [[package]]
 name = "somehal"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "anyhow",
@@ -1393,7 +1393,7 @@ dependencies = [
 
 [[package]]
 name = "somehal-macros"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "darling 0.21.3",
  "proc-macro2",
@@ -1403,7 +1403,7 @@ dependencies = [
 
 [[package]]
 name = "sparreal-kernel"
-version = "0.15.0"
+version = "0.15.1"
 dependencies = [
  "ansi_rgb",
  "anstyle",
@@ -1440,7 +1440,7 @@ dependencies = [
 
 [[package]]
 name = "sparreal-rt"
-version = "0.13.3"
+version = "0.13.4"
 dependencies = [
  "log",
  "somehal",

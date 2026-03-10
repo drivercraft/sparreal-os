@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0](https://github.com/drivercraft/sparreal-os/compare/rdrive-v0.19.1...rdrive-v0.20.0) - 2026-03-10
+
+### Other
+
+- ✨ feat: 更新 fdt-edit 和 fdt-raw 版本，优化 FDT 相关功能 ([#47](https://github.com/drivercraft/sparreal-os/pull/47))
+- ♻️ refactor(PCIe): PCIe driver use mmio_api for memory-mapped I/O operations
+
 ## [0.19.1](https://github.com/drivercraft/sparreal-os/compare/rdrive-v0.19.0...rdrive-v0.19.1) - 2026-03-06
 
 ### Other

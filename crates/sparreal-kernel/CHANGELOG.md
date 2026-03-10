@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.1](https://github.com/drivercraft/sparreal-os/compare/sparreal-kernel-v0.15.0...sparreal-kernel-v0.15.1) - 2026-03-10
+
+### Other
+
+- ✨ feat: 更新 fdt-edit 和 fdt-raw 版本，优化 FDT 相关功能 ([#47](https://github.com/drivercraft/sparreal-os/pull/47))
+- ✨ feat: 添加驱动测试技能文档，添加 NVMe ([#44](https://github.com/drivercraft/sparreal-os/pull/44))
+
 ## [0.15.0](https://github.com/drivercraft/sparreal-os/compare/sparreal-kernel-v0.14.0...sparreal-kernel-v0.15.0) - 2026-03-04
 
 ### Other
