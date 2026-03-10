@@ -23,6 +23,12 @@ macro_rules! custom_type {
                 write!(f, $debug, self.0)
             }
         }
+
+        impl $name {
+            pub fn raw(&self) -> $target {
+                self.0
+            }
+        }
     };
 
     ($name:ident, $target:ty, $debug: expr) => {

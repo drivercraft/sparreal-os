@@ -57,14 +57,10 @@ pub fn __somehal_secondary_default() -> ! {
 
 #[someboot::secondary_entry]
 fn secondary_entry() -> ! {
-    let meta = unsafe {
-        let phys = meta as *const _ as usize;
-        let virt = crate::mem::phys_to_virt(phys);
-        &*(virt as *const crate::smp::PerCpuMeta)
-    };
-
     someboot::set_kernel_page_table_paddr(meta.primary_table_paddr);
     arch::Plat::secondary_init();
+    arch::Plat::secondary_init_intc();
+    arch::Plat::secondary_init_systick();
 
     unsafe extern "Rust" {
         fn __somehal_secondary(meta: &crate::smp::PerCpuMeta);

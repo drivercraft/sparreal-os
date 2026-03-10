@@ -18,7 +18,13 @@ impl PlatOp for Plat {
         gic::irq_handler()
     }
 
-    fn secondary_init() {
+    fn secondary_init() {}
+
+    fn secondary_init_intc() {
         gic::init_current_cpu();
+    }
+
+    fn secondary_init_systick() {
+        systick::setup_systick_irq();
     }
 }

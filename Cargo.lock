@@ -1387,6 +1387,7 @@ dependencies = [
  "rdrive",
  "someboot",
  "somehal-macros",
+ "spin 0.10.0",
  "thiserror",
  "tock-registers 0.10.1",
 ]

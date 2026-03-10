@@ -14,4 +14,8 @@ impl PlatOp for Plat {
     }
 
     fn secondary_init() {}
+
+    fn secondary_init_intc() {}
+
+    fn secondary_init_systick() {}
 }
