@@ -70,8 +70,29 @@ pub fn entry(args: TokenStream, input: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn secondary_entry(args: TokenStream, input: TokenStream) -> TokenStream {
-    _entry::entry_secondary(args, input, "__someboot_secondary")
+pub fn someboot_secondary_entry(args: TokenStream, input: TokenStream) -> TokenStream {
+    _entry::entry_secondary(args, input, true)
+}
+
+/// Attribute to declare the secondary entry point of the program
+///
+/// # Examples
+///
+/// - Simple entry point
+///
+/// ``` no_run
+/// # #![no_main]
+/// # use pie_boot::secondary_entry;
+/// #[entry]
+/// fn secondary(cpu_id: usize) -> ! {
+///     loop {
+///         /* .. */
+///     }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn somehal_secondary_entry(args: TokenStream, input: TokenStream) -> TokenStream {
+    _entry::entry_secondary(args, input, false)
 }
 
 /// 中断处理器属性宏

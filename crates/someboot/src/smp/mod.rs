@@ -5,6 +5,7 @@ use kernutil::memory::MemoryType;
 use crate::{
     ArchTrait, DCacheOp,
     arch::Arch,
+    kernel_page_table_paddr,
     mem::{__kimage_va, __percpu, dcache_range, page_size, phys_to_virt, stack_size},
 };
 
@@ -108,6 +109,7 @@ pub fn alloc_percpu() {
             stack_top_virt: stack_top_virt as _,
             entry_virt: entry_virt as _,
             boot_table_paddr: 0,
+            primary_table_paddr: 0,
         };
         unsafe {
             *meta_va.cast::<PerCpuMeta>() = meta;
@@ -124,8 +126,10 @@ pub fn alloc_percpu() {
 
 pub(crate) fn init_percpu() {
     let boot_table = crate::mem::mmu::boot_table_addr();
+    let primary_table = kernel_page_table_paddr();
     for meta in cpu_meta_list_mut() {
         meta.boot_table_paddr = boot_table;
+        meta.primary_table_paddr = primary_table;
     }
 
     let start = __percpu(unsafe { PERCPU_START });
@@ -146,6 +150,7 @@ pub struct PerCpuMeta {
     pub entry_virt: usize,
 
     pub boot_table_paddr: usize,
+    pub primary_table_paddr: usize,
 }
 
 fn stack_offset() -> usize {

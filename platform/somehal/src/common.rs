@@ -9,6 +9,8 @@ pub trait PlatOp {
     fn irq_handler() -> someboot::irq::IrqId;
 
     fn systick_irq() -> IrqId;
+
+    fn secondary_init();
 }
 
 #[allow(dead_code)]

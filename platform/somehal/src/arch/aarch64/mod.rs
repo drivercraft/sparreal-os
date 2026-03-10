@@ -17,4 +17,8 @@ impl PlatOp for Plat {
     fn irq_handler() -> someboot::irq::IrqId {
         gic::irq_handler()
     }
+
+    fn secondary_init() {
+        gic::init_current_cpu();
+    }
 }

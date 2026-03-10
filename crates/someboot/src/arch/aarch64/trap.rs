@@ -98,7 +98,7 @@ global_asm!(
 
 pub fn setup() {
     let addr = ext_sym_addr!(__vector_table);
-    println!("Setting up vector table at {:#x}", addr);
+    // println!("Setting up vector table at {:#x}", addr);
     match CurrentEL.read(CurrentEL::EL) {
         1 => unsafe {
             asm!("msr vbar_el1, {0}", in(reg) addr);

@@ -48,7 +48,7 @@ pub mod timer;
 
 pub use fdt::{fdt_addr, fdt_addr_phys};
 pub use page_table_generic::*;
-pub use somehal_macros::{entry, irq_handler, secondary_entry};
+pub use somehal_macros::{entry, irq_handler, someboot_secondary_entry as secondary_entry};
 
 use crate::{
     irq::IrqId,
@@ -123,6 +123,7 @@ pub enum DCacheOp {
 
 pub fn post_allocator() {
     fdt::init_with_alloc();
+    smp::init_percpu();
     debug!("Setup after allocator");
     arch::Arch::post_allocator();
 }
@@ -160,7 +161,6 @@ fn prime_entry() -> ! {
     // mem::init_after_mmu();
     mem::memory_map_setup();
     mem::print_memory_map();
-    smp::init_percpu();
 
     unsafe extern "C" {
         fn __someboot_main() -> !;
