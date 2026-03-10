@@ -1,0 +1,16 @@
+[package]
+edition.workspace = true
+name = "bare-test-net"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+bare-test.workspace = true
+dma-api.workspace = true
+rdif-net.workspace = true
+smoltcp = { version = "0.12", default-features = false, features = [
+    "alloc",
+    "medium-ethernet",
+    "proto-ipv4",
+    "socket-icmp",
+] }

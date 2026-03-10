@@ -214,6 +214,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bare-test-net"
+version = "0.1.0"
+dependencies = [
+ "bare-test",
+ "dma-api 0.7.1",
+ "rdif-net",
+ "smoltcp",
+]
+
+[[package]]
 name = "bit_field"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -528,13 +538,13 @@ name = "eth-intel"
 version = "0.1.0"
 dependencies = [
  "bare-test",
+ "bare-test-net",
  "dma-api 0.7.1",
  "fdt-edit",
  "log",
  "mmio-api",
  "pcie",
  "rdif-net",
- "smoltcp",
  "thiserror",
 ]
 

@@ -18,14 +18,9 @@ thiserror = { version = "2", default-features = false }
 
 [dev-dependencies]
 bare-test.workspace = true
+bare-test-net.workspace = true
 fdt-edit.workspace = true
 pcie.workspace = true
-smoltcp = { version = "0.12", default-features = false, features = [
-    "alloc",
-    "medium-ethernet",
-    "proto-ipv4",
-    "socket-icmp",
-] }
 
 [lib]
 test = false
