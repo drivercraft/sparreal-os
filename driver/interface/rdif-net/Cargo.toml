@@ -10,4 +10,6 @@ repository.workspace = true
 version = "0.1.1"
 
 [dependencies]
+dma-api = { workspace = true }
 rdif-base = { workspace = true }
+thiserror = { version = "2", default-features = false }

@@ -1053,7 +1053,9 @@ dependencies = [
 name = "rdif-net"
 version = "0.1.1"
 dependencies = [
+ "dma-api 0.7.1",
  "rdif-base 0.8.0",
+ "thiserror",
 ]
 
 [[package]]
