@@ -1004,7 +1004,7 @@ dependencies = [
  "as-any",
  "async-trait",
  "paste",
- "rdif-def 0.2.1",
+ "rdif-def 0.2.2",
  "thiserror",
  "tokio",
 ]
@@ -1036,7 +1036,7 @@ dependencies = [
 
 [[package]]
 name = "rdif-def"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "thiserror",
 ]
@@ -1332,7 +1332,7 @@ dependencies = [
 
 [[package]]
 name = "someboot"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "aarch64-cpu-ext",
@@ -1374,7 +1374,7 @@ dependencies = [
 
 [[package]]
 name = "somehal"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "anyhow",

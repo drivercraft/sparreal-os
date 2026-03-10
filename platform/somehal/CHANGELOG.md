@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.3](https://github.com/drivercraft/sparreal-os/compare/somehal-v0.6.2...somehal-v0.6.3) - 2026-03-10
+
+### Other
+
+- ✨ feat: 更新架构初始化函数以支持中断和定时器设置 ([#50](https://github.com/drivercraft/sparreal-os/pull/50))
+
 ## [0.6.2](https://github.com/drivercraft/sparreal-os/compare/somehal-v0.6.1...somehal-v0.6.2) - 2026-03-10
 
 ### Fixed
