@@ -1,7 +1,7 @@
 extern crate alloc;
 
 use alloc::{boxed::Box, vec, vec::Vec};
-use core::{mem::size_of, ptr::NonNull};
+use core::mem::size_of;
 
 use dma_api::{DArray, DeviceDma, DmaDirection, DmaOp};
 use mmio_api::{Mmio, MmioAddr, MmioOp};
@@ -46,7 +46,7 @@ impl E1000 {
     ) -> Result<Self> {
         mmio_api::init(mmio_op);
         let mmio = mmio_api::ioremap(bar_addr.into(), bar_size)?;
-        let regs = Regs::new(NonNull::new(mmio.as_ptr()).ok_or(Error::Other("null mmio ptr"))?);
+        let regs = Regs::new(mmio.as_nonnull_ptr());
         let dma = DeviceDma::new(dma_mask, dma_op);
 
         regs.reset();

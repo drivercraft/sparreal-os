@@ -113,6 +113,10 @@ impl MmioRaw {
         self.virt.as_ptr()
     }
 
+    pub fn as_nonnull_ptr(&self) -> NonNull<u8> {
+        self.virt
+    }
+
     pub fn size(&self) -> usize {
         self.size
     }
