@@ -267,13 +267,12 @@ pub fn run_ping_test(nic: &mut dyn Interface) {
             bare_test::println!("ping_test: icmp echo request sent");
         }
 
-        if sent && socket.can_recv() {
-            if let Ok((_data, addr)) = socket.recv() {
+        if sent && socket.can_recv()
+            && let Ok((_data, addr)) = socket.recv() {
                 bare_test::println!("ping_test: icmp echo reply from {addr:?}");
                 received = true;
                 break;
             }
-        }
 
         spin_delay(Duration::from_millis(10));
     }
