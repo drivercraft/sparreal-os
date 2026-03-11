@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2](https://github.com/drivercraft/sparreal-os/compare/bare-test-v0.8.1...bare-test-v0.8.2) - 2026-03-11
+
+### Other
+
+- ✨ feat: 添加网络功能支持，重构 bare-test 依赖，移除不再使用的包 ([#57](https://github.com/drivercraft/sparreal-os/pull/57))
+
 ## [0.8.1](https://github.com/drivercraft/sparreal-os/compare/bare-test-v0.8.0...bare-test-v0.8.1) - 2026-02-09
 
 ### Other
