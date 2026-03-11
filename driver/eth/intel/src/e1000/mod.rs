@@ -5,7 +5,7 @@ use core::{mem::size_of, ptr::NonNull};
 
 use dma_api::{DArray, DeviceDma, DmaDirection, DmaOp};
 use mmio_api::{Mmio, MmioAddr, MmioOp};
-use rdif_net::{
+use rdif_eth::{
     BuffConfig, Event, IRxQueue, ITxQueue, Interface, NetError, RequestId, RxRequest, RxResponse,
     TxRequest,
 };
@@ -69,7 +69,7 @@ impl E1000 {
     }
 }
 
-impl rdif_net::DriverGeneric for E1000 {
+impl rdif_eth::DriverGeneric for E1000 {
     fn name(&self) -> &str {
         "eth-intel-e1000"
     }

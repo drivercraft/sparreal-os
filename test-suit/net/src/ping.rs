@@ -4,7 +4,7 @@ use alloc::{boxed::Box, vec, vec::Vec};
 use core::{num::NonZeroUsize, ptr::NonNull, time::Duration};
 
 use dma_api::{DmaDirection, DmaMapHandle, DmaOp};
-use rdif_net::{Buffer, IRxQueue, ITxQueue, Interface, NetError};
+use rdif_eth::{Buffer, IRxQueue, ITxQueue, Interface, NetError};
 use smoltcp::{
     iface::{Config, Interface as SmolInterface, SocketSet},
     phy::{Device, DeviceCapabilities, Medium, RxToken, TxToken},
@@ -31,7 +31,7 @@ fn spin_delay(duration: Duration) {
 struct RxSlot {
     storage: Vec<u8>,
     map: DmaMapHandle,
-    req_id: Option<rdif_net::RequestId>,
+    req_id: Option<rdif_eth::RequestId>,
 }
 
 struct NetDevice {
@@ -79,7 +79,7 @@ impl NetDevice {
             return Ok(());
         }
 
-        let req_id = self.rx.submit_request(rdif_net::RxRequest {
+        let req_id = self.rx.submit_request(rdif_eth::RxRequest {
             buffer: Buffer {
                 virt: slot.storage.as_mut_ptr(),
                 bus: slot.map.dma_addr().as_u64(),
@@ -162,7 +162,7 @@ impl<'a> TxToken for NetTxToken<'a> {
         let req_id = loop {
             match self
                 .tx
-                .submit_request(rdif_net::TxRequest { data: &buffer })
+                .submit_request(rdif_eth::TxRequest { data: &buffer })
             {
                 Ok(req_id) => break req_id,
                 Err(NetError::Retry) => spin_delay(Duration::from_millis(1)),

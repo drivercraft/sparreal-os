@@ -5,9 +5,9 @@ description = "Driver Interface net definition."
 edition.workspace = true
 keywords = ["os", "driver"]
 license = "MIT"
-name = "rdif-net"
+name = "rdif-eth"
 repository.workspace = true
-version = "0.1.1"
+version = "0.1.0"
 
 [dependencies]
 dma-api = { workspace = true }

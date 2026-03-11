@@ -1,5 +1,5 @@
 #![no_std]
-#![cfg(test)]
+#![cfg(target_os = "none")]
 
 extern crate alloc;
 

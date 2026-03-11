@@ -219,7 +219,7 @@ version = "0.1.0"
 dependencies = [
  "bare-test",
  "dma-api 0.7.1",
- "rdif-net",
+ "rdif-eth",
  "smoltcp",
 ]
 
@@ -544,7 +544,7 @@ dependencies = [
  "log",
  "mmio-api",
  "pcie",
- "rdif-net",
+ "rdif-eth",
  "thiserror",
 ]
 
@@ -1146,20 +1146,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "rdif-eth"
+version = "0.1.0"
+dependencies = [
+ "dma-api 0.7.1",
+ "rdif-base 0.8.0",
+ "thiserror",
+]
+
+[[package]]
 name = "rdif-intc"
 version = "0.14.0"
 dependencies = [
  "cfg-if",
  "rdif-base 0.8.0",
-]
-
-[[package]]
-name = "rdif-net"
-version = "0.1.1"
-dependencies = [
- "dma-api 0.7.1",
- "rdif-base 0.8.0",
- "thiserror",
 ]
 
 [[package]]
