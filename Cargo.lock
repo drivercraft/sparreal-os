@@ -1444,7 +1444,7 @@ dependencies = [
 
 [[package]]
 name = "someboot"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "aarch64-cpu-ext",
