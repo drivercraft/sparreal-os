@@ -8,7 +8,6 @@ license = "MPL-2.0"
 name = "someboot"
 repository.workspace = true
 version = "0.1.9"
-include = ["build-info.toml"]
 
 [features]
 efi = []
