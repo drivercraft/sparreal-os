@@ -70,6 +70,33 @@ fn map_regions(pt: &mut Box<dyn PageTable>) {
         pt.map(virt.raw().into(), phys.raw().into(), size, config, false)
             .expect("Failed to map memory region");
     }
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        let lapic_phys = PhysAddr::from(0xfee0_0000usize);
+        let lapic_virt = crate::os::mem::__io(lapic_phys);
+        let config = MemConfig {
+            access: AccessFlags::READ | AccessFlags::WRITE,
+            attrs: MemAttributes::Device,
+        };
+        let _ = pt.unmap(lapic_virt, memory::page_size());
+        debug!(
+            "Mapping `LAPIC`: [0x{:>016x}, 0x{:>016x}) -> [0x{:>016x}, 0x{:>016x}) {} (4 KiB)",
+            lapic_virt.raw(),
+            lapic_virt.raw() + memory::page_size(),
+            lapic_phys.raw(),
+            lapic_phys.raw() + memory::page_size(),
+            config,
+        );
+        pt.map(
+            lapic_virt,
+            lapic_phys,
+            memory::page_size(),
+            config,
+            false,
+        )
+        .expect("Failed to map x86_64 LAPIC page");
+    }
 }
 
 pub fn ioremap(phys_start: PhysAddr, size: usize) -> Result<IoMemAddr, PagingError> {

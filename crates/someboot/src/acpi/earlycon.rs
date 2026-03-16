@@ -60,6 +60,10 @@ fn deal_with_spsr(spsr: &PhysicalMapping<impl Handler, Spcr>) -> Option<()> {
     }
 
     unsafe { crate::console::set_out(&SENDER) };
+    unsafe {
+        crate::console::DEBUG_BASE = base_address.address as usize;
+        crate::console::DEBUG_IS_MMIO = true;
+    }
 
     println!("Early console initialized at vaddr {:#x}", vaddr as usize);
 

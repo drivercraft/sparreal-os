@@ -150,12 +150,14 @@ impl TimerManager {
             let now = ticks();
             let delay = key.deadline.saturating_sub(now);
 
-            // Ensure minimum delay to avoid missing the interrupt
-            // Use a larger minimum to handle edge cases with zero/near-zero delays
-            let delay = delay.max(1);
+            // Keep a small but non-trivial minimum delay to avoid programming
+            // a deadline that expires before IRQ unmasking takes effect.
+            let freq = crate::hal::al::cpu::systick_frequency();
+            let min_delay = (freq / 10_000).max(1); // ~=100us
+            let delay = delay.max(min_delay);
 
-            crate::hal::al::cpu::systick_set_interval(delay);
             crate::hal::al::cpu::systick_irq_enable();
+            crate::hal::al::cpu::systick_set_interval(delay);
         } else {
             // No pending timers, disable hardware timer
             crate::hal::al::cpu::systick_set_interval(usize::MAX);

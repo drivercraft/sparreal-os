@@ -30,4 +30,5 @@ pub const IMAGE_FILE_BYTES_REVERSED_HI: u16 = 0x8000; // Bytes of machine word a
 /// Extensible Firmware Interface (EFI) application
 pub const IMAGE_SUBSYSTEM_EFI_APPLICATION: usize = 10;
 
+pub const IMAGE_FILE_MACHINE_AMD64: usize = 0x8664;
 pub const IMAGE_FILE_MACHINE_LOONGARCH64: usize = 0x6264;

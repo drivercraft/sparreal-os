@@ -1,0 +1,16 @@
+[system.Cargo]
+args = [
+  "-Z",
+  "build-std=core,alloc",
+  "--config",
+  ".cargo/config-app.toml",
+]
+features = []
+package = "test-suit-hello"
+post_build_cmds = []
+pre_build_cmds = []
+target = "x86_64-unknown-none"
+to_bin = true
+
+[system.Cargo.env]
+KERNEL_BUILTIN_CMDLINE = "earlycon=ns16550,io,0x3f8,115200n8"

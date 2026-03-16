@@ -139,9 +139,20 @@ impl Build {
     }
 
     fn prepare_x86_64(&mut self) {
-        self.kernel_vaddr = 0;
+        let ld_src = "src/arch/x86_64/link.ld";
+
+        self.kernel_vaddr = 0xffff_ffff_8000_0000;
+
+        let kernel_load_vaddr = self.kernel_vaddr as usize;
+
+        let ld = include_str!("src/arch/x86_64/link.ld")
+            .replace("${kernel_load_vaddr}", &format!("{kernel_load_vaddr:#x}"));
+
+        println!("cargo:rerun-if-changed={ld_src}");
+        println!("cargo:rustc-cfg=efi");
+
         let ld_dst = self.out_dir.join(Self::LD_NAME);
-        fs::write(ld_dst, "SECTIONS {}\n").unwrap();
+        fs::write(ld_dst, ld).unwrap();
     }
 
     fn prepare_riscv64(&mut self) {

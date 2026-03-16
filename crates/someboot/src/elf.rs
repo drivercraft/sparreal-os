@@ -46,7 +46,6 @@ pub unsafe fn reset(r_type: u32) {
 
     let num_entries = (end as usize - start as usize) / size_of::<Rela>();
     let relocations = unsafe { core::slice::from_raw_parts_mut(start as *mut Rela, num_entries) };
-
     for reloc in relocations {
         if reloc.r_type_raw() == r_type {
             let addr = reloc.r_offset as usize as *mut usize;

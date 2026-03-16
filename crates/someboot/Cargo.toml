@@ -55,6 +55,10 @@ kasm-aarch64 = { workspace = true }
 smccc = "0.2"
 some-serial = "0.3"
 
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+uefi.workspace = true
+x86 = "0.52"
+
 [build-dependencies]
 prettyplease = "0.2"
 quote = "1.0"

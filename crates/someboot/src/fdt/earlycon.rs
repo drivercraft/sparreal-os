@@ -2,7 +2,10 @@ use core::ptr::NonNull;
 
 use some_serial::*;
 
-use crate::{console::DEBUG_BASE, mem::_fixmap_io};
+use crate::{
+    console::{DEBUG_BASE, DEBUG_IS_MMIO},
+    mem::_fixmap_io,
+};
 
 pub fn setup_earlycon() -> Option<()> {
     let _ = super::set_cmdline();
@@ -49,6 +52,7 @@ fn set_by_stdout() -> Option<()> {
     }
     unsafe {
         DEBUG_BASE = address as usize;
+        DEBUG_IS_MMIO = true;
     }
     Some(())
 }

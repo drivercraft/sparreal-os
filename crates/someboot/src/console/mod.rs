@@ -8,10 +8,12 @@ use crate::cmdline::EarlyconConfig;
 use crate::mem::{_fixmap_io, page_size};
 
 pub(crate) static mut DEBUG_BASE: usize = 0;
+pub(crate) static mut DEBUG_IS_MMIO: bool = false;
 
 pub(crate) fn debug_to_memory_desc() -> Option<MemoryDescriptor> {
     let debug_base = unsafe { DEBUG_BASE };
-    if debug_base == 0 {
+    let debug_is_mmio = unsafe { DEBUG_IS_MMIO };
+    if debug_base == 0 || !debug_is_mmio {
         return None;
     }
 
@@ -195,31 +197,42 @@ unsafe impl Sync for EarlyconRecieverCell {}
 
 pub fn set_earlycon_by_cmdline() -> Result<(), &'static str> {
     let config = crate::cmdline::earlycon().ok_or("No earlycon parameter found")?;
-    match config.uart_type {
+    let debug_is_mmio = match config.uart_type {
         "ns16550" => {
             match config.io_type {
                 "io" => {
                     #[cfg(target_arch = "x86_64")]
                     {
-                        todo!()
+                        let base = config.base_addr.ok_or("missing io base address")? as u16;
+                        let mut uart = some_serial::ns16550::Ns16550::new_port(base, 1_843_200);
+                        let tx = uart.take_tx().ok_or("failed to take io sender")?;
+                        let rx = uart.take_rx().ok_or("failed to take io receiver")?;
+                        set_earlycon_sender(tx);
+                        set_earlycon_reciever(rx);
+                        false
                     }
                     #[cfg(not(target_arch = "x86_64"))]
                     {
                         return Err("io type not supported on this architecture");
                     }
                 }
-                _ => set_16550_mmio(&config)?,
-            };
+                _ => {
+                    set_16550_mmio(&config)?;
+                    true
+                }
+            }
         }
         "pl011" => {
             set_pl011(&config)?;
+            true
         }
         _ => {
             return Err("unsupported earlycon uart type");
         }
-    }
+    };
     unsafe {
         DEBUG_BASE = config.base_addr.unwrap_or(0);
+        DEBUG_IS_MMIO = debug_is_mmio;
     }
     Ok(())
 }
