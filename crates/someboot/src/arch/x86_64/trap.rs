@@ -1,4 +1,7 @@
-use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use core::{
+    hint::spin_loop,
+    sync::atomic::{AtomicBool, AtomicU8, AtomicU64, Ordering},
+};
 
 use page_table_generic::PhysAddr;
 use x86::{
@@ -35,6 +38,8 @@ static TSC_FREQ_HZ: AtomicU64 = AtomicU64::new(0);
 static APIC_COUNTS_PER_TSC_Q32: AtomicU64 = AtomicU64::new(0);
 static HAS_TSC_DEADLINE: AtomicBool = AtomicBool::new(false);
 static LAPIC_READY: AtomicBool = AtomicBool::new(false);
+static TSC_INFO_STATE: AtomicU8 = AtomicU8::new(0);
+static IDT_STATE: AtomicU8 = AtomicU8::new(0);
 
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
@@ -52,45 +57,8 @@ struct Idt([Descriptor64; 256]);
 static mut IDT: Idt = Idt([Descriptor64::NULL; 256]);
 
 pub fn setup() {
-    unsafe {
-        let selector = cs();
-        set_gate(
-            3,
-            selector,
-            breakpoint_handler as *const () as usize as u64,
-            true,
-        );
-        set_gate(
-            13,
-            selector,
-            general_protection_handler as *const () as usize as u64,
-            false,
-        );
-        set_gate(
-            14,
-            selector,
-            page_fault_handler as *const () as usize as u64,
-            false,
-        );
-        set_gate(
-            LAPIC_TIMER_VECTOR as usize,
-            selector,
-            lapic_timer_handler as *const () as usize as u64,
-            false,
-        );
-        set_gate(
-            LAPIC_SPURIOUS_VECTOR as usize,
-            selector,
-            spurious_handler as *const () as usize as u64,
-            false,
-        );
-
-        let ptr = DescriptorTablePointer {
-            base: core::ptr::addr_of!(IDT.0).cast::<Descriptor64>(),
-            limit: (core::mem::size_of::<Idt>() - 1) as u16,
-        };
-        dtables::lidt(&ptr);
-    }
+    init_idt_once();
+    load_idt();
 }
 
 pub fn trap_addr() -> usize {
@@ -179,6 +147,19 @@ unsafe fn set_gate(
 }
 
 fn init_tsc_freq() {
+    if TSC_INFO_STATE.load(Ordering::Acquire) == 2 {
+        return;
+    }
+    if TSC_INFO_STATE
+        .compare_exchange(0, 1, Ordering::AcqRel, Ordering::Acquire)
+        .is_err()
+    {
+        while TSC_INFO_STATE.load(Ordering::Acquire) != 2 {
+            spin_loop();
+        }
+        return;
+    }
+
     let cpuid = CpuId::new();
     let freq_hz = cpuid
         .get_tsc_info()
@@ -229,6 +210,68 @@ fn init_tsc_freq() {
     }
 
     TSC_FREQ_HZ.store(freq_hz, Ordering::Release);
+    TSC_INFO_STATE.store(2, Ordering::Release);
+}
+
+fn init_idt_once() {
+    if IDT_STATE.load(Ordering::Acquire) == 2 {
+        return;
+    }
+    if IDT_STATE
+        .compare_exchange(0, 1, Ordering::AcqRel, Ordering::Acquire)
+        .is_err()
+    {
+        while IDT_STATE.load(Ordering::Acquire) != 2 {
+            spin_loop();
+        }
+        return;
+    }
+
+    unsafe {
+        let selector = cs();
+        set_gate(
+            3,
+            selector,
+            breakpoint_handler as *const () as usize as u64,
+            true,
+        );
+        set_gate(
+            13,
+            selector,
+            general_protection_handler as *const () as usize as u64,
+            false,
+        );
+        set_gate(
+            14,
+            selector,
+            page_fault_handler as *const () as usize as u64,
+            false,
+        );
+        set_gate(
+            LAPIC_TIMER_VECTOR as usize,
+            selector,
+            lapic_timer_handler as *const () as usize as u64,
+            false,
+        );
+        set_gate(
+            LAPIC_SPURIOUS_VECTOR as usize,
+            selector,
+            spurious_handler as *const () as usize as u64,
+            false,
+        );
+    }
+
+    IDT_STATE.store(2, Ordering::Release);
+}
+
+fn load_idt() {
+    unsafe {
+        let ptr = DescriptorTablePointer {
+            base: core::ptr::addr_of!(IDT.0).cast::<Descriptor64>(),
+            limit: (core::mem::size_of::<Idt>() - 1) as u16,
+        };
+        dtables::lidt(&ptr);
+    }
 }
 
 fn init_lapic() {

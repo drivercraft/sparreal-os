@@ -9,11 +9,11 @@ cd "$PROJECT_ROOT" || exit 1
 SUITE="${1:-hello}"
 
 case "$SUITE" in
-  hello|timer)
+  hello|timer|smp)
     ;;
   *)
     echo "Unsupported x86_64 test suite: $SUITE"
-    echo "Usage: $0 [hello|timer]"
+    echo "Usage: $0 [hello|timer|smp]"
     exit 1
     ;;
 esac

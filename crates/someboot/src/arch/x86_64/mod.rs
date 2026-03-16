@@ -6,6 +6,7 @@ pub(crate) mod entry;
 mod head;
 pub(crate) mod irq;
 mod paging;
+pub(crate) mod power;
 pub(crate) mod relocate;
 mod trap;
 
@@ -55,6 +56,7 @@ impl ArchTrait for Arch {
 
     fn per_cpu_trap_init(_is_primary: bool) {
         trap::setup();
+        trap::init_local();
     }
 
     fn trap_addr() -> usize {
@@ -110,8 +112,8 @@ impl ArchTrait for Arch {
         _secondary_entry as *const ()
     }
 
-    fn cpu_on(_hartid: usize, _entry: usize, _arg: usize) -> Result<(), CpuOnError> {
-        Err(CpuOnError::NotSupported)
+    fn cpu_on(hartid: usize, entry: usize, arg: usize) -> Result<(), CpuOnError> {
+        power::cpu_on(hartid, entry, arg)
     }
 
     fn systimer_enable() {

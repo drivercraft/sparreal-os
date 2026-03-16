@@ -121,6 +121,7 @@ pub(crate) fn early_init() {
         memory_type: MemoryType::KImage,
     })
     .unwrap();
+    reserve_arch_early_ranges();
 
     unsafe { MEMORY_MAP.update(|m| m.sort_by_key(|a| a.physical_start)) };
 
@@ -139,6 +140,22 @@ pub(crate) fn early_init() {
 
     crate::fdt::save_fdt();
     crate::smp::alloc_percpu();
+}
+
+fn reserve_arch_early_ranges() {
+    #[cfg(target_arch = "x86_64")]
+    {
+        // AP trampoline lives in low memory and must stay reserved.
+        let tramp = crate::arch::power::AP_TRAMPOLINE_PADDR;
+        let desc = MemoryDescriptor::new_aligned(tramp, page_size(), MemoryType::Reserved, page_size());
+        match add_memory_descriptor(desc) {
+            Ok(()) => {}
+            Err(RangeError::Conflict { existing, .. }) if existing.memory_type != MemoryType::Free => {
+                // Already reserved by firmware map; keep it as-is.
+            }
+            Err(err) => panic!("failed to reserve x86 AP trampoline: {err:?}"),
+        }
+    }
 }
 
 /// Get the physical range of the kernel image

@@ -209,6 +209,32 @@ fn setup_page_table() -> anyhow::Result<()> {
         })?;
     }
 
+    let ap_trampoline = super::power::AP_TRAMPOLINE_PADDR;
+    let ap_trampoline_mapped = crate::mem::memory_map().iter().any(|region| {
+        let start = region.physical_start;
+        let end = start.saturating_add(region.size_in_bytes);
+        (start..end).contains(&ap_trampoline)
+    });
+    if !ap_trampoline_mapped {
+        print_mapping("APTrampoline", ap_trampoline, ap_trampoline, page_size());
+        table.map(&MapConfig {
+            vaddr: ap_trampoline.into(),
+            paddr: ap_trampoline.into(),
+            size: page_size(),
+            pte: PteConfig {
+                valid: true,
+                read: true,
+                writable: true,
+                executable: true,
+                global: true,
+                mem_attr: MemAttributes::Normal,
+                ..Default::default()
+            },
+            allow_huge: false,
+            flush: false,
+        })?;
+    }
+
     let kimage = crate::mem::kimage_range();
     let kimage_size = kimage.len().align_up(2 * 1024 * 1024);
     let kimage_vaddr = __kimage_va(kimage.start);

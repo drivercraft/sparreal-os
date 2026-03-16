@@ -1,0 +1,21 @@
+args = [
+  "-nographic",
+  "-machine",
+  "q35",
+  "-smp",
+  "4",
+  "-d",
+  "int,mmu,guest_errors",
+  "-D",
+  "qemu.log",
+]
+fail_regex = [
+  "FAILED",
+  "Panicked:",
+  "开始 panic",
+]
+success_regex = [
+  "All tests passed!",
+]
+to_bin = true
+uefi = true

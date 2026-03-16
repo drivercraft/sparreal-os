@@ -1,6 +1,7 @@
 use core::ffi::c_void;
 
 use crate::entry::PrimaryCpuInitInfo;
+use crate::smp::PerCpuMeta;
 
 use super::head::_head;
 
@@ -45,7 +46,10 @@ pub(crate) fn mmu_entry() -> ! {
     crate::prime_entry()
 }
 
-pub(crate) unsafe extern "C" fn _secondary_entry(_arg: usize) -> ! {
+pub(crate) unsafe extern "C" fn _secondary_entry(arg: usize) -> ! {
+    let cpu_meta = unsafe { &*(crate::mem::phys_to_virt(arg) as *const PerCpuMeta) };
+    super::power::notify_ap_started(cpu_meta.cpu_id);
+    crate::entry::secondary_entry(cpu_meta);
     loop {
         core::hint::spin_loop();
     }
