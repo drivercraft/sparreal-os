@@ -63,7 +63,8 @@ unsafe extern "C" fn efi_pe_entry_main(
         table::set_system_table(system_table.cast());
         setup_console();
         println!("UEFI application started.");
-        // efi_enter_kernel 会永不返回，返回值用于类型检查
+        // Safety: `system_table` comes from the EFI firmware entry path and
+        // matches the contract documented on `ArchTrait::efi_enter_kernel`.
         if Arch::efi_enter_kernel(system_table) {
             Status::SUCCESS
         } else {

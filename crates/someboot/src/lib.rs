@@ -116,8 +116,10 @@ pub trait ArchTrait {
 
     /// EFI 入口点 - 从 EFI PE 入口跳转到内核
     ///
-    /// 返回值表示是否应该继续执行（false 表示永不返回）
-    fn efi_enter_kernel(system_table: *const ::core::ffi::c_void) -> bool;
+    /// # Safety
+    /// `system_table` 必须是当前 EFI 固件提供的有效 `EFI_SYSTEM_TABLE` 指针，
+    /// 并且调用者必须保证此调用符合对应架构的启动约定。
+    unsafe fn efi_enter_kernel(system_table: *const ::core::ffi::c_void) -> bool;
 }
 
 #[derive(Debug, Clone, Copy)]

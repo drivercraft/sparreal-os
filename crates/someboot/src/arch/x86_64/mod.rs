@@ -178,7 +178,9 @@ impl ArchTrait for Arch {
         }
     }
 
-    fn efi_enter_kernel(system_table: *const ::core::ffi::c_void) -> bool {
+    // Safety: `system_table` is forwarded from the EFI stub and must satisfy
+    // the `ArchTrait::efi_enter_kernel` contract.
+    unsafe fn efi_enter_kernel(system_table: *const ::core::ffi::c_void) -> bool {
         crate::arch::entry::kernel_entry(1, null(), system_table)
     }
 }

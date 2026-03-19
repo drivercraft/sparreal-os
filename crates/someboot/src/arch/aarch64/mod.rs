@@ -202,7 +202,8 @@ impl ArchTrait for Arch {
         aarch64_cpu_ext::cache::dcache_range(op.into(), addr, size);
     }
 
-    fn efi_enter_kernel(_system_table: *const ::core::ffi::c_void) -> bool {
+    // Safety: the EFI stub guarantees the same contract as the trait docs.
+    unsafe fn efi_enter_kernel(_system_table: *const ::core::ffi::c_void) -> bool {
         unsafe { crate::arch::entry::kernel_entry(0) };
         unreachable!()
     }
