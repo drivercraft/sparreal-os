@@ -198,30 +198,28 @@ unsafe impl Sync for EarlyconRecieverCell {}
 pub fn set_earlycon_by_cmdline() -> Result<(), &'static str> {
     let config = crate::cmdline::earlycon().ok_or("No earlycon parameter found")?;
     let debug_is_mmio = match config.uart_type {
-        "ns16550" => {
-            match config.io_type {
-                "io" => {
-                    #[cfg(target_arch = "x86_64")]
-                    {
-                        let base = config.base_addr.ok_or("missing io base address")? as u16;
-                        let mut uart = some_serial::ns16550::Ns16550::new_port(base, 1_843_200);
-                        let tx = uart.take_tx().ok_or("failed to take io sender")?;
-                        let rx = uart.take_rx().ok_or("failed to take io receiver")?;
-                        set_earlycon_sender(tx);
-                        set_earlycon_reciever(rx);
-                        false
-                    }
-                    #[cfg(not(target_arch = "x86_64"))]
-                    {
-                        return Err("io type not supported on this architecture");
-                    }
+        "ns16550" => match config.io_type {
+            "io" => {
+                #[cfg(target_arch = "x86_64")]
+                {
+                    let base = config.base_addr.ok_or("missing io base address")? as u16;
+                    let mut uart = some_serial::ns16550::Ns16550::new_port(base, 1_843_200);
+                    let tx = uart.take_tx().ok_or("failed to take io sender")?;
+                    let rx = uart.take_rx().ok_or("failed to take io receiver")?;
+                    set_earlycon_sender(tx);
+                    set_earlycon_reciever(rx);
+                    false
                 }
-                _ => {
-                    set_16550_mmio(&config)?;
-                    true
+                #[cfg(not(target_arch = "x86_64"))]
+                {
+                    return Err("io type not supported on this architecture");
                 }
             }
-        }
+            _ => {
+                set_16550_mmio(&config)?;
+                true
+            }
+        },
         "pl011" => {
             set_pl011(&config)?;
             true

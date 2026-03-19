@@ -13,7 +13,7 @@ mod register;
 mod relocate;
 mod trap;
 
-use core::hint::spin_loop;
+use core::{hint::spin_loop, ptr::null};
 
 pub(crate) use entry::_secondary_entry;
 use loongArch64::{
@@ -239,5 +239,10 @@ impl ArchTrait for Arch {
         unsafe {
             core::arch::asm!("dbar 0", options(nomem, nostack));
         }
+    }
+
+    fn efi_enter_kernel(system_table: *const ::core::ffi::c_void) -> bool {
+        unsafe { crate::arch::entry::kernel_entry(1, null(), system_table) };
+        unreachable!()
     }
 }

@@ -113,6 +113,11 @@ pub trait ArchTrait {
     fn irq_set_enable(irq: IrqId, enable: bool);
 
     fn dcache_range(op: DCacheOp, addr: usize, size: usize);
+
+    /// EFI 入口点 - 从 EFI PE 入口跳转到内核
+    ///
+    /// 返回值表示是否应该继续执行（false 表示永不返回）
+    fn efi_enter_kernel(system_table: *const ::core::ffi::c_void) -> bool;
 }
 
 #[derive(Debug, Clone, Copy)]

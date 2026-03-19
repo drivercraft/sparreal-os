@@ -201,6 +201,11 @@ impl ArchTrait for Arch {
     fn dcache_range(op: crate::DCacheOp, addr: usize, size: usize) {
         aarch64_cpu_ext::cache::dcache_range(op.into(), addr, size);
     }
+
+    fn efi_enter_kernel(_system_table: *const ::core::ffi::c_void) -> bool {
+        unsafe { crate::arch::entry::kernel_entry(0) };
+        unreachable!()
+    }
 }
 
 impl From<crate::DCacheOp> for aarch64_cpu_ext::cache::CacheOp {

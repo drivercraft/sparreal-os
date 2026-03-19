@@ -17,8 +17,9 @@ use uefi::{
 pub use uefi::{Status, runtime::ResetType};
 
 use crate::{
+    ArchTrait,
     acpi::set_rsdp,
-    arch::relocate,
+    arch::{Arch, relocate},
     mem::{__io, __va},
 };
 
@@ -53,7 +54,6 @@ pub unsafe extern "C" fn __x86_64_efi_pe_entry() -> Status {
     )
 }
 
-#[cfg(target_arch = "x86_64")]
 unsafe extern "C" fn efi_pe_entry_main(
     image_handle: Handle,
     system_table: *const ::core::ffi::c_void,
@@ -63,7 +63,12 @@ unsafe extern "C" fn efi_pe_entry_main(
         table::set_system_table(system_table.cast());
         setup_console();
         println!("UEFI application started.");
-        crate::arch::entry::kernel_entry(1, null(), system_table)
+        // efi_enter_kernel 会永不返回，返回值用于类型检查
+        if Arch::efi_enter_kernel(system_table) {
+            Status::SUCCESS
+        } else {
+            unreachable!()
+        }
     }
 }
 
@@ -76,24 +81,8 @@ pub unsafe extern "efiapi" fn efi_pe_entry(
 ) -> Status {
     unsafe {
         relocate();
-        boot::set_image_handle(image_handle);
-        table::set_system_table(system_table.cast());
-        setup_console();
-        println!("UEFI application started.");
-        efi_enter_kernel(system_table)
+        efi_pe_entry_main(image_handle, system_table)
     }
-}
-
-#[cfg(target_arch = "loongarch64")]
-unsafe fn efi_enter_kernel(system_table: *const ::core::ffi::c_void) -> Status {
-    unsafe { crate::arch::entry::kernel_entry(1, null(), system_table) };
-    unreachable!()
-}
-
-#[cfg(target_arch = "aarch64")]
-unsafe fn efi_enter_kernel(_system_table: *const ::core::ffi::c_void) -> Status {
-    unsafe { crate::arch::entry::kernel_entry(0) };
-    unreachable!()
 }
 
 pub(crate) fn exit_boot_services() {

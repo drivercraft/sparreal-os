@@ -14,6 +14,8 @@ pub(crate) use entry::_secondary_entry;
 pub use paging::Entry;
 pub use relocate::relocate;
 
+use core::ptr::null;
+
 use crate::{ArchTrait, DCacheOp, mem::PageTableInfo, power::CpuOnError};
 
 pub struct Arch;
@@ -174,5 +176,9 @@ impl ArchTrait for Arch {
         unsafe {
             core::arch::asm!("mfence", options(nomem, nostack, preserves_flags));
         }
+    }
+
+    fn efi_enter_kernel(system_table: *const ::core::ffi::c_void) -> bool {
+        crate::arch::entry::kernel_entry(1, null(), system_table)
     }
 }

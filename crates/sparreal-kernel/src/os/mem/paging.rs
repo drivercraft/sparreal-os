@@ -88,14 +88,8 @@ fn map_regions(pt: &mut Box<dyn PageTable>) {
             lapic_phys.raw() + memory::page_size(),
             config,
         );
-        pt.map(
-            lapic_virt,
-            lapic_phys,
-            memory::page_size(),
-            config,
-            false,
-        )
-        .expect("Failed to map x86_64 LAPIC page");
+        pt.map(lapic_virt, lapic_phys, memory::page_size(), config, false)
+            .expect("Failed to map x86_64 LAPIC page");
     }
 }
 

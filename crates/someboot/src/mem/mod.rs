@@ -147,10 +147,13 @@ fn reserve_arch_early_ranges() {
     {
         // AP trampoline lives in low memory and must stay reserved.
         let tramp = crate::arch::power::AP_TRAMPOLINE_PADDR;
-        let desc = MemoryDescriptor::new_aligned(tramp, page_size(), MemoryType::Reserved, page_size());
+        let desc =
+            MemoryDescriptor::new_aligned(tramp, page_size(), MemoryType::Reserved, page_size());
         match add_memory_descriptor(desc) {
             Ok(()) => {}
-            Err(RangeError::Conflict { existing, .. }) if existing.memory_type != MemoryType::Free => {
+            Err(RangeError::Conflict { existing, .. })
+                if existing.memory_type != MemoryType::Free =>
+            {
                 // Already reserved by firmware map; keep it as-is.
             }
             Err(err) => panic!("failed to reserve x86 AP trampoline: {err:?}"),
