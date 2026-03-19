@@ -13,6 +13,7 @@ version = "0.1.10"
 efi = []
 hv = []
 mmu = []
+percpu-prealloc = []
 uspace = ["mmu"]
 
 [dependencies]
