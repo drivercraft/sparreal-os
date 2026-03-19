@@ -3,6 +3,7 @@ mod _macros;
 
 mod addrspace;
 mod cache;
+mod console;
 mod context;
 pub(crate) mod entry;
 mod head;
@@ -31,6 +32,7 @@ pub struct Arch;
 
 impl ArchTrait for Arch {
     type P = paging::Generic;
+    type Console = console::Console;
 
     fn _va(paddr: usize) -> *mut u8 {
         (paddr + addrspace::PAGE_OFFSET) as *mut u8

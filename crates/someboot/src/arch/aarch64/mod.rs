@@ -1,5 +1,6 @@
 #[macro_use]
 mod _macros;
+mod console;
 
 #[cfg(feature = "hv")]
 #[path = "el2/mod.rs"]
@@ -36,6 +37,7 @@ pub struct Arch;
 
 impl ArchTrait for Arch {
     type P = paging::Generic;
+    type Console = console::Console;
 
     fn _va(paddr: usize) -> *mut u8 {
         (paddr + PAGE_OFFSET) as *mut u8

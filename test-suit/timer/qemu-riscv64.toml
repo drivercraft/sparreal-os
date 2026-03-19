@@ -1,0 +1,21 @@
+args = [
+  "-nographic",
+  "-machine",
+  "virt",
+  "-bios",
+  "default",
+  "-smp",
+  "1",
+  "-d",
+  "int,guest_errors",
+  "-D",
+  "qemu.log",
+]
+fail_regex = [
+  "Panicked:",
+]
+success_regex = [
+  "All tests passed!"
+]
+to_bin = true
+uefi = false

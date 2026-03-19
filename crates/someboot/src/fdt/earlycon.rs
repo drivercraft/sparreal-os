@@ -10,15 +10,20 @@ use crate::{
 pub fn setup_earlycon() -> Option<()> {
     let _ = super::set_cmdline();
 
-    if crate::console::set_earlycon_by_cmdline().is_ok() {
-        return Some(());
-    }
+    if <<crate::arch::Arch as crate::ArchTrait>::Console as crate::console::ArchConsoleOps>::init()
+    {
+        Some(())
+    } else {
+        if crate::console::set_earlycon_by_cmdline().is_ok() {
+            return Some(());
+        }
 
-    if set_by_stdout().is_some() {
-        return Some(());
-    }
+        if set_by_stdout().is_some() {
+            return Some(());
+        }
 
-    Some(())
+        Some(())
+    }
 }
 
 fn set_by_stdout() -> Option<()> {

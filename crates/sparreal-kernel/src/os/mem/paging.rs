@@ -68,7 +68,7 @@ fn map_regions(pt: &mut Box<dyn PageTable>) {
             fmt
         );
         pt.map(virt.raw().into(), phys.raw().into(), size, config, false)
-            .expect("Failed to map memory region");
+            .unwrap_or_else(|err| panic!("Failed to map memory region: {err:?}"));
     }
 
     #[cfg(target_arch = "x86_64")]

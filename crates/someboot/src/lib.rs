@@ -60,6 +60,7 @@ use crate::{
 #[allow(unused)]
 pub trait ArchTrait {
     type P: TableMeta;
+    type Console: console::ArchConsoleOps;
 
     fn _va(paddr: usize) -> *mut u8;
     fn _io(paddr: usize) -> *mut u8 {

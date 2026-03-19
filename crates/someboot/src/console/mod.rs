@@ -10,6 +10,16 @@ use crate::mem::{_fixmap_io, page_size};
 pub(crate) static mut DEBUG_BASE: usize = 0;
 pub(crate) static mut DEBUG_IS_MMIO: bool = false;
 
+pub trait ArchConsoleOps {
+    fn init() -> bool {
+        false
+    }
+
+    fn read_byte() -> Option<u8> {
+        None
+    }
+}
+
 pub(crate) fn debug_to_memory_desc() -> Option<MemoryDescriptor> {
     let debug_base = unsafe { DEBUG_BASE };
     let debug_is_mmio = unsafe { DEBUG_IS_MMIO };
@@ -157,6 +167,10 @@ pub fn set_earlycon_reciever(reciever: Reciever) {
 }
 
 pub fn read_byte() -> Option<u8> {
+    if let Some(byte) = <crate::arch::Arch as crate::ArchTrait>::Console::read_byte() {
+        return Some(byte);
+    }
+
     unsafe {
         if let Some(ref mut reciever) = *EARLYCON_RECIEVER.0.get() {
             match reciever.read_byte() {

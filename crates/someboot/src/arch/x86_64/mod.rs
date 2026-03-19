@@ -2,6 +2,7 @@
 mod _macros;
 
 mod addrspace;
+mod console;
 pub(crate) mod entry;
 mod head;
 pub(crate) mod irq;
@@ -22,6 +23,7 @@ pub struct Arch;
 
 impl ArchTrait for Arch {
     type P = paging::Generic;
+    type Console = console::Console;
 
     fn _va(paddr: usize) -> *mut u8 {
         paddr as *mut u8

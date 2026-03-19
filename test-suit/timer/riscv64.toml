@@ -1,0 +1,15 @@
+[system.Cargo]
+args = [
+  "-Z",
+  "build-std=core,alloc",
+  "--config",
+  ".cargo/config-app.toml",
+]
+features = ["sparreal-rt/uspace"]
+package = "test-suit-timer"
+post_build_cmds = []
+pre_build_cmds = []
+target = "riscv64gc-unknown-none-elf"
+to_bin = true
+
+[system.Cargo.env]

@@ -17,6 +17,7 @@ pub use page_table_generic::*;
 pub const KB: usize = 1024;
 pub const MB: usize = 1024 * KB;
 pub const GB: usize = 1024 * MB;
+pub const KIMAGE_MAP_ALIGN: usize = 2 * MB;
 
 static mut VM_LOAD_OFFSET: isize = 0;
 static MEMORY_MAP: StaticCell<MemoryMap> = StaticCell::new(MemoryMap::new());
@@ -35,13 +36,18 @@ pub(crate) fn setup_entry(
 ) {
     unsafe {
         KIMAGE_START = Some(kernel_start);
-        KIMAGE_END = kernel_end.raw().align_up(page_size()).into();
+        KIMAGE_END = kernel_end.raw().align_up(KIMAGE_MAP_ALIGN).into();
 
         VM_LOAD_OFFSET = kernel_start.raw() as isize - kernel_start_link.raw() as isize;
     }
 }
 
 pub fn stack_size() -> usize {
+    #[cfg(target_arch = "riscv64")]
+    {
+        return 0x4000;
+    }
+
     unsafe extern "C" {
         fn STACK_SIZE();
     }
@@ -120,7 +126,7 @@ pub(crate) fn early_init() {
         size_in_bytes: kernel_range.end - kernel_range.start,
         memory_type: MemoryType::KImage,
     })
-    .unwrap();
+    .unwrap_or_else(|err| panic!("failed to add KImage memory descriptor {kernel_range:#x?}: {err:?}"));
     reserve_arch_early_ranges();
 
     unsafe { MEMORY_MAP.update(|m| m.sort_by_key(|a| a.physical_start)) };
@@ -173,6 +179,11 @@ pub(crate) fn kimage_range() -> core::ops::Range<usize> {
 }
 
 pub fn page_size() -> usize {
+    #[cfg(target_arch = "riscv64")]
+    {
+        return crate::consts::PAGE_SIZE;
+    }
+
     unsafe extern "C" {
         static PAGE_SIZE: usize;
     }

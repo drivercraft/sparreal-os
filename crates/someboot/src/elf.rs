@@ -17,10 +17,6 @@ impl Rela {
 /// # Safety
 /// 此函数操作裸指针，调用者必须确保传入的指针范围有效且指向合法的 RELA 重定位表。
 pub unsafe fn apply_reloc(load_offset: i128, start: *mut u8, end: *const u8, r_type: u32) {
-    if load_offset == 0 {
-        return;
-    }
-
     let num_entries = (end as usize - start as usize) / size_of::<Rela>();
     let relocations = unsafe { core::slice::from_raw_parts_mut(start as *mut Rela, num_entries) };
 

@@ -156,9 +156,22 @@ impl Build {
     }
 
     fn prepare_riscv64(&mut self) {
-        self.kernel_vaddr = 0;
+        let ld_src = "src/arch/riscv64/link.ld";
+
+        if self.uspace {
+            self.kernel_vaddr = 0xffff_ffc0_8020_0000;
+        } else {
+            self.kernel_vaddr = 0x8020_0000;
+        }
+
+        let kernel_load_vaddr = self.kernel_vaddr as usize;
+        let ld = include_str!("src/arch/riscv64/link.ld")
+            .replace("${kernel_load_vaddr}", &format!("{kernel_load_vaddr:#x}"));
+
+        println!("cargo:rerun-if-changed={ld_src}");
+
         let ld_dst = self.out_dir.join(Self::LD_NAME);
-        fs::write(ld_dst, "SECTIONS {}\n").unwrap();
+        fs::write(ld_dst, ld).unwrap();
     }
 
     fn gen_defines(&self) {

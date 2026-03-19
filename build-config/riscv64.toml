@@ -1,0 +1,17 @@
+[system.Cargo]
+args = [
+  "-Z",
+  "build-std=core,alloc",
+  "--config",
+  ".cargo/cargo-app.toml",
+]
+features = [
+  "sparreal-rt/uspace",
+]
+package = "helloworld"
+post_build_cmds = []
+pre_build_cmds = []
+target = "riscv64gc-unknown-none-elf"
+to_bin = true
+
+[system.Cargo.env]
