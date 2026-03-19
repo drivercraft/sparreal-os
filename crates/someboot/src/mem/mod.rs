@@ -43,11 +43,6 @@ pub(crate) fn setup_entry(
 }
 
 pub fn stack_size() -> usize {
-    #[cfg(target_arch = "riscv64")]
-    {
-        return 0x4000;
-    }
-
     unsafe extern "C" {
         fn STACK_SIZE();
     }
@@ -126,7 +121,9 @@ pub(crate) fn early_init() {
         size_in_bytes: kernel_range.end - kernel_range.start,
         memory_type: MemoryType::KImage,
     })
-    .unwrap_or_else(|err| panic!("failed to add KImage memory descriptor {kernel_range:#x?}: {err:?}"));
+    .unwrap_or_else(|err| {
+        panic!("failed to add KImage memory descriptor {kernel_range:#x?}: {err:?}")
+    });
     reserve_arch_early_ranges();
 
     unsafe { MEMORY_MAP.update(|m| m.sort_by_key(|a| a.physical_start)) };
@@ -179,11 +176,6 @@ pub(crate) fn kimage_range() -> core::ops::Range<usize> {
 }
 
 pub fn page_size() -> usize {
-    #[cfg(target_arch = "riscv64")]
-    {
-        return crate::consts::PAGE_SIZE;
-    }
-
     unsafe extern "C" {
         static PAGE_SIZE: usize;
     }

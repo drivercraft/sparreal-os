@@ -1,10 +1,6 @@
 use core::arch::naked_asm;
 
-use crate::{
-    entry::PrimaryCpuInitInfo,
-    mem::phys_to_virt,
-    smp::PerCpuMeta,
-};
+use crate::{entry::PrimaryCpuInitInfo, mem::phys_to_virt, smp::PerCpuMeta};
 
 #[unsafe(naked)]
 #[unsafe(no_mangle)]

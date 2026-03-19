@@ -2,9 +2,9 @@
 mod _macros;
 
 mod addrspace;
+mod console;
 mod entry;
 pub(crate) mod irq;
-mod console;
 mod paging;
 mod relocate;
 pub(crate) mod sbi;
@@ -19,10 +19,12 @@ pub use relocate::apply as relocate;
 
 use crate::{
     ArchTrait, DCacheOp,
-    mem::{__kimage_va_to_pa, PageTableInfo, mmu},
+    mem::{PageTableInfo, mmu},
     power::CpuOnError,
-    smp::percpu_va_range,
 };
+
+#[cfg(uspace)]
+use crate::{mem::__kimage_va_to_pa, smp::percpu_va_range};
 
 const KERNEL_LOAD_ADDRESS: usize = 0x8020_0000;
 const SATP_MODE_SV39: usize = 8usize << 60;
@@ -238,15 +240,9 @@ impl ArchTrait for Arch {
     }
 
     fn systimer_enable() {
-        unsafe {
-            core::arch::asm!(
-                "csrs sie, {stie}",
-                "csrs sstatus, {sie}",
-                stie = in(reg) SIE_STIE,
-                sie = in(reg) SSTATUS_SIE,
-                options(nostack, preserves_flags)
-            );
-        }
+        // Only bring the timer source into a known idle state here.
+        // IRQ masking/unmasking is controlled separately by the timer core.
+        let _ = sbi::set_timer(u64::MAX);
     }
 
     fn systimer_irq_enable() {

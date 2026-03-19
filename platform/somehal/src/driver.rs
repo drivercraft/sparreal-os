@@ -3,12 +3,6 @@ use core::ptr::{NonNull, slice_from_raw_parts};
 use rdrive::register::DriverRegisterSlice;
 
 pub fn rdrive_setup() {
-    #[cfg(target_arch = "riscv64")]
-    {
-        info!("Skip rdrive pre-kernel probe on riscv64");
-        return;
-    }
-
     let registers = DriverRegisterSlice::from_raw(driver_registers());
 
     if let Some(addr) = someboot::fdt_addr() {

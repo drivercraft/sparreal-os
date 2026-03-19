@@ -83,7 +83,12 @@ fn setup_page_table() -> anyhow::Result<()> {
     }
 
     let percpu = crate::smp::percpu_range();
-    print_mapping("PerCpu", __percpu(percpu.start) as _, percpu.start, percpu.len());
+    print_mapping(
+        "PerCpu",
+        __percpu(percpu.start) as _,
+        percpu.start,
+        percpu.len(),
+    );
 
     table.map(&MapConfig {
         vaddr: __percpu(percpu.start).into(),

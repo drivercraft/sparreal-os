@@ -45,7 +45,7 @@ struct TrapFrame {
 }
 
 pub fn setup() {
-    let addr = trap_addr();
+    let addr = trap_addr() & !0x3;
     unsafe {
         core::arch::asm!(
             "csrw stvec, {addr}",
@@ -115,12 +115,14 @@ const TF_SEPC: usize = offset_of!(TrapFrame, sepc);
 const TF_SCAUSE: usize = offset_of!(TrapFrame, scause);
 const TF_STVAL: usize = offset_of!(TrapFrame, stval);
 const TF_SIZE: usize = core::mem::size_of::<TrapFrame>();
+const TF_ALLOC_SIZE: usize = (TF_SIZE + 15) & !15;
 
 global_asm!(
     ".section .text.trap, \"ax\"",
+    ".p2align 2",
     ".globl __riscv64_trap_entry",
     "__riscv64_trap_entry:",
-    "addi sp, sp, -{tf_size}",
+    "addi sp, sp, -{tf_alloc_size}",
     "sd ra, {tf_ra}(sp)",
     "sd gp, {tf_gp}(sp)",
     "sd tp, {tf_tp}(sp)",
@@ -151,7 +153,7 @@ global_asm!(
     "sd t4, {tf_t4}(sp)",
     "sd t5, {tf_t5}(sp)",
     "sd t6, {tf_t6}(sp)",
-    "addi t0, sp, {tf_size}",
+    "addi t0, sp, {tf_alloc_size}",
     "sd t0, {tf_sp}(sp)",
     "csrr t0, sstatus",
     "sd t0, {tf_sstatus}(sp)",
@@ -197,7 +199,7 @@ global_asm!(
     "ld t4, {tf_t4}(sp)",
     "ld t5, {tf_t5}(sp)",
     "ld t6, {tf_t6}(sp)",
-    "addi sp, sp, {tf_size}",
+    "addi sp, sp, {tf_alloc_size}",
     "sret",
     trap_handler = sym __riscv64_handle_trap,
     tf_ra = const TF_RA,
@@ -235,5 +237,5 @@ global_asm!(
     tf_sepc = const TF_SEPC,
     tf_scause = const TF_SCAUSE,
     tf_stval = const TF_STVAL,
-    tf_size = const TF_SIZE,
+    tf_alloc_size = const TF_ALLOC_SIZE,
 );
