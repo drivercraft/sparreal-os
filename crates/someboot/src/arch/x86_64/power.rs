@@ -201,8 +201,8 @@ fn delay_us(us: u64) {
 }
 
 fn prepare_trampoline(cr3: u64, stack: u64, arg: u64, entry: u64) {
-    let src_start = core::ptr::addr_of!(__x86_ap_trampoline_start) as *const u8;
-    let src_end = core::ptr::addr_of!(__x86_ap_trampoline_end) as *const u8;
+    let src_start = core::ptr::addr_of!(__x86_ap_trampoline_start);
+    let src_end = core::ptr::addr_of!(__x86_ap_trampoline_end);
     let len = src_end as usize - src_start as usize;
     assert!(len <= AP_TRAMPOLINE_SIZE);
 

@@ -156,8 +156,8 @@ impl TimerManager {
             let min_delay = (freq / 10_000).max(1); // ~=100us
             let delay = delay.max(min_delay);
 
-            crate::hal::al::cpu::systick_irq_enable();
             crate::hal::al::cpu::systick_set_interval(delay);
+            crate::hal::al::cpu::systick_irq_enable();
         } else {
             // No pending timers, disable hardware timer
             crate::hal::al::cpu::systick_set_interval(usize::MAX);

@@ -16,7 +16,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [loongarch64, aarch64]
+        include:
+          - arch: loongarch64
+            target: loongarch64-unknown-none-softfloat
+          - arch: aarch64
+            target: aarch64-unknown-none-softfloat
+          - arch: x86_64
+            target: x86_64-unknown-none
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -62,7 +68,7 @@ jobs:
       - uses: taiki-e/install-action@cargo-hack
 
       - name: Clippy for workspace
-        run: cargo clippy --target ${{ matrix.arch }}-unknown-none-softfloat -- -D warnings
+        run: cargo clippy --target ${{ matrix.target }} -- -D warnings
 
       - name: Build test
         run: ./scripts/test_${{ matrix.arch }}.sh
