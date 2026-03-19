@@ -43,7 +43,7 @@ jobs:
           version: 10.1.0
           arch_list: x86_64,aarch64,riscv64,loongarch64
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2.9.1
         with:
           shared-key: test
           cache-targets: false
