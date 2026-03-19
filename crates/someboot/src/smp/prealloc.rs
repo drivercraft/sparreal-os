@@ -15,15 +15,20 @@ struct LayoutInfo {
     total_size: usize,
 }
 
+fn aligned_slot_size(size: usize, align: usize) -> usize {
+    let size = size.max(1);
+    align_up_pow2(size, align)
+}
+
 fn layout_info(cpu_num: usize) -> LayoutInfo {
-    let meta_stride = align_up_pow2(core::mem::size_of::<PerCpuMeta>(), meta_align());
+    let meta_stride = aligned_slot_size(core::mem::size_of::<PerCpuMeta>(), meta_align());
     let meta_region_size = meta_stride * cpu_num;
 
-    let stack_stride = align_up_pow2(stack_size(), crate::mem::page_size());
+    let stack_stride = aligned_slot_size(stack_size(), crate::mem::page_size());
     let stack_region_offset = align_up_pow2(meta_region_size, crate::mem::page_size());
     let stack_region_size = stack_stride * cpu_num;
 
-    let data_stride = align_up_pow2(percpu_link_range().len(), percpu_region_align());
+    let data_stride = aligned_slot_size(percpu_link_range().len(), percpu_region_align());
     let data_region_offset = align_up_pow2(
         stack_region_offset + stack_region_size,
         percpu_region_align(),
@@ -73,6 +78,14 @@ pub fn alloc_percpu() {
     let link_size = link_range.len();
     let layout = layout_info(cpu_num);
 
+    debug_assert_eq!(layout.meta_region_offset % meta_align(), 0);
+    debug_assert_eq!(layout.meta_stride % meta_align(), 0);
+    debug_assert_eq!(layout.stack_region_offset % crate::mem::page_size(), 0);
+    debug_assert_eq!(layout.stack_stride % crate::mem::page_size(), 0);
+    debug_assert_eq!(layout.data_region_offset % percpu_region_align(), 0);
+    debug_assert_eq!(layout.data_stride % percpu_region_align(), 0);
+
+    println!("Per-CPU linker template size: {:#x} bytes", link_size);
     println!("Per-CPU metadata stride: {:#x} bytes", layout.meta_stride);
     println!("Per-CPU stack stride: {:#x} bytes", layout.stack_stride);
     println!("Per-CPU data stride: {:#x} bytes", layout.data_stride);
@@ -106,6 +119,9 @@ pub fn alloc_percpu() {
         let cpu_data_start = cpu_data_start(idx).unwrap();
         let meta_start = cpu_meta_start(idx).unwrap();
         let stack_start = cpu_stack_start(idx).unwrap();
+        debug_assert_eq!(meta_start % meta_align(), 0);
+        debug_assert_eq!(stack_start % crate::mem::page_size(), 0);
+        debug_assert_eq!(cpu_data_start % percpu_region_align(), 0);
         println!(
             "Initializing per-CPU RAM for CPU{idx} - hard id {hard_id:#x}, meta @ {meta_start:#x}, stack @ {stack_start:#x}, percpu @ {cpu_data_start:#x}"
         );
