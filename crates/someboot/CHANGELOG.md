@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.11](https://github.com/drivercraft/sparreal-os/compare/someboot-v0.1.10...someboot-v0.1.11) - 2026-03-19
+
+### Other
+
+- ✨ feat: 添加 per-CPU 预分配支持 ([#62](https://github.com/drivercraft/sparreal-os/pull/62))
+
 ## [0.1.10](https://github.com/drivercraft/sparreal-os/compare/someboot-v0.1.9...someboot-v0.1.10) - 2026-03-19
 
 ### Other
