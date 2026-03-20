@@ -26,9 +26,11 @@ jobs:
       - name: Prepare image metadata
         id: prep
         run: |
+          toolchain="$(tr -d '\r' < rust-toolchain.toml | awk -F'"' '/^channel = / { print $2; exit }')"
+          [ -n "${toolchain}" ] || { echo "failed to parse rust-toolchain.toml" >&2; exit 1; }
           echo "image=ghcr.io/${GITHUB_REPOSITORY,,}-container" >> "$GITHUB_OUTPUT"
           echo "sha_tag=sha-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-          echo "rust_toolchain=$(sed -n 's/^channel = \"\\(.*\\)\"$/\\1/p' rust-toolchain.toml)" >> "$GITHUB_OUTPUT"
+          echo "rust_toolchain=${toolchain}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GitHub Container Registry
         env:
