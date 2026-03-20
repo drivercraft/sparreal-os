@@ -1,0 +1,65 @@
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG QEMU_VERSION=10.2.1
+ARG RUST_TOOLCHAIN=nightly
+
+ENV TZ=Etc/UTC \
+    RUSTUP_HOME=/opt/rustup \
+    CARGO_HOME=/opt/cargo \
+    PATH=/opt/cargo/bin:/opt/qemu-${QEMU_VERSION}/bin:${PATH}
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        build-essential \
+        clang \
+        curl \
+        git \
+        libglib2.0-dev \
+        libpixman-1-dev \
+        libslirp-dev \
+        libudev-dev \
+        make \
+        ninja-build \
+        pkg-config \
+        python3 \
+        wget \
+        xz-utils \
+        zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    wget -O /tmp/qemu.tar.xz "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz"; \
+    tar -xf /tmp/qemu.tar.xz -C /tmp; \
+    cd "/tmp/qemu-${QEMU_VERSION}"; \
+    ./configure \
+      --prefix="/opt/qemu-${QEMU_VERSION}" \
+      --target-list=loongarch64-softmmu,riscv64-softmmu,aarch64-softmmu,x86_64-softmmu \
+      --enable-slirp \
+      --disable-docs \
+      --disable-gtk \
+      --disable-sdl \
+      --disable-vte \
+      --disable-werror; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -rf "/tmp/qemu-${QEMU_VERSION}" /tmp/qemu.tar.xz
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+    | sh -s -- -y --profile minimal --default-toolchain "${RUST_TOOLCHAIN}"
+
+RUN rustup component add rust-src llvm-tools rustfmt clippy cargo \
+    && rustup target add \
+      x86_64-unknown-none \
+      riscv64gc-unknown-none-elf \
+      aarch64-unknown-none-softfloat \
+      loongarch64-unknown-none-softfloat \
+    && cargo install --locked \
+      cargo-binutils \
+      cargo-hack \
+      ostool
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]

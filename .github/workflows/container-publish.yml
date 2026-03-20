@@ -1,0 +1,51 @@
+name: Publish Container Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - container/**
+      - rust-toolchain.toml
+      - .github/workflows/container-publish.yml
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare image metadata
+        id: prep
+        run: |
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}-container" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=sha-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "rust_toolchain=$(sed -n 's/^channel = \"\\(.*\\)\"$/\\1/p' rust-toolchain.toml)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+
+      - name: Build container image
+        run: |
+          docker build \
+            --build-arg RUST_TOOLCHAIN="${{ steps.prep.outputs.rust_toolchain }}" \
+            -t "${{ steps.prep.outputs.image }}:latest" \
+            -t "${{ steps.prep.outputs.image }}:${{ steps.prep.outputs.sha_tag }}" \
+            -f container/Dockerfile \
+            container
+
+      - name: Push container image
+        run: |
+          docker push "${{ steps.prep.outputs.image }}:latest"
+          docker push "${{ steps.prep.outputs.image }}:${{ steps.prep.outputs.sha_tag }}"
