@@ -3,7 +3,7 @@ args = [
   "-Z",
   "build-std=core,alloc",
   "--config",
-  ".cargo/cargo-app.toml",
+  ".cargo/config-app.toml",
 ]
 features = [
   "sparreal-rt/uspace",

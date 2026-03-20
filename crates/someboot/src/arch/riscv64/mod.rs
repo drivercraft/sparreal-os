@@ -251,18 +251,10 @@ impl ArchTrait for Arch {
             Err(sbi::HartStartError::InvalidParam | sbi::HartStartError::InvalidAddress) => {
                 Err(CpuOnError::InvalidParameters)
             }
-            Err(sbi::HartStartError::NotSupported | sbi::HartStartError::Failed(_)) => {
-                match entry::release_secondary_hart(hartid) {
-                    Ok(()) => Ok(()),
-                    Err(entry::ColdBootReleaseError::AlreadyReleased) => Err(CpuOnError::AlreadyOn),
-                    Err(entry::ColdBootReleaseError::InvalidHartId) => {
-                        Err(CpuOnError::InvalidParameters)
-                    }
-                    Err(entry::ColdBootReleaseError::NotPrepared) => Err(CpuOnError::Other(
-                        anyhow::anyhow!("secondary hart {hartid:#x} is not prepared for cold boot"),
-                    )),
-                }
-            }
+            Err(sbi::HartStartError::NotSupported) => Err(CpuOnError::NotSupported),
+            Err(sbi::HartStartError::Failed(err)) => Err(CpuOnError::Other(anyhow::anyhow!(
+                "hart_start failed: {err:?}"
+            ))),
         }
     }
 

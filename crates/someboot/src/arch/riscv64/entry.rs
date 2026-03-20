@@ -1,77 +1,61 @@
-use core::{
-    arch::naked_asm,
-    mem::offset_of,
-    sync::atomic::{AtomicUsize, Ordering},
-};
+use core::{arch::naked_asm, mem::offset_of};
 
 use crate::{entry::PrimaryCpuInitInfo, smp::PerCpuMeta};
 
-const MAX_COLD_BOOT_HARTS: usize = 64;
-const BOOT_STATE_UNCLAIMED: usize = usize::MAX;
-const BOOT_STATE_PRIMARY_INIT: usize = usize::MAX - 1;
-const BOOT_STATE_SECONDARY_READY: usize = usize::MAX - 2;
-
-static BOOT_STATE: AtomicUsize = AtomicUsize::new(BOOT_STATE_UNCLAIMED);
-static SECONDARY_BOOT_META: [AtomicUsize; MAX_COLD_BOOT_HARTS] =
-    [const { AtomicUsize::new(0) }; MAX_COLD_BOOT_HARTS];
-static SECONDARY_BOOT_RELEASE: [AtomicUsize; MAX_COLD_BOOT_HARTS] =
-    [const { AtomicUsize::new(0) }; MAX_COLD_BOOT_HARTS];
+const RISCV_LINUX_IMAGE_TEXT_OFFSET: usize = 0x20_0000;
+const RISCV_LINUX_IMAGE_FLAGS: usize = 0;
+const RISCV_LINUX_IMAGE_VERSION: usize = 0x0000_0002;
+const RISCV_LINUX_IMAGE_MAGIC: usize = 0x5643_5349_52;
+const RISCV_LINUX_IMAGE_MAGIC2: usize = 0x0543_5352;
 
 #[unsafe(naked)]
 #[unsafe(no_mangle)]
+#[unsafe(link_section = ".head.text")]
 pub unsafe extern "C" fn _head() -> ! {
     naked_asm!(
-        "mv t0, a0",
-        "mv t1, a1",
-        "mv tp, t0",
-        "lla t2, {boot_state}",
-        "ld t5, 0(t2)",
-        "li t3, {boot_state_unclaimed}",
-        "li t4, {boot_state_primary_init}",
-        "bne t5, t3, 2f",
-        "sd t4, 0(t2)",
+        ".option push",
+        ".option norvc",
+        // code0/code1
+        "j {kernel_entry}",
+        "nop",
+        ".option pop",
+        // text_offset
+        ".quad {text_offset}",
+        // image_size
+        ".quad __kernel_load_end - _head",
+        // flags
+        ".quad {flags}",
+        // version + reserved
+        ".word {version}",
+        ".word 0",
+        // reserved
+        ".quad 0",
+        // magic + magic2 + reserved
+        ".quad {magic}",
+        ".word {magic2}",
+        ".word 0",
+        kernel_entry = sym kernel_entry,
+        text_offset = const RISCV_LINUX_IMAGE_TEXT_OFFSET,
+        flags = const RISCV_LINUX_IMAGE_FLAGS,
+        version = const RISCV_LINUX_IMAGE_VERSION,
+        magic = const RISCV_LINUX_IMAGE_MAGIC,
+        magic2 = const RISCV_LINUX_IMAGE_MAGIC2,
+    )
+}
+
+#[unsafe(naked)]
+pub unsafe extern "C" fn kernel_entry(_hart_id: usize, _fdt_addr: usize) -> ! {
+    naked_asm!(
+        "mv tp, a0",
+        "mv t0, a1",
         "lla sp, __cpu0_stack_top",
         "mv a0, t0",
-        "mv a1, t1",
         "j {primary_head_entry}",
-        "2:",
-        "li t3, {max_cold_boot_harts}",
-        "bgeu t0, t3, 5f",
-        "li t3, {boot_state_secondary_ready}",
-        "3:",
-        "ld t4, 0(t2)",
-        "bne t4, t3, 3b",
-        "slli t3, t0, 3",
-        "lla t4, {secondary_meta}",
-        "add t4, t4, t3",
-        "4:",
-        "ld t5, 0(t4)",
-        "beqz t5, 4b",
-        "lla t6, {secondary_release}",
-        "add t6, t6, t3",
-        "6:",
-        "ld a0, 0(t6)",
-        "beqz a0, 6b",
-        "fence r, rw",
-        "mv a0, t5",
-        "ld sp, {stack_top_offset}(t5)",
-        "j {secondary_start}",
-        "5:",
-        "j 5b",
-        boot_state = sym BOOT_STATE,
-        boot_state_unclaimed = const BOOT_STATE_UNCLAIMED,
-        boot_state_primary_init = const BOOT_STATE_PRIMARY_INIT,
-        boot_state_secondary_ready = const BOOT_STATE_SECONDARY_READY,
-        max_cold_boot_harts = const MAX_COLD_BOOT_HARTS,
-        secondary_meta = sym SECONDARY_BOOT_META,
-        secondary_release = sym SECONDARY_BOOT_RELEASE,
-        stack_top_offset = const offset_of!(PerCpuMeta, stack_top),
-        secondary_start = sym secondary_start,
         primary_head_entry = sym primary_head_entry,
     )
 }
 
-fn primary_head_entry(_hart_id: usize, fdt_addr: usize) -> ! {
+fn primary_head_entry(fdt_addr: usize) -> ! {
     super::relocate::apply();
     primary_entry(fdt_addr)
 }
@@ -92,8 +76,6 @@ fn primary_entry(fdt_addr: usize) -> ! {
         kernel_end: (__kernel_code_end as *const () as usize).into(),
         kernel_start_link: crate::consts::VM_LOAD_ADDRESS.into(),
     });
-    prepare_secondary_boot();
-    BOOT_STATE.store(BOOT_STATE_SECONDARY_READY, Ordering::Release);
     super::paging::enable_mmu()
 }
 
@@ -135,41 +117,4 @@ fn clear_bss() {
             core::ptr::write_bytes(start as *mut u8, 0, len);
         }
     }
-}
-
-pub(crate) fn release_secondary_hart(hart_id: usize) -> Result<(), ColdBootReleaseError> {
-    if hart_id >= MAX_COLD_BOOT_HARTS {
-        return Err(ColdBootReleaseError::InvalidHartId);
-    }
-    if SECONDARY_BOOT_META[hart_id].load(Ordering::Acquire) == 0 {
-        return Err(ColdBootReleaseError::NotPrepared);
-    }
-    match SECONDARY_BOOT_RELEASE[hart_id].compare_exchange(
-        0,
-        1,
-        Ordering::AcqRel,
-        Ordering::Acquire,
-    ) {
-        Ok(_) => Ok(()),
-        Err(_) => Err(ColdBootReleaseError::AlreadyReleased),
-    }
-}
-
-fn prepare_secondary_boot() {
-    for cpu_idx in 0..crate::smp::cpu_count() {
-        let hart_id = crate::smp::cpu_idx_to_id(cpu_idx).expect("missing hart id for cpu index");
-        assert!(
-            hart_id < MAX_COLD_BOOT_HARTS,
-            "hart id {hart_id:#x} exceeds cold boot table size"
-        );
-        let meta_paddr = crate::smp::cpu_meta_addr(cpu_idx).expect("missing cpu meta address");
-        SECONDARY_BOOT_META[hart_id].store(meta_paddr, Ordering::Release);
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum ColdBootReleaseError {
-    InvalidHartId,
-    NotPrepared,
-    AlreadyReleased,
 }
