@@ -40,7 +40,6 @@ const PTE_G: usize = 1 << 5;
 const PTE_A: usize = 1 << 6;
 const PTE_D: usize = 1 << 7;
 
-static BOOT_HART_ID: AtomicUsize = AtomicUsize::new(0);
 static KERNEL_PAGE_TABLE_ADDR: AtomicUsize = AtomicUsize::new(0);
 static TIMEBASE_FREQ: AtomicUsize = AtomicUsize::new(0);
 
@@ -148,7 +147,11 @@ impl ArchTrait for Arch {
     }
 
     fn cpu_current_hartid() -> usize {
-        BOOT_HART_ID.load(Ordering::Relaxed)
+        let hart_id: usize;
+        unsafe {
+            core::arch::asm!("mv {hart_id}, tp", hart_id = out(reg) hart_id, options(nostack, preserves_flags));
+        }
+        hart_id
     }
 
     fn jump_to(entry: usize, sp: usize) -> ! {
@@ -235,8 +238,32 @@ impl ArchTrait for Arch {
         _secondary_entry as *const ()
     }
 
-    fn cpu_on(_hartid: usize, _entry: usize, _arg: usize) -> Result<(), CpuOnError> {
-        Err(CpuOnError::NotSupported)
+    fn cpu_on(hartid: usize, entry: usize, arg: usize) -> Result<(), CpuOnError> {
+        if hartid == Self::cpu_current_hartid() {
+            return Err(CpuOnError::AlreadyOn);
+        }
+
+        match sbi::hart_start(hartid, entry, arg) {
+            Ok(()) => Ok(()),
+            Err(sbi::HartStartError::AlreadyAvailable | sbi::HartStartError::AlreadyStarted) => {
+                Err(CpuOnError::AlreadyOn)
+            }
+            Err(sbi::HartStartError::InvalidParam | sbi::HartStartError::InvalidAddress) => {
+                Err(CpuOnError::InvalidParameters)
+            }
+            Err(sbi::HartStartError::NotSupported | sbi::HartStartError::Failed(_)) => {
+                match entry::release_secondary_hart(hartid) {
+                Ok(()) => Ok(()),
+                Err(entry::ColdBootReleaseError::AlreadyReleased) => Err(CpuOnError::AlreadyOn),
+                Err(entry::ColdBootReleaseError::InvalidHartId) => {
+                    Err(CpuOnError::InvalidParameters)
+                }
+                Err(entry::ColdBootReleaseError::NotPrepared) => Err(CpuOnError::Other(
+                    anyhow::anyhow!("secondary hart {hartid:#x} is not prepared for cold boot"),
+                )),
+                }
+            }
+        }
     }
 
     fn systimer_enable() {
@@ -357,10 +384,6 @@ impl ArchTrait for Arch {
     unsafe fn efi_enter_kernel(_system_table: *const ::core::ffi::c_void) -> bool {
         false
     }
-}
-
-pub(crate) fn set_boot_hart_id(hart_id: usize) {
-    BOOT_HART_ID.store(hart_id, Ordering::Relaxed);
 }
 
 pub(crate) fn kernel_load_address() -> usize {

@@ -6,6 +6,7 @@ use page_table_generic::{MapConfig, MemAttributes, PteConfig};
 use crate::{
     console::print_mapping,
     mem::{__kimage_va, __percpu, __va, MB, PageTableInfo},
+    smp::PerCpuMeta,
 };
 
 pub fn enable_mmu() -> ! {
@@ -30,6 +31,27 @@ pub fn enable_mmu() -> ! {
         asm!(
             "mv sp, {sp}",
             "jr {entry}",
+            sp = in(reg) v_sp,
+            entry = in(reg) v_entry,
+            options(noreturn)
+        );
+    }
+}
+
+pub fn enable_mmu_secondary(cpu_meta_paddr: usize) -> ! {
+    let meta = unsafe { &*(cpu_meta_paddr as *const PerCpuMeta) };
+    let v_sp = meta.stack_top_virt;
+    let v_entry = meta.entry_virt;
+
+    super::write_satp(meta.boot_table_paddr);
+    crate::mem::mmu::set_mmu_enabled();
+
+    unsafe {
+        asm!(
+            "mv a0, {meta}",
+            "mv sp, {sp}",
+            "jr {entry}",
+            meta = in(reg) cpu_meta_paddr,
             sp = in(reg) v_sp,
             entry = in(reg) v_entry,
             options(noreturn)

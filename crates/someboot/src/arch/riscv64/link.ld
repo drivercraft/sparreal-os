@@ -64,7 +64,6 @@ SECTIONS
         *(.bss .bss.*)
         *(COMMON)
 
-        . = ALIGN(PAGE_SIZE);
         __cpu0_stack = .;
         . += STACK_SIZE;
         __cpu0_stack_top = .;
