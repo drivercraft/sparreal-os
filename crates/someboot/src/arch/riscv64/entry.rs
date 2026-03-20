@@ -5,7 +5,7 @@ use crate::{entry::PrimaryCpuInitInfo, smp::PerCpuMeta};
 const RISCV_LINUX_IMAGE_TEXT_OFFSET: usize = 0x20_0000;
 const RISCV_LINUX_IMAGE_FLAGS: usize = 0;
 const RISCV_LINUX_IMAGE_VERSION: usize = 0x0000_0002;
-const RISCV_LINUX_IMAGE_MAGIC: usize = 0x5643_5349_52;
+const RISCV_LINUX_IMAGE_MAGIC: usize = 0x0056_4353_4952;
 const RISCV_LINUX_IMAGE_MAGIC2: usize = 0x0543_5352;
 
 #[unsafe(naked)]
