@@ -18,9 +18,7 @@ pub fn hart_start(hartid: usize, start_addr: usize, opaque: usize) -> Result<(),
         x if x == sbi_rt::SbiRet::already_available().error => {
             Err(HartStartError::AlreadyAvailable)
         }
-        x if x == sbi_rt::SbiRet::already_started().error => {
-            Err(HartStartError::AlreadyStarted)
-        }
+        x if x == sbi_rt::SbiRet::already_started().error => Err(HartStartError::AlreadyStarted),
         other => Err(HartStartError::Failed(other as isize)),
     }
 }

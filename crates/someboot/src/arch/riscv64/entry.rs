@@ -144,8 +144,12 @@ pub(crate) fn release_secondary_hart(hart_id: usize) -> Result<(), ColdBootRelea
     if SECONDARY_BOOT_META[hart_id].load(Ordering::Acquire) == 0 {
         return Err(ColdBootReleaseError::NotPrepared);
     }
-    match SECONDARY_BOOT_RELEASE[hart_id].compare_exchange(0, 1, Ordering::AcqRel, Ordering::Acquire)
-    {
+    match SECONDARY_BOOT_RELEASE[hart_id].compare_exchange(
+        0,
+        1,
+        Ordering::AcqRel,
+        Ordering::Acquire,
+    ) {
         Ok(_) => Ok(()),
         Err(_) => Err(ColdBootReleaseError::AlreadyReleased),
     }
