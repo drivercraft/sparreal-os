@@ -1,10 +1,11 @@
 use core::arch::asm;
 
+use num_align::NumAlign;
 use page_table_generic::{MapConfig, MemAttributes, PteConfig};
 
 use crate::{
     console::print_mapping,
-    mem::{__kimage_va, __percpu, __va, PageTableInfo},
+    mem::{__kimage_va, __percpu, __va, MB, PageTableInfo},
 };
 
 pub fn enable_mmu() -> ! {
@@ -39,6 +40,7 @@ pub fn enable_mmu() -> ! {
 fn setup_page_table() -> anyhow::Result<()> {
     println!("Mapping early memory regions...");
 
+    let k_start = crate::mem::kimage_range().start;
     let mut table = crate::mem::mmu::new_boot_table();
 
     let ram_pte = PteConfig {
@@ -81,6 +83,20 @@ fn setup_page_table() -> anyhow::Result<()> {
             })?;
         }
     }
+
+    let v_start = __kimage_va(k_start);
+    let size = crate::mem::kimage_range().len().align_up(2 * MB);
+
+    print_mapping("KImage", v_start as _, k_start, size);
+
+    table.map(&MapConfig {
+        vaddr: v_start.into(),
+        paddr: k_start.into(),
+        size,
+        pte: ram_pte,
+        allow_huge: true,
+        flush: false,
+    })?;
 
     let percpu = crate::smp::percpu_range();
     print_mapping(

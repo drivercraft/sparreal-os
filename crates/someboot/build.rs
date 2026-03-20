@@ -159,7 +159,7 @@ impl Build {
         let ld_src = "src/arch/riscv64/link.ld";
 
         if self.uspace {
-            self.kernel_vaddr = 0xffff_ffc0_8020_0000;
+            self.kernel_vaddr = 0xffff_ffff_8000_0000;
         } else {
             self.kernel_vaddr = 0x8020_0000;
         }
