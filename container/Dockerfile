@@ -24,6 +24,7 @@ RUN apt-get update \
         ninja-build \
         pkg-config \
         python3 \
+        python3-venv \
         wget \
         xz-utils \
         zlib1g-dev \
