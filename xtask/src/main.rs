@@ -5,9 +5,11 @@
 mod lang;
 
 #[cfg(not(target_os = "none"))]
-mod run;
+mod cli;
 
 #[cfg(not(target_os = "none"))]
-fn main() {
-    println!("Hello, world!");
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    cli::run_cli().await?;
+    Ok(())
 }

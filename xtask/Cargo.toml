@@ -10,5 +10,9 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
-[target.'cfg(any(windows,unix))'.dependencies]
+[target.'cfg(not(target_os = "none"))'.dependencies]
 ostool = "0.9"
+clap = { version = "4", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+toml = "0.8"
