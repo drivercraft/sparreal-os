@@ -86,7 +86,7 @@ impl ranges_ext::RangeOp for MemoryDescriptor {
         self.memory_type
     }
 
-    fn overwritable(&self, other: &Self) -> bool {
+    fn overwritable(&self, _other: &Self) -> bool {
         matches!(self.memory_type, MemoryType::Free)
     }
 
