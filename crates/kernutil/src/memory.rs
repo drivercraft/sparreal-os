@@ -87,7 +87,7 @@ impl ranges_ext::RangeOp for MemoryDescriptor {
     }
 
     fn overwritable(&self, other: &Self) -> bool {
-        matches!(self.memory_type, MemoryType::Free) || self.memory_type == other.memory_type
+        matches!(self.memory_type, MemoryType::Free)
     }
 
     fn clone_with_range(&self, range: core::ops::Range<Self::Type>) -> Self {
