@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.3](https://github.com/drivercraft/sparreal-os/compare/sparreal-kernel-v0.15.2...sparreal-kernel-v0.15.3) - 2026-04-02
+
+### Other
+
+- ✨ feat: 添加 RISC-V64 架构支持 ([#65](https://github.com/drivercraft/sparreal-os/pull/65))
+
 ## [0.15.2](https://github.com/drivercraft/sparreal-os/compare/sparreal-kernel-v0.15.1...sparreal-kernel-v0.15.2) - 2026-03-19
 
 ### Other

@@ -1055,7 +1055,7 @@ dependencies = [
 
 [[package]]
 name = "ranges-ext"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "heapless 0.9.2",
  "thiserror",
@@ -1459,7 +1459,7 @@ dependencies = [
 
 [[package]]
 name = "someboot"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "aarch64-cpu-ext",
@@ -1503,7 +1503,7 @@ dependencies = [
 
 [[package]]
 name = "somehal"
-version = "0.6.5"
+version = "0.6.6"
 dependencies = [
  "aarch64-cpu 11.2.0",
  "anyhow",
@@ -1533,7 +1533,7 @@ dependencies = [
 
 [[package]]
 name = "sparreal-kernel"
-version = "0.15.2"
+version = "0.15.3"
 dependencies = [
  "ansi_rgb",
  "anstyle",
