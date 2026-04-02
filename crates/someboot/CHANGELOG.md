@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.12](https://github.com/drivercraft/sparreal-os/compare/someboot-v0.1.11...someboot-v0.1.12) - 2026-04-02
+
+### Other
+
+- ✨ feat: 添加 RISC-V64 架构支持 ([#65](https://github.com/drivercraft/sparreal-os/pull/65))
+
 ## [0.1.11](https://github.com/drivercraft/sparreal-os/compare/someboot-v0.1.10...someboot-v0.1.11) - 2026-03-19
 
 ### Other
