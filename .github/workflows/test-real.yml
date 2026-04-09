@@ -8,16 +8,16 @@ jobs:
     strategy:
       matrix:
         include:
-          - board: phytiumpi
+          - board: PhytiumPi
             suit_name: el1
             config: "./test-suit/timer/aarch64.toml"
-          - board: phytiumpi
+          - board: PhytiumPi
             suit_name: smp
             config: "./test-suit/smp/aarch64.toml"
-          - board: roc-rk3568-pc
+          - board: ROC-RK3568-PC
             suit_name: el1
             config: "./test-suit/timer/aarch64.toml"
-          - board: roc-rk3568-pc
+          - board: ROC-RK3568-PC
             suit_name: smp
             config: "./test-suit/smp/aarch64.toml"
 
@@ -25,7 +25,7 @@ jobs:
     runs-on:
       - self-hosted
       - linux
-      - ${{ matrix.board }}
+      - board
 
     steps:
       - name: Clean up workspace
@@ -40,10 +40,9 @@ jobs:
           clean: true
 
       - name: Install dependencies
-        run: cargo +stable install ostool --version ^0.8
+        run: cargo +stable install ostool --version ^0.12
 
       - name: Run tests
         run: |
-          echo $BOARD_POWER_RESET
           export RUST_LOG=debug
-          ostool run -c ${{ matrix.config }} uboot -u .github/workflows/uboot.toml
+          ostool board run -c ${{ matrix.config }} --board-config .github/workflows/board.toml -b ${{ matrix.board }}
