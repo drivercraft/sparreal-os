@@ -7,14 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.1](https://github.com/drivercraft/sparreal-os/compare/eth-intel-v0.1.0...eth-intel-v0.1.1) - 2026-04-10
+## [0.1.0](https://github.com/drivercraft/sparreal-os/releases/tag/rd-net-v0.1.0) - 2026-04-10
 
 ### Other
 
 - ✨ feat(rd-net): 添加网络传输包装层，简化 DMA 缓冲区管理 ([#72](https://github.com/drivercraft/sparreal-os/pull/72))
-
-## [0.1.0](https://github.com/drivercraft/sparreal-os/releases/tag/eth-intel-v0.1.0) - 2026-03-11
-
-### Other
-
-- ✨ feat: 添加 rdif-net 驱动接口和 e1000 驱动 ([#52](https://github.com/drivercraft/sparreal-os/pull/52))

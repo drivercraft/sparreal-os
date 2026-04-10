@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3](https://github.com/drivercraft/sparreal-os/compare/bare-test-v0.8.2...bare-test-v0.8.3) - 2026-04-10
+
+### Other
+
+- ✨ feat(rd-net): 添加网络传输包装层，简化 DMA 缓冲区管理 ([#72](https://github.com/drivercraft/sparreal-os/pull/72))
+
 ## [0.8.2](https://github.com/drivercraft/sparreal-os/compare/bare-test-v0.8.1...bare-test-v0.8.2) - 2026-03-11
 
 ### Other

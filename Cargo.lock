@@ -186,7 +186,7 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "bare-test"
-version = "0.8.2"
+version = "0.8.3"
 dependencies = [
  "bare-test-macros 0.3.3",
  "log",
@@ -469,7 +469,7 @@ dependencies = [
 
 [[package]]
 name = "dma-api"
-version = "0.7.1"
+version = "0.7.2"
 dependencies = [
  "aarch64-cpu-ext",
  "cfg-if",
@@ -527,10 +527,10 @@ dependencies = [
 
 [[package]]
 name = "eth-intel"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bare-test",
- "dma-api 0.7.1",
+ "dma-api 0.7.2",
  "fdt-edit",
  "log",
  "mmio-api",
@@ -850,7 +850,7 @@ version = "0.4.1"
 dependencies = [
  "bare-test",
  "byte-unit",
- "dma-api 0.7.1",
+ "dma-api 0.7.2",
  "fdt-edit",
  "log",
  "mmio-api",
@@ -1046,7 +1046,7 @@ checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 name = "ramdisk"
 version = "0.1.0"
 dependencies = [
- "dma-api 0.7.1",
+ "dma-api 0.7.2",
  "rd-block",
  "rdif-block",
  "spin 0.10.0",
@@ -1073,7 +1073,7 @@ dependencies = [
 name = "rd-block"
 version = "0.1.1"
 dependencies = [
- "dma-api 0.7.1",
+ "dma-api 0.7.2",
  "futures",
  "rdif-block",
  "spin_on",
@@ -1083,7 +1083,7 @@ dependencies = [
 name = "rd-net"
 version = "0.1.0"
 dependencies = [
- "dma-api 0.7.1",
+ "dma-api 0.7.2",
  "futures",
  "rdif-eth",
 ]
@@ -1117,7 +1117,7 @@ dependencies = [
 name = "rdif-block"
 version = "0.7.0"
 dependencies = [
- "dma-api 0.7.1",
+ "dma-api 0.7.2",
  "rdif-base 0.8.0",
  "thiserror",
 ]
@@ -1147,9 +1147,9 @@ dependencies = [
 
 [[package]]
 name = "rdif-eth"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
- "dma-api 0.7.1",
+ "dma-api 0.7.2",
  "rdif-base 0.8.0",
  "thiserror",
 ]
@@ -1397,7 +1397,7 @@ version = "0.1.0"
 dependencies = [
  "bare-test",
  "bare-test-macros 0.3.3",
- "dma-api 0.7.1",
+ "dma-api 0.7.2",
  "log",
 ]
 
@@ -1548,7 +1548,7 @@ dependencies = [
  "bitflags 2.11.0",
  "buddy_system_allocator 0.11.0",
  "byte-unit",
- "dma-api 0.7.1",
+ "dma-api 0.7.2",
  "fdt-raw",
  "heapless 0.9.2",
  "kernutil",

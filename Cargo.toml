@@ -58,7 +58,7 @@ rdif-base = { path = "driver/interface/rdif-base", version = "0.8" }
 rdif-def = { path = "driver/interface/rdif-def", version = "0.2" }
 rdif-pcie = { path = "driver/interface/rdif-pcie", version = "0.2" }
 rdif-block = { path = "driver/interface/rdif-block", version = "0.7" }
-rdif-eth = { path = "driver/interface/rdif-eth", version = "0.1" }
+rdif-eth = { path = "driver/interface/rdif-eth", version = "0.2" }
 
 rd-block = { path = "driver/block/rd-block", version = "0.1" }
 rd-net = { path = "driver/eth/rd-net", version = "0.1" }

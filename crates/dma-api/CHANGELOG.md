@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2](https://github.com/drivercraft/sparreal-os/compare/dma-api-v0.7.1...dma-api-v0.7.2) - 2026-04-10
+
+### Other
+
+- ✨ feat(rd-net): 添加网络传输包装层，简化 DMA 缓冲区管理 ([#72](https://github.com/drivercraft/sparreal-os/pull/72))
+
 ## [0.7.1](https://github.com/drivercraft/sparreal-os/compare/dma-api-v0.7.0...dma-api-v0.7.1) - 2026-03-04
 
 ### Other
