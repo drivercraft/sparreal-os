@@ -23,8 +23,8 @@ mod tests {
     #[timeout = 10000]
     fn ping_test() {
         println!("ping_test: e1000 discovery start");
-        let mut nic = get_e1000().expect("no e1000 found on pci bus");
-        bare_test::net::ping::run_ping_test(&mut nic);
+        let nic = get_e1000().expect("no e1000 found on pci bus");
+        bare_test::net::ping::run_ping_test(nic);
         println!("ping_test: completed");
     }
 

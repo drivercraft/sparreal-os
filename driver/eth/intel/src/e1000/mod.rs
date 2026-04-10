@@ -1,14 +1,11 @@
 extern crate alloc;
 
-use alloc::{boxed::Box, vec, vec::Vec};
+use alloc::boxed::Box;
 use core::mem::size_of;
 
 use dma_api::{DArray, DeviceDma, DmaDirection, DmaOp};
 use mmio_api::{Mmio, MmioAddr, MmioOp};
-use rdif_eth::{
-    BuffConfig, Event, IRxQueue, ITxQueue, Interface, NetError, RequestId, RxRequest, RxResponse,
-    TxRequest,
-};
+use rdif_eth::{Event, IRxQueue, ITxQueue, Interface, NetError, QueueConfig};
 
 use crate::err::{Error, Result};
 
@@ -90,13 +87,7 @@ impl Interface for E1000 {
             .array_zero_with_align::<TxDesc>(QUEUE_SIZE, 16, DmaDirection::Bidirectional)
             .ok()?;
 
-        let tx_buf = self
-            .dma
-            .array_zero_with_align::<[u8; MAX_PACKET]>(QUEUE_SIZE, 16, DmaDirection::Bidirectional)
-            .ok()?;
-
         let desc_base = desc.dma_addr().as_u64();
-        let _buf_base = tx_buf.dma_addr().as_u64();
 
         self.regs.write(TDBAL, desc_base as u32);
         self.regs.write(TDBAH, (desc_base >> 32) as u32);
@@ -113,10 +104,10 @@ impl Interface for E1000 {
         let queue = E1000TxQueue {
             regs: self.regs,
             desc,
-            tx_buf,
-            reqs: vec![None; QUEUE_SIZE],
-            next_req: 1,
+            dma_mask: self.dma.dma_mask(),
+            bus_addrs: [None; QUEUE_SIZE],
             next_submit: 0,
+            next_reclaim: 0,
         };
 
         self.tx_created = true;
@@ -148,9 +139,10 @@ impl Interface for E1000 {
         let queue = E1000RxQueue {
             regs: self.regs,
             desc,
-            reqs: vec![None; QUEUE_SIZE],
-            next_req: 1,
+            dma_mask: self.dma.dma_mask(),
+            bus_addrs: [None; QUEUE_SIZE],
             next_submit: 0,
+            next_reclaim: 0,
         };
 
         self.rx_created = true;
@@ -189,16 +181,10 @@ impl Interface for E1000 {
 struct E1000TxQueue {
     regs: Regs,
     desc: DArray<TxDesc>,
-    tx_buf: DArray<[u8; MAX_PACKET]>,
-    reqs: Vec<Option<RequestId>>,
-    next_req: usize,
+    dma_mask: u64,
+    bus_addrs: [Option<u64>; QUEUE_SIZE],
     next_submit: usize,
-}
-
-impl E1000TxQueue {
-    fn desc_dma_addr(&self, idx: usize) -> u64 {
-        self.tx_buf.dma_addr().as_u64() + (idx * MAX_PACKET) as u64
-    }
+    next_reclaim: usize,
 }
 
 impl ITxQueue for E1000TxQueue {
@@ -206,23 +192,17 @@ impl ITxQueue for E1000TxQueue {
         QUEUE_ID0
     }
 
-    fn mtu(&self) -> usize {
-        1500
-    }
-
-    fn buff_config(&self) -> BuffConfig {
-        BuffConfig {
-            dma_mask: u64::MAX,
+    fn config(&self) -> QueueConfig {
+        QueueConfig {
+            dma_mask: self.dma_mask,
             align: 16,
-            size: MAX_PACKET,
+            buf_size: MAX_PACKET,
+            ring_size: QUEUE_SIZE,
         }
     }
 
-    fn submit_request(
-        &mut self,
-        request: TxRequest<'_>,
-    ) -> core::result::Result<RequestId, NetError> {
-        if request.data.len() > MAX_PACKET {
+    fn submit(&mut self, bus_addr: u64, len: usize) -> core::result::Result<(), NetError> {
+        if len > MAX_PACKET {
             return Err(NetError::Other(Box::new(Error::InvalidArgument(
                 "tx packet too large",
             ))));
@@ -236,54 +216,33 @@ impl ITxQueue for E1000TxQueue {
             return Err(NetError::Retry);
         }
 
-        let mut slot = self
-            .tx_buf
-            .read(idx)
-            .ok_or_else(|| NetError::Other(Box::new(Error::Other("invalid tx slot"))))?;
-        slot[..request.data.len()].copy_from_slice(request.data);
-        self.tx_buf.set(idx, slot);
-
-        let desc = TxDesc::new(self.desc_dma_addr(idx), request.data.len() as u16);
-        self.desc.set(idx, desc);
-
-        let req_id = RequestId::new(self.next_req);
-        self.next_req += 1;
-        self.reqs[idx] = Some(req_id);
-
+        self.desc.set(idx, TxDesc::new(bus_addr, len as u16));
+        self.bus_addrs[idx] = Some(bus_addr);
         self.next_submit = next;
         self.regs.write(TDT, next as u32);
 
-        Ok(req_id)
+        Ok(())
     }
 
-    fn poll_request(&mut self, request: RequestId) -> core::result::Result<(), NetError> {
-        for idx in 0..QUEUE_SIZE {
-            if self.reqs[idx] != Some(request) {
-                continue;
-            }
-
-            let desc = self
-                .desc
-                .read(idx)
-                .ok_or_else(|| NetError::Other(Box::new(Error::Other("invalid tx desc"))))?;
-            if desc.is_done() {
-                self.reqs[idx] = None;
-                return Ok(());
-            }
-
-            return Err(NetError::Retry);
+    fn reclaim(&mut self) -> Option<u64> {
+        let idx = self.next_reclaim;
+        let desc = self.desc.read(idx)?;
+        if !desc.is_done() {
+            return None;
         }
 
-        Err(NetError::Other(Box::new(Error::Other("request not found"))))
+        self.next_reclaim = (idx + 1) % QUEUE_SIZE;
+        self.bus_addrs[idx].take()
     }
 }
 
 struct E1000RxQueue {
     regs: Regs,
     desc: DArray<RxDesc>,
-    reqs: Vec<Option<RequestId>>,
-    next_req: usize,
+    dma_mask: u64,
+    bus_addrs: [Option<u64>; QUEUE_SIZE],
     next_submit: usize,
+    next_reclaim: usize,
 }
 
 impl IRxQueue for E1000RxQueue {
@@ -291,19 +250,22 @@ impl IRxQueue for E1000RxQueue {
         QUEUE_ID0
     }
 
-    fn mtu(&self) -> usize {
-        1500
-    }
-
-    fn buff_config(&self) -> BuffConfig {
-        BuffConfig {
-            dma_mask: u64::MAX,
+    fn config(&self) -> QueueConfig {
+        QueueConfig {
+            dma_mask: self.dma_mask,
             align: 16,
-            size: MAX_PACKET,
+            buf_size: MAX_PACKET,
+            ring_size: QUEUE_SIZE,
         }
     }
 
-    fn submit_request(&mut self, request: RxRequest) -> core::result::Result<RequestId, NetError> {
+    fn submit(&mut self, bus_addr: u64, len: usize) -> core::result::Result<(), NetError> {
+        if len > MAX_PACKET {
+            return Err(NetError::Other(Box::new(Error::InvalidArgument(
+                "rx buffer too large",
+            ))));
+        }
+
         let idx = self.next_submit;
         let next = (idx + 1) % QUEUE_SIZE;
         let hw_head = self.regs.read(RDH) as usize;
@@ -312,39 +274,24 @@ impl IRxQueue for E1000RxQueue {
             return Err(NetError::Retry);
         }
 
-        let desc = RxDesc::new(request.buffer.bus);
-        self.desc.set(idx, desc);
-
-        let req_id = RequestId::new(self.next_req);
-        self.next_req += 1;
-        self.reqs[idx] = Some(req_id);
-
+        self.desc.set(idx, RxDesc::new(bus_addr));
+        self.bus_addrs[idx] = Some(bus_addr);
         self.next_submit = next;
         self.regs.write(RDT, next as u32);
 
-        Ok(req_id)
+        Ok(())
     }
 
-    fn poll_request(&mut self, request: RequestId) -> core::result::Result<RxResponse, NetError> {
-        for idx in 0..QUEUE_SIZE {
-            if self.reqs[idx] != Some(request) {
-                continue;
-            }
-
-            let desc = self
-                .desc
-                .read(idx)
-                .ok_or_else(|| NetError::Other(Box::new(Error::Other("invalid rx desc"))))?;
-            if desc.is_done() {
-                self.reqs[idx] = None;
-                return Ok(RxResponse {
-                    len: desc.length as usize,
-                });
-            }
-
-            return Err(NetError::Retry);
+    fn reclaim(&mut self) -> Option<(u64, usize)> {
+        let idx = self.next_reclaim;
+        let desc = self.desc.read(idx)?;
+        if !desc.is_done() {
+            return None;
         }
 
-        Err(NetError::Other(Box::new(Error::Other("request not found"))))
+        self.next_reclaim = (idx + 1) % QUEUE_SIZE;
+        self.bus_addrs[idx]
+            .take()
+            .map(|bus_addr| (bus_addr, desc.length as usize))
     }
 }

@@ -1,10 +1,9 @@
 extern crate alloc;
 
-use alloc::{boxed::Box, vec, vec::Vec};
-use core::{num::NonZeroUsize, ptr::NonNull, time::Duration};
+use alloc::vec;
+use core::time::Duration;
 
-use dma_api::{DmaDirection, DmaMapHandle, DmaOp};
-use rdif_eth::{Buffer, IRxQueue, ITxQueue, Interface, NetError};
+use rd_net::{Interface, Net, NetError, RxPacket, RxQueue, TxQueue};
 use smoltcp::{
     iface::{Config, Interface as SmolInterface, SocketSet},
     phy::{Device, DeviceCapabilities, Medium, RxToken, TxToken},
@@ -28,163 +27,51 @@ fn spin_delay(duration: Duration) {
     }
 }
 
-struct RxSlot {
-    storage: Vec<u8>,
-    map: DmaMapHandle,
-    req_id: Option<rdif_eth::RequestId>,
+struct BridgeDevice {
+    tx: TxQueue,
+    rx: RxQueue,
 }
 
-struct NetDevice {
-    tx: Box<dyn ITxQueue>,
-    rx: Box<dyn IRxQueue>,
-    slots: Vec<RxSlot>,
+struct NetRxToken<'a> {
+    packet: RxPacket<'a>,
 }
 
-impl NetDevice {
-    fn new(tx: Box<dyn ITxQueue>, rx: Box<dyn IRxQueue>) -> Self {
-        let cfg = rx.buff_config();
-        let mut slots = Vec::new();
-
-        for _ in 0..64 {
-            let mut storage = vec![0u8; cfg.size.max(1536)];
-            let map = unsafe {
-                crate::os::mem::dma::kernel_dma_op()
-                    .map_single(
-                        cfg.dma_mask,
-                        NonNull::new(storage.as_mut_ptr()).expect("nonnull rx buffer"),
-                        NonZeroUsize::new(storage.len()).expect("nonzero rx buffer"),
-                        cfg.align.max(1),
-                        DmaDirection::FromDevice,
-                    )
-                    .expect("map rx buffer")
-            };
-
-            slots.push(RxSlot {
-                storage,
-                map,
-                req_id: None,
-            });
-        }
-
-        let mut dev = Self { tx, rx, slots };
-        for idx in 0..dev.slots.len() {
-            let _ = dev.refill_slot(idx);
-        }
-        dev
-    }
-
-    fn refill_slot(&mut self, idx: usize) -> core::result::Result<(), NetError> {
-        let slot = &mut self.slots[idx];
-        if slot.req_id.is_some() {
-            return Ok(());
-        }
-
-        let req_id = self.rx.submit_request(rdif_eth::RxRequest {
-            buffer: Buffer {
-                virt: slot.storage.as_mut_ptr(),
-                bus: slot.map.dma_addr().as_u64(),
-                size: slot.storage.len(),
-            },
-        })?;
-
-        slot.req_id = Some(req_id);
-        Ok(())
-    }
-
-    fn poll_rx_packet(&mut self) -> Option<Vec<u8>> {
-        for idx in 0..self.slots.len() {
-            let req_id = match self.slots[idx].req_id {
-                Some(id) => id,
-                None => continue,
-            };
-
-            match self.rx.poll_request(req_id) {
-                Ok(resp) => {
-                    let len = resp.len.min(self.slots[idx].storage.len());
-                    crate::os::mem::dma::kernel_dma_op().prepare_read(
-                        &self.slots[idx].map,
-                        0,
-                        len,
-                        DmaDirection::FromDevice,
-                    );
-                    let packet = self.slots[idx].storage[..len].to_vec();
-                    self.slots[idx].req_id = None;
-                    let _ = self.refill_slot(idx);
-                    return Some(packet);
-                }
-                Err(NetError::Retry) => {}
-                Err(_) => {
-                    self.slots[idx].req_id = None;
-                    let _ = self.refill_slot(idx);
-                }
-            }
-        }
-
-        None
-    }
-}
-
-impl Drop for NetDevice {
-    fn drop(&mut self) {
-        for slot in &self.slots {
-            unsafe {
-                crate::os::mem::dma::kernel_dma_op().unmap_single(slot.map);
-            }
-        }
-    }
-}
-
-struct NetRxToken {
-    data: Vec<u8>,
-}
-
-impl RxToken for NetRxToken {
+impl RxToken for NetRxToken<'_> {
     fn consume<R, F>(self, f: F) -> R
     where
         F: FnOnce(&[u8]) -> R,
     {
-        f(&self.data)
+        self.packet.consume(f)
     }
 }
 
 struct NetTxToken<'a> {
-    tx: &'a mut dyn ITxQueue,
+    tx: &'a mut TxQueue,
 }
 
-impl<'a> TxToken for NetTxToken<'a> {
+impl TxToken for NetTxToken<'_> {
     fn consume<R, F>(self, len: usize, f: F) -> R
     where
         F: FnOnce(&mut [u8]) -> R,
     {
-        let mut buffer = vec![0u8; len];
-        let ret = f(&mut buffer);
-
-        let req_id = loop {
-            match self
-                .tx
-                .submit_request(rdif_eth::TxRequest { data: &buffer })
-            {
-                Ok(req_id) => break req_id,
-                Err(NetError::Retry) => spin_delay(Duration::from_millis(1)),
-                Err(e) => panic!("tx submit failed: {e:?}"),
-            }
+        let (ret, mut pending) = match self.tx.prepare_send(len, f) {
+            Ok(result) => result,
+            Err(err) => panic!("tx prepare failed: {err:?}"),
         };
 
         loop {
-            match self.tx.poll_request(req_id) {
-                Ok(()) => break,
+            match pending.try_submit() {
+                Ok(()) => return ret,
                 Err(NetError::Retry) => spin_delay(Duration::from_millis(1)),
-                Err(e) => panic!("tx poll failed: {e:?}"),
+                Err(err) => panic!("tx submit failed: {err:?}"),
             }
         }
-
-        ret
     }
 }
 
-impl Device for NetDevice {
+impl Device for BridgeDevice {
     type RxToken<'a>
-        = NetRxToken
+        = NetRxToken<'a>
     where
         Self: 'a;
     type TxToken<'a>
@@ -193,36 +80,30 @@ impl Device for NetDevice {
         Self: 'a;
 
     fn receive(&mut self, _timestamp: Instant) -> Option<(Self::RxToken<'_>, Self::TxToken<'_>)> {
-        let data = self.poll_rx_packet()?;
-        Some((
-            NetRxToken { data },
-            NetTxToken {
-                tx: self.tx.as_mut(),
-            },
-        ))
+        let BridgeDevice { tx, rx } = self;
+        let packet = rx.try_receive()?;
+        Some((NetRxToken { packet }, NetTxToken { tx }))
     }
 
     fn transmit(&mut self, _timestamp: Instant) -> Option<Self::TxToken<'_>> {
-        Some(NetTxToken {
-            tx: self.tx.as_mut(),
-        })
+        Some(NetTxToken { tx: &mut self.tx })
     }
 
     fn capabilities(&self) -> DeviceCapabilities {
         let mut caps = DeviceCapabilities::default();
-        caps.max_transmission_unit = self.tx.mtu();
+        caps.max_transmission_unit = self.tx.buf_size();
         caps.medium = Medium::Ethernet;
         caps.max_burst_size = Some(1);
         caps
     }
 }
 
-pub fn run_ping_test(nic: &mut dyn Interface) {
-    let mac = nic.mac_address();
-
-    let tx = nic.create_tx_queue().expect("create tx queue");
-    let rx = nic.create_rx_queue().expect("create rx queue");
-    let mut dev = NetDevice::new(tx, rx);
+pub fn run_ping_test(nic: impl Interface) {
+    let mut net = Net::new(nic, crate::os::mem::dma::kernel_dma_op());
+    let mac = net.mac_address();
+    let tx = net.create_tx_queue().expect("create tx queue");
+    let rx = net.create_rx_queue().expect("create rx queue");
+    let mut dev = BridgeDevice { tx, rx };
 
     let config = Config::new(HardwareAddress::Ethernet(EthernetAddress::from_bytes(&mac)));
     let mut iface = SmolInterface::new(config, &mut dev, now());

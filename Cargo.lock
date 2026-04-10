@@ -189,9 +189,8 @@ name = "bare-test"
 version = "0.8.2"
 dependencies = [
  "bare-test-macros 0.3.3",
- "dma-api 0.7.1",
  "log",
- "rdif-eth",
+ "rd-net",
  "smoltcp",
  "sparreal-rt",
 ]
@@ -1078,6 +1077,15 @@ dependencies = [
  "futures",
  "rdif-block",
  "spin_on",
+]
+
+[[package]]
+name = "rd-net"
+version = "0.1.0"
+dependencies = [
+ "dma-api 0.7.1",
+ "futures",
+ "rdif-eth",
 ]
 
 [[package]]

@@ -11,13 +11,12 @@ version = "0.8.2"
 
 [features]
 default = []
-net = ["dep:dma-api", "dep:rdif-eth", "dep:smoltcp"]
+net = ["dep:rd-net", "dep:smoltcp"]
 
 [dependencies]
 bare-test-macros.workspace = true
-dma-api = { workspace = true, optional = true }
 log.workspace = true
-rdif-eth = { workspace = true, optional = true }
+rd-net = { workspace = true, optional = true }
 smoltcp = { version = "0.12", default-features = false, features = [
     "alloc",
     "medium-ethernet",

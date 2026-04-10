@@ -2,8 +2,6 @@
 
 extern crate alloc;
 
-use core::ops::{Deref, DerefMut};
-
 use alloc::boxed::Box;
 pub use dma_api;
 pub use rdif_base::{DriverGeneric, KError, io};
@@ -61,59 +59,20 @@ impl From<dma_api::DmaError> for NetError {
 // DMA buffer helpers
 // ---------------------------------------------------------------------------
 
-/// Configuration for DMA buffer allocation.
-pub struct BuffConfig {
+/// Queue configuration needed by the upper layer DMA pool.
+#[derive(Debug, Clone, Copy)]
+pub struct QueueConfig {
     /// DMA addressing mask for the device.
     pub dma_mask: u64,
 
     /// Required alignment for buffer addresses (in bytes).
     pub align: usize,
 
-    /// Maximum buffer size in bytes (typically MTU + Ethernet header).
-    pub size: usize,
-}
+    /// DMA packet buffer size in bytes.
+    pub buf_size: usize,
 
-/// A DMA-capable buffer described by both a virtual and bus address.
-#[derive(Clone, Copy)]
-pub struct Buffer {
-    pub virt: *mut u8,
-    pub bus: u64,
-    pub size: usize,
-}
-
-impl Deref for Buffer {
-    type Target = [u8];
-
-    fn deref(&self) -> &Self::Target {
-        unsafe { core::slice::from_raw_parts(self.virt, self.size) }
-    }
-}
-
-impl DerefMut for Buffer {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe { core::slice::from_raw_parts_mut(self.virt, self.size) }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Request / response identifiers and event bitmask
-// ---------------------------------------------------------------------------
-
-/// Opaque identifier for a submitted request.
-#[repr(transparent)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct RequestId(usize);
-
-impl RequestId {
-    pub fn new(id: usize) -> Self {
-        Self(id)
-    }
-}
-
-impl From<RequestId> for usize {
-    fn from(value: RequestId) -> Self {
-        value.0
-    }
+    /// Descriptor ring size.
+    pub ring_size: usize,
 }
 
 /// Bitmask tracking up to 64 queue identifiers.
@@ -163,32 +122,6 @@ impl Event {
     }
 }
 
-// ---------------------------------------------------------------------------
-// TX request / RX request & response
-// ---------------------------------------------------------------------------
-
-/// A transmit request: a packet to send.
-pub struct TxRequest<'a> {
-    /// Raw packet data (including Ethernet header) to transmit.
-    pub data: &'a [u8],
-}
-
-/// A receive request: a pre-allocated buffer submitted to hardware.
-pub struct RxRequest {
-    /// DMA buffer that hardware will fill with received data.
-    pub buffer: Buffer,
-}
-
-/// Result of a completed receive operation.
-pub struct RxResponse {
-    /// Actual number of bytes received into the buffer.
-    pub len: usize,
-}
-
-// ---------------------------------------------------------------------------
-// Device-level interface
-// ---------------------------------------------------------------------------
-
 /// Core interface that network device drivers must implement.
 ///
 /// Provides device-level operations: queue creation, interrupt management,
@@ -225,31 +158,25 @@ pub trait Interface: DriverGeneric {
 
 /// Transmit queue interface.
 ///
-/// A driver creates one or more TX queues via [`Interface::create_tx_queue`].
-/// The caller submits packets with [`submit_request`](ITxQueue::submit_request)
-/// and later polls for completion with [`poll_request`](ITxQueue::poll_request).
+/// A driver creates one or more TX queues via [`Interface::create_tx_queue`]
+/// and exchanges DMA buffer bus addresses with the caller.
 pub trait ITxQueue: Send + 'static {
     /// Queue identifier (unique within the device).
     fn id(&self) -> usize;
 
-    /// Maximum transmission unit in bytes (payload only, excluding Ethernet
-    /// header).
-    fn mtu(&self) -> usize;
+    /// DMA buffer configuration for this queue.
+    fn config(&self) -> QueueConfig;
 
-    /// DMA buffer configuration for transmit buffers.
-    fn buff_config(&self) -> BuffConfig;
-
-    /// Submit a packet for transmission.
+    /// Submit a DMA buffer for transmission.
     ///
-    /// Returns a [`RequestId`] that can be polled via [`poll_request`](ITxQueue::poll_request).
-    /// Returns [`NetError::Retry`] when the hardware queue is full.
-    fn submit_request(&mut self, request: TxRequest<'_>) -> Result<RequestId, NetError>;
+    /// `bus_addr` must point to a DMA-capable buffer whose first `len` bytes
+    /// contain the packet to be transmitted.
+    fn submit(&mut self, bus_addr: u64, len: usize) -> Result<(), NetError>;
 
-    /// Poll for completion of a previously submitted transmit request.
+    /// Reclaim the next completed transmit buffer.
     ///
-    /// Returns `Ok(())` when the packet has been sent, or
-    /// [`NetError::Retry`] if the request is still in progress.
-    fn poll_request(&mut self, request: RequestId) -> Result<(), NetError>;
+    /// Returns the buffer bus address when the device has completed sending it.
+    fn reclaim(&mut self) -> Option<u64>;
 }
 
 // ---------------------------------------------------------------------------
@@ -258,31 +185,22 @@ pub trait ITxQueue: Send + 'static {
 
 /// Receive queue interface.
 ///
-/// A driver creates one or more RX queues via [`Interface::create_rx_queue`].
-/// The caller pre-allocates DMA buffers and submits them with
-/// [`submit_request`](IRxQueue::submit_request). When a packet arrives the
-/// hardware fills the buffer; the caller retrieves results via
-/// [`poll_request`](IRxQueue::poll_request).
+/// A driver creates one or more RX queues via [`Interface::create_rx_queue`]
+/// and exchanges DMA buffer bus addresses with the caller.
 pub trait IRxQueue: Send + 'static {
     /// Queue identifier (unique within the device).
     fn id(&self) -> usize;
 
-    /// Maximum transmission unit in bytes.
-    fn mtu(&self) -> usize;
+    /// DMA buffer configuration for this queue.
+    fn config(&self) -> QueueConfig;
 
-    /// DMA buffer configuration for receive buffers.
-    fn buff_config(&self) -> BuffConfig;
-
-    /// Submit a pre-allocated receive buffer to hardware.
+    /// Submit an empty DMA buffer to hardware.
     ///
-    /// The buffer will be filled when a packet is received. Returns a
-    /// [`RequestId`] for later polling.
-    /// Returns [`NetError::Retry`] when the hardware queue is full.
-    fn submit_request(&mut self, request: RxRequest) -> Result<RequestId, NetError>;
+    /// `bus_addr` must point to a DMA-capable buffer whose total size is `len`.
+    fn submit(&mut self, bus_addr: u64, len: usize) -> Result<(), NetError>;
 
-    /// Poll for completion of a previously submitted receive request.
+    /// Reclaim the next completed receive buffer.
     ///
-    /// Returns [`RxResponse`] with the actual received byte count on success,
-    /// or [`NetError::Retry`] if no packet has been received yet.
-    fn poll_request(&mut self, request: RequestId) -> Result<RxResponse, NetError>;
+    /// Returns the buffer bus address and the received byte count.
+    fn reclaim(&mut self) -> Option<(u64, usize)>;
 }

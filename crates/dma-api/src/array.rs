@@ -207,6 +207,73 @@ impl<T> DArray<T> {
         self.data.confirm_write_all();
     }
 
+    /// 在 CPU 读取前同步指定字节范围。
+    ///
+    /// 对 `FromDevice` 和 `Bidirectional` 方向，这会使对应缓存范围失效。
+    pub fn prepare_read(&self, offset: usize, size: usize) {
+        assert!(
+            offset <= self.bytes_len() && size <= self.bytes_len().saturating_sub(offset),
+            "range out of bounds, offset: {}, size: {}, bytes_len: {}",
+            offset,
+            size,
+            self.bytes_len()
+        );
+        self.data.prepare_read(offset, size);
+    }
+
+    /// 在设备读取前同步指定字节范围。
+    ///
+    /// 对 `ToDevice` 和 `Bidirectional` 方向，这会将对应缓存范围刷回内存。
+    pub fn confirm_write(&self, offset: usize, size: usize) {
+        assert!(
+            offset <= self.bytes_len() && size <= self.bytes_len().saturating_sub(offset),
+            "range out of bounds, offset: {}, size: {}, bytes_len: {}",
+            offset,
+            size,
+            self.bytes_len()
+        );
+        self.data.confirm_write(offset, size);
+    }
+
+    /// 在 CPU 读取前同步整个数组。
+    pub fn prepare_read_all(&self) {
+        self.data.prepare_read(0, self.bytes_len());
+    }
+
+    /// 在设备读取前同步整个数组。
+    pub fn confirm_write_all(&self) {
+        self.data.confirm_write_all();
+    }
+
+    /// 直接借出一段可写切片，并在闭包返回后自动同步缓存。
+    pub fn write_with<R>(&mut self, len: usize, f: impl FnOnce(&mut [T]) -> R) -> R {
+        assert!(
+            len <= self.len(),
+            "range out of bounds, len: {}, array len: {}",
+            len,
+            self.len()
+        );
+        let ret = {
+            let data = unsafe { self.as_mut_slice() };
+            f(&mut data[..len])
+        };
+        self.confirm_write(0, len * core::mem::size_of::<T>());
+        ret
+    }
+
+    /// 直接借出一段只读切片，并在闭包调用前自动同步缓存。
+    pub fn read_with<R>(&self, len: usize, f: impl FnOnce(&[T]) -> R) -> R {
+        assert!(
+            len <= self.len(),
+            "range out of bounds, len: {}, array len: {}",
+            len,
+            self.len()
+        );
+        self.prepare_read(0, len * core::mem::size_of::<T>());
+        let data = unsafe { core::slice::from_raw_parts(self.as_ptr().as_ptr(), len) };
+        f(data)
+    }
+
     /// # Safety
     ///
     /// slice will not auto do cache sync operations.
