@@ -17,15 +17,17 @@ impl Rela {
 /// # Safety
 /// 此函数操作裸指针，调用者必须确保传入的指针范围有效且指向合法的 RELA 重定位表。
 pub unsafe fn apply_reloc(load_offset: i128, start: *mut u8, end: *const u8, r_type: u32) {
-    let num_entries = (end as usize - start as usize) / size_of::<Rela>();
-    let relocations = unsafe { core::slice::from_raw_parts_mut(start as *mut Rela, num_entries) };
+    let mut reloc = start as *mut Rela;
+    let end = end as usize;
 
-    for reloc in relocations {
-        if reloc.r_type_raw() == r_type {
-            let addr = (reloc.r_offset as i128 + load_offset) as usize as *mut usize;
-            let val = (reloc.r_addend as i128 + load_offset) as usize;
+    while (reloc as usize) < end {
+        let current = unsafe { &mut *reloc };
+        if current.r_type_raw() == r_type {
+            let addr = (current.r_offset as i128 + load_offset) as usize as *mut usize;
+            let val = (current.r_addend as i128 + load_offset) as usize;
             unsafe { *addr = val };
         }
+        reloc = unsafe { reloc.add(1) };
     }
 }
 
@@ -40,12 +42,14 @@ pub unsafe fn reset(r_type: u32) {
     let start = __rela_dyn_begin as *mut u8;
     let end = __rela_dyn_end as *const u8;
 
-    let num_entries = (end as usize - start as usize) / size_of::<Rela>();
-    let relocations = unsafe { core::slice::from_raw_parts_mut(start as *mut Rela, num_entries) };
-    for reloc in relocations {
-        if reloc.r_type_raw() == r_type {
-            let addr = reloc.r_offset as usize as *mut usize;
-            unsafe { addr.write_volatile(reloc.r_addend as u64 as usize) };
+    let mut reloc = start as *mut Rela;
+    let end = end as usize;
+    while (reloc as usize) < end {
+        let current = unsafe { &mut *reloc };
+        if current.r_type_raw() == r_type {
+            let addr = current.r_offset as usize as *mut usize;
+            unsafe { addr.write_volatile(current.r_addend as u64 as usize) };
         }
+        reloc = unsafe { reloc.add(1) };
     }
 }

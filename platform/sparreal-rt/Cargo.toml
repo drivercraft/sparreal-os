@@ -12,6 +12,7 @@ version = "0.13.4"
 [features]
 default = ["uspace"]
 hv = ["somehal/hv"]
+std-compat = ["somehal/std-compat", "sparreal-kernel/std-compat"]
 uspace = ["somehal/uspace"]
 
 [dependencies]
@@ -19,4 +20,5 @@ somehal = { workspace = true }
 sparreal-kernel = { workspace = true }
 
 log = {workspace = true}
+spin = "0.10"
  

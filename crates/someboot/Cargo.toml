@@ -14,6 +14,7 @@ efi = []
 hv = []
 mmu = []
 percpu-prealloc = []
+std-compat = []
 uspace = ["mmu"]
 
 [dependencies]

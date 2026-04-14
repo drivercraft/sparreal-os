@@ -18,7 +18,7 @@ use crate::{
     },
 };
 
-#[cfg(target_os = "none")]
+#[cfg(any(target_os = "none", feature = "std-compat"))]
 #[global_allocator]
 pub(super) static KERNEL_MEMORY_ALLOCATOR: KernelMemoryAllocator = KernelMemoryAllocator::new();
 
@@ -62,11 +62,11 @@ impl FrameAllocator for KernelAllocator {
 
 /// 获取全局内核内存分配器实例
 pub fn kernel_memory_allocator() -> &'static KernelMemoryAllocator {
-    #[cfg(target_os = "none")]
+    #[cfg(any(target_os = "none", feature = "std-compat"))]
     {
         &KERNEL_MEMORY_ALLOCATOR
     }
-    #[cfg(not(target_os = "none"))]
+    #[cfg(not(any(target_os = "none", feature = "std-compat")))]
     {
         // 对于非 none 目标，提供一个空实现
         use core::sync::atomic::{AtomicPtr, Ordering};

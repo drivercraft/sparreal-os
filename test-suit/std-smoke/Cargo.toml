@@ -1,0 +1,8 @@
+[package]
+edition.workspace = true
+name = "test-suit-std-smoke"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+sparreal-rt = { workspace = true, features = ["std-compat"] }

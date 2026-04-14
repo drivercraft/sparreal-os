@@ -54,7 +54,7 @@ pub(crate) fn init_heap(regions: &[MemoryDescriptor]) {
                 adjusted_byte
             );
 
-            #[cfg(target_os = "none")]
+            #[cfg(any(target_os = "none", feature = "std-compat"))]
             {
                 let memory = unsafe { core::slice::from_raw_parts_mut(start.into(), size) };
 

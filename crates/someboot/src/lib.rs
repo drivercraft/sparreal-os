@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![cfg(not(any(windows, unix)))]
+#![cfg(any(not(any(windows, unix)), feature = "std-compat"))]
 #![cfg_attr(target_arch = "x86_64", feature(abi_x86_interrupt))]
 
 #[allow(unused_imports)]

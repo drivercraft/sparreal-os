@@ -8,8 +8,11 @@ fn main() {
     println!("cargo::rustc-check-cfg=cfg(hv)");
 
     let target = std::env::var("TARGET").unwrap();
+    let std_compat = std::env::var("CARGO_FEATURE_STD_COMPAT").is_ok();
 
-    if target.contains("windows") || target.contains("linux") || target.contains("darwin") {
+    if !std_compat
+        && (target.contains("windows") || target.contains("linux") || target.contains("darwin"))
+    {
         return;
     }
 

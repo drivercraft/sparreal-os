@@ -115,6 +115,16 @@ pub(crate) fn _fixmap_io(paddr: usize) -> *mut u8 {
 pub(crate) fn early_init() {
     crate::fdt::init_memory_map();
 
+    #[cfg(feature = "std-compat")]
+    if memory_map().iter().all(|desc| desc.memory_type != MemoryType::Free) {
+        add_memory_descriptor(MemoryDescriptor {
+            physical_start: 0x4000_0000,
+            size_in_bytes: 0x0800_0000,
+            memory_type: MemoryType::Free,
+        })
+        .unwrap();
+    }
+
     let kernel_range = kimage_range();
     add_memory_descriptor(MemoryDescriptor {
         physical_start: kernel_range.start,

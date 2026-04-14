@@ -14,6 +14,7 @@ efi = ["someboot/efi"]
 hv = ["mmu", "someboot/hv"]
 mmu = ["someboot/mmu"]
 percpu-prealloc = ["someboot/percpu-prealloc"]
+std-compat = ["someboot/std-compat"]
 uspace = ["mmu", "someboot/uspace"]
 
 [dependencies]

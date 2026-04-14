@@ -9,6 +9,9 @@ name = "sparreal-kernel"
 repository.workspace = true
 version = "0.15.3"
 
+[features]
+std-compat = []
+
 [dependencies]
 ansi_rgb = "0.2"
 buddy_system_allocator = "0.11"

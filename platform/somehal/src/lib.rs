@@ -2,7 +2,7 @@
 #![no_main]
 #![allow(unused_features)]
 #![feature(used_with_arg)]
-#![cfg(not(any(windows, unix)))]
+#![cfg(any(not(any(windows, unix)), feature = "std-compat"))]
 
 #[macro_use]
 extern crate alloc;
