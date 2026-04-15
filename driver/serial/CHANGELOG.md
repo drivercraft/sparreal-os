@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1](https://github.com/drivercraft/sparreal-os/compare/some-serial-v0.4.0...some-serial-v0.4.1) - 2026-04-15
+
+### Other
+
+- release ([#74](https://github.com/drivercraft/sparreal-os/pull/74))
+
 ## [0.4.0](https://github.com/drivercraft/sparreal-os/compare/some-serial-v0.3.1...some-serial-v0.4.0) - 2026-04-15
 
 ### Other
