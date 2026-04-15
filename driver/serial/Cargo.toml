@@ -4,7 +4,6 @@ categories = ["embedded", "hardware-support", "no-std"]
 description = "Unified serial driver collection for embedded and bare-metal environments"
 documentation = "https://docs.rs/some-serial"
 edition.workspace = true
-homepage = "https://github.com/drivercraft/some-serial"
 keywords = ["serial", "uart", "embedded", "bare-metal"]
 license = "MIT OR Apache-2.0"
 name = "some-serial"
