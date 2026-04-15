@@ -1389,7 +1389,7 @@ dependencies = [
 
 [[package]]
 name = "some-serial"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "bare-test",
  "bitflags 2.11.0",
