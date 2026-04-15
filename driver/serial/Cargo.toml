@@ -1,0 +1,48 @@
+[package]
+authors = ["周睿 <zrufo747@outlook.com>"]
+categories = ["embedded", "hardware-support", "no-std"]
+description = "Unified serial driver collection for embedded and bare-metal environments"
+documentation = "https://docs.rs/some-serial"
+edition = "2021"
+homepage = "https://github.com/drivercraft/some-serial"
+keywords = ["serial", "uart", "embedded", "bare-metal"]
+license = "MIT OR Apache-2.0"
+name = "some-serial"
+repository = "https://github.com/drivercraft/some-serial"
+version = "0.3.1"
+
+[dependencies]
+bitflags = "2.10"
+dma-api = {version = "0.5", features = ["alloc"]}
+heapless = "0.9"
+log = "0.4"
+mbarrier = "0.1"
+# rdif-base = {version = "0.7"}
+rdif-serial = {version = "0.6"}
+# rdif-serial = {path = "C:\\Users\\zhoudongsheng\\Documents\\opensource\\rdrive\\interface\\rdif-serial"}
+
+thiserror = {version = "2.0", default-features = false}
+tock-registers = "0.10"
+enum_dispatch = "0.3"
+
+[target.'cfg(any(target_arch = "x86", target_arch = "x86_64"))'.dependencies]
+x86 = "0.52"
+
+[target.'cfg(target_os = "none")'.dev-dependencies]
+bare-test = "0.7"
+spin = "0.10"
+
+[build-dependencies]
+bare-test-macros = "0.2"
+
+[[test]]
+harness = false
+name = "test"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+targets = ["aarch64-unknown-none-softfloat", "x86_64-unknown-none"]
+
+[package.metadata.playground]
+all-features = true
