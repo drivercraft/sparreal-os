@@ -2,7 +2,7 @@
 //!
 //! 适用于嵌入式平台的内存映射 IO 版本
 
-use rdif_serial::{BSerial, SerialDyn};
+use rdif_serial::{BSerial, InterfaceRaw, SerialDyn};
 
 use crate::ns16550::{Ns16550IrqHandler, Ns16550Reciever, Ns16550Sender};
 
@@ -56,7 +56,9 @@ impl Ns16550<Mmio> {
     }
 
     pub fn new_mmio_boxed(base: NonNull<u8>, clock_freq: u32, reg_width: usize) -> BSerial {
-        SerialDyn::new_boxed(Ns16550::new_mmio(base, clock_freq, reg_width))
+        let mut serial = Ns16550::new_mmio(base, clock_freq, reg_width);
+        serial.open();
+        SerialDyn::new_boxed(serial)
     }
 
     pub fn take_tx(&mut self) -> Option<crate::Sender> {

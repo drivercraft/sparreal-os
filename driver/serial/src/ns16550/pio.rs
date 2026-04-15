@@ -2,6 +2,8 @@
 //!
 //! 仅在 x86_64 架构下编译，使用 x86_64 crate 进行端口 I/O
 
+use rdif_serial::InterfaceRaw;
+
 use super::{Kind, Ns16550, Ns16550IrqHandler, Ns16550Reciever, Ns16550Sender};
 
 /// NS16550 IO Port 版本驱动
@@ -46,7 +48,9 @@ impl Ns16550<Port> {
     }
 
     pub fn new_port_boxed(port: u16, clock_freq: u32) -> rdif_serial::BSerial {
-        rdif_serial::SerialDyn::new_boxed(Ns16550::new_port(port, clock_freq))
+        let mut serial = Ns16550::new_port(port, clock_freq);
+        serial.open();
+        rdif_serial::SerialDyn::new_boxed(serial)
     }
 
     pub fn take_tx(&mut self) -> Option<crate::Sender> {

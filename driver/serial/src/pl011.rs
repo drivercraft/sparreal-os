@@ -173,7 +173,9 @@ impl Pl011 {
     }
 
     pub fn new_boxed(base: NonNull<u8>, clock_freq: u32) -> BSerial {
-        SerialDyn::new_boxed(Self::new(base, clock_freq))
+        let mut serial = Self::new(base, clock_freq);
+        serial.open();
+        SerialDyn::new_boxed(serial)
     }
 
     fn registers(&self) -> &Pl011Registers {
@@ -312,7 +314,7 @@ impl Pl011 {
             log::debug!("  TX trigger level: 1/2");
         }
         self.registers().uartimsc.set(0); // 禁用所有中断
-                                          // 启用 UART
+        // 启用 UART
         self.registers()
             .uartcr
             .modify(UARTCR::UARTEN::SET + UARTCR::TXE::SET + UARTCR::RXE::SET);
@@ -458,6 +460,10 @@ impl InterfaceRaw for Pl011 {
     type Sender = crate::Sender;
 
     type Reciever = crate::Reciever;
+
+    fn name(&self) -> &str {
+        "PL011 UART"
+    }
 
     fn set_config(&mut self, config: &Config) -> Result<(), ConfigError> {
         use tock_registers::interfaces::Readable;

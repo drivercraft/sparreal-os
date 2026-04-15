@@ -4,6 +4,7 @@ members = [
     "crates/*",
     "platform/*",
     "test-suit/*",
+    "driver/serial",
     "driver/rdrive-macros",
     "driver/rdrive",
     "driver/interface/*",
@@ -27,14 +28,18 @@ repository = "https://github.com/drivercraft/sparreal-os"
 anyhow = { version = "1.0", default-features = false }
 byte-unit = { version = "5", default-features = false, features = ["byte"] }
 derive_more = { version = "2.1", default-features = false, features = ["full"] }
+enum_dispatch = "0.3"
 fdt-edit = "0.2.3"
 fdt-raw = "0.3"
 heapless = { version = "0.9" }
 log = "0.4"
 ranges-ext = { version = "0.6", path = "crates/ranges-ext" }
+bitflags = "2.10"
+spin = "0.10"
 thiserror = { version = "2", default-features = false }
 tock-registers = "0.10"
 uefi = "0.36"
+x86 = "0.52"
 
 rdrive = { version = "0.20", path = "driver/rdrive" }
 
@@ -49,6 +54,7 @@ page-table-generic = { path = "crates/page-table-generic", version = "0.7" }
 someboot = { path = "crates/someboot", version = "0.1" }
 somehal = { path = "platform/somehal", version = "0.6" }
 somehal-macros = { path = "crates/somehal-macros", version = "0.1" }
+some-serial = { path = "driver/serial", version = "0.4.0" }
 sparreal-kernel = { path = "crates/sparreal-kernel", version = "0.15" }
 sparreal-macros = { path = "crates/sparreal-macros", version = "0.10" }
 sparreal-rt = { path = "platform/sparreal-rt", version = "0.13" }
@@ -56,6 +62,7 @@ sparreal-rt = { path = "platform/sparreal-rt", version = "0.13" }
 rdif-intc = { path = "driver/interface/rdif-intc", version = "0.14" }
 rdif-base = { path = "driver/interface/rdif-base", version = "0.8" }
 rdif-def = { path = "driver/interface/rdif-def", version = "0.2" }
+rdif-serial = { path = "driver/interface/rdif-serial", version = "0.7" }
 rdif-pcie = { path = "driver/interface/rdif-pcie", version = "0.2" }
 rdif-block = { path = "driver/interface/rdif-block", version = "0.7" }
 rdif-eth = { path = "driver/interface/rdif-eth", version = "0.2" }

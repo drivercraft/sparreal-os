@@ -188,22 +188,11 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 name = "bare-test"
 version = "0.8.3"
 dependencies = [
- "bare-test-macros 0.3.3",
+ "bare-test-macros",
  "log",
  "rd-net",
  "smoltcp",
  "sparreal-rt",
-]
-
-[[package]]
-name = "bare-test-macros"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e585a01076fee271c5aabcf36212acb349fb3e638561d842fffa8ca013f4fdd8"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -457,18 +446,6 @@ dependencies = [
 
 [[package]]
 name = "dma-api"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3816a852c6c71653e1941cfe22f215eca41c14fd45ec9b32c0fa82fe57fe0989"
-dependencies = [
- "aarch64-cpu-ext",
- "cfg-if",
- "spin 0.10.0",
- "thiserror",
-]
-
-[[package]]
-name = "dma-api"
 version = "0.7.2"
 dependencies = [
  "aarch64-cpu-ext",
@@ -530,7 +507,7 @@ name = "eth-intel"
 version = "0.1.1"
 dependencies = [
  "bare-test",
- "dma-api 0.7.2",
+ "dma-api",
  "fdt-edit",
  "log",
  "mmio-api",
@@ -850,7 +827,7 @@ version = "0.4.1"
 dependencies = [
  "bare-test",
  "byte-unit",
- "dma-api 0.7.2",
+ "dma-api",
  "fdt-edit",
  "log",
  "mmio-api",
@@ -1046,7 +1023,7 @@ checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 name = "ramdisk"
 version = "0.1.0"
 dependencies = [
- "dma-api 0.7.2",
+ "dma-api",
  "rd-block",
  "rdif-block",
  "spin 0.10.0",
@@ -1073,7 +1050,7 @@ dependencies = [
 name = "rd-block"
 version = "0.1.1"
 dependencies = [
- "dma-api 0.7.2",
+ "dma-api",
  "futures",
  "rdif-block",
  "spin_on",
@@ -1083,22 +1060,9 @@ dependencies = [
 name = "rd-net"
 version = "0.1.0"
 dependencies = [
- "dma-api 0.7.2",
+ "dma-api",
  "futures",
  "rdif-eth",
-]
-
-[[package]]
-name = "rdif-base"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f8c32d8cbc18633a412130719b07d31135215d1715ac48fc3888ca835a811ba"
-dependencies = [
- "as-any",
- "async-trait",
- "paste",
- "rdif-def 0.2.0",
- "thiserror",
 ]
 
 [[package]]
@@ -1108,7 +1072,7 @@ dependencies = [
  "as-any",
  "async-trait",
  "paste",
- "rdif-def 0.2.2",
+ "rdif-def",
  "thiserror",
  "tokio",
 ]
@@ -1117,8 +1081,8 @@ dependencies = [
 name = "rdif-block"
 version = "0.7.0"
 dependencies = [
- "dma-api 0.7.2",
- "rdif-base 0.8.0",
+ "dma-api",
+ "rdif-base",
  "thiserror",
 ]
 
@@ -1126,16 +1090,7 @@ dependencies = [
 name = "rdif-clk"
 version = "0.5.0"
 dependencies = [
- "rdif-base 0.8.0",
-]
-
-[[package]]
-name = "rdif-def"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c238eb44d86fabc99028adc973f896ce2202aeb6184cc8b89863f2d157d7ca06"
-dependencies = [
- "thiserror",
+ "rdif-base",
 ]
 
 [[package]]
@@ -1149,8 +1104,8 @@ dependencies = [
 name = "rdif-eth"
 version = "0.2.0"
 dependencies = [
- "dma-api 0.7.2",
- "rdif-base 0.8.0",
+ "dma-api",
+ "rdif-base",
  "thiserror",
 ]
 
@@ -1159,7 +1114,7 @@ name = "rdif-intc"
 version = "0.14.0"
 dependencies = [
  "cfg-if",
- "rdif-base 0.8.0",
+ "rdif-base",
 ]
 
 [[package]]
@@ -1167,7 +1122,7 @@ name = "rdif-pcie"
 version = "0.2.0"
 dependencies = [
  "pci_types",
- "rdif-base 0.8.0",
+ "rdif-base",
  "serde",
  "thiserror",
 ]
@@ -1176,21 +1131,7 @@ dependencies = [
 name = "rdif-power"
 version = "0.7.0"
 dependencies = [
- "rdif-base 0.8.0",
-]
-
-[[package]]
-name = "rdif-serial"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6668610226177053d66d9d3e55436cfa44f6428a5b755b9d7593288b738e3f12"
-dependencies = [
- "bitflags 2.11.0",
- "futures",
- "heapless 0.9.2",
- "rdif-base 0.7.0",
- "spin 0.10.0",
- "thiserror",
+ "rdif-base",
 ]
 
 [[package]]
@@ -1200,7 +1141,7 @@ dependencies = [
  "bitflags 2.11.0",
  "futures",
  "heapless 0.9.2",
- "rdif-base 0.8.0",
+ "rdif-base",
  "spin 0.10.0",
  "thiserror",
 ]
@@ -1209,14 +1150,14 @@ dependencies = [
 name = "rdif-systick"
 version = "0.6.0"
 dependencies = [
- "rdif-base 0.8.0",
+ "rdif-base",
 ]
 
 [[package]]
 name = "rdif-timer"
 version = "0.6.0"
 dependencies = [
- "rdif-base 0.8.0",
+ "rdif-base",
 ]
 
 [[package]]
@@ -1229,7 +1170,7 @@ dependencies = [
  "mmio-api",
  "paste",
  "pcie",
- "rdif-base 0.8.0",
+ "rdif-base",
  "rdif-clk",
  "rdif-intc",
  "rdif-pcie",
@@ -1396,8 +1337,8 @@ name = "simple_bare_test"
 version = "0.1.0"
 dependencies = [
  "bare-test",
- "bare-test-macros 0.3.3",
- "dma-api 0.7.2",
+ "bare-test-macros",
+ "dma-api",
  "log",
 ]
 
@@ -1448,18 +1389,18 @@ dependencies = [
 
 [[package]]
 name = "some-serial"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20ad586f110c679176859fe111f2c3dd176b95bbe731e9b4c3d1c6382cb301c9"
+version = "0.4.0"
 dependencies = [
- "bare-test-macros 0.2.0",
+ "bare-test",
  "bitflags 2.11.0",
- "dma-api 0.5.2",
  "enum_dispatch",
+ "fdt-edit",
  "heapless 0.9.2",
  "log",
- "mbarrier",
- "rdif-serial 0.6.0",
+ "rdif-intc",
+ "rdif-serial",
+ "rdrive",
+ "spin 0.10.0",
  "thiserror",
  "tock-registers 0.10.1",
  "x86",
@@ -1548,7 +1489,7 @@ dependencies = [
  "bitflags 2.11.0",
  "buddy_system_allocator 0.11.0",
  "byte-unit",
- "dma-api 0.7.2",
+ "dma-api",
  "fdt-raw",
  "heapless 0.9.2",
  "kernutil",

@@ -53,6 +53,10 @@ impl<T: Kind> InterfaceRaw for Ns16550<T> {
     type Reciever = crate::Reciever;
     type IrqHandler = Ns16550IrqHandler<T>;
 
+    fn name(&self) -> &str {
+        "NS16550 UART"
+    }
+
     fn base_addr(&self) -> usize {
         self.base.get_base()
     }
